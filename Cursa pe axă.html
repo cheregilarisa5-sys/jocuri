@@ -1,0 +1,774 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Cursa pe axă</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: one centered column on squared notebook paper (red margin rule at left); HUD strip, then the question sheet, then the number line */
+:root{
+  --paper:#f3f5fa; --grid:rgba(38,72,170,.075); --margin:rgba(214,58,52,.38);
+  --sheet:#ffffff; --ink:#151d36; --muted:#5b6582; --line:#cfd5e6; --chip:#eef1f9;
+  --accent:#2443c4; --accent-ink:#ffffff; --b:#bf650a; --res:#151d36;
+  --ok:#1d8148; --ok-soft:#e4f3e9; --bad:#cc2d28; --bad-soft:#fbe7e6;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Cambria Math",Cambria,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1427; --grid:rgba(140,165,255,.06); --margin:rgba(255,110,100,.28);
+    --sheet:#161c33; --ink:#e7eaf6; --muted:#9aa4c4; --line:#2e375b; --chip:#1e2645;
+    --accent:#8ea4ff; --accent-ink:#0f1427; --b:#f2a65a; --res:#e7eaf6;
+    --ok:#52cf88; --ok-soft:rgba(82,207,136,.13); --bad:#ff7d73; --bad-soft:rgba(255,125,115,.13);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1427; --grid:rgba(140,165,255,.06); --margin:rgba(255,110,100,.28);
+  --sheet:#161c33; --ink:#e7eaf6; --muted:#9aa4c4; --line:#2e375b; --chip:#1e2645;
+  --accent:#8ea4ff; --accent-ink:#0f1427; --b:#f2a65a; --res:#e7eaf6;
+  --ok:#52cf88; --ok-soft:rgba(82,207,136,.13); --bad:#ff7d73; --bad-soft:rgba(255,125,115,.13);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px; min-height:100vh;
+}
+body::before{content:"";position:fixed;top:0;bottom:0;left:52px;width:1.5px;background:var(--margin);pointer-events:none}
+@media (max-width:820px){body::before{display:none}}
+.wrap{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:22px 48px;display:flex;flex-direction:column;gap:18px}
+.math{font-family:var(--f-math);font-size:1.14em;white-space:nowrap}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+
+/* brand */
+.brand{display:flex;align-items:center;gap:12px}
+.brand svg{flex:none}
+.brand b{font-family:var(--f-display);font-weight:800;font-size:1.15rem}
+.brand span{color:var(--muted);font-size:.86rem}
+
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:clamp(18px,4vw,30px);display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* start */
+.hero h1{font-size:clamp(2.1rem,6vw,3.3rem);font-weight:800;line-height:1.02}
+.hero h1 em{font-style:normal;font-family:var(--f-math);font-weight:600;color:var(--accent)}
+.hero p{margin:6px 0 0;color:var(--muted);max-width:56ch}
+.setting{display:flex;flex-direction:column;gap:8px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{border:1.5px solid var(--line);background:var(--sheet);border-radius:10px;padding:10px 14px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 150px}
+.seg button b{font-family:var(--f-display);font-size:1.02rem}
+.seg button small{color:var(--muted);font-size:.8rem;line-height:1.35}
+.seg button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.rules{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:4px;font-size:.93rem}
+.rules b{color:var(--ink);font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:13px 22px;font-weight:700;font-size:1rem}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.best{color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums}
+
+/* HUD */
+.hud{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between;align-items:end;gap:10px 18px}
+.hud .cell{display:flex;flex-direction:column;gap:2px}
+.hud .val{font-family:var(--f-display);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.lives{display:flex;gap:7px;height:1.5rem;align-items:center}
+.lives i{width:14px;height:14px;border-radius:50%;border:2.5px solid var(--accent);background:var(--accent);display:block;transition:background .3s}
+.lives i.lost{background:transparent}
+.timer{height:5px;background:var(--chip);border-radius:3px;overflow:hidden}
+.timer div{height:100%;background:var(--accent);width:100%;transition:width .1s linear}
+.timer.low div{background:var(--bad)}
+@media (max-width:520px){.hud{grid-template-columns:repeat(2,1fr)}}
+
+/* question */
+.qhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.tag{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.pts{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.prompt{font-size:1.1rem;line-height:1.65;max-width:62ch}
+.prompt p{margin:0 0 8px}
+.system{display:inline-flex;align-items:stretch;gap:10px;margin:6px 0 4px 6px}
+.system .brace{width:10px;border:2px solid var(--ink);border-right:0;border-radius:10px 0 0 10px}
+.system .eqs{display:flex;flex-direction:column;gap:4px;font-family:var(--f-math);font-size:1.2rem}
+
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.options{grid-template-columns:1fr}}
+.opt{border:1.5px solid var(--line);background:var(--sheet);border-radius:10px;padding:13px 14px;text-align:left;display:flex;gap:12px;align-items:center;min-width:0}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .k{flex:none;font:600 .75rem var(--f-body);color:var(--muted);border:1px solid var(--line);border-radius:6px;width:24px;height:24px;display:grid;place-items:center}
+.opt .math{font-size:1.22rem;white-space:normal;overflow-wrap:anywhere}
+.opt.correct{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt:disabled{cursor:default}
+
+.numrow{display:flex;gap:10px;flex-wrap:wrap}
+.numrow input{font:600 1.3rem var(--f-math);width:9ch;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--sheet);color:var(--ink);font-variant-numeric:tabular-nums}
+
+.build{display:flex;flex-direction:column;gap:10px}
+.brow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.brow .u{font-family:var(--f-math);font-size:1.4rem;color:var(--muted);width:100%}
+.br{font:600 1.7rem/1 var(--f-math);width:42px;height:48px;border:1.5px solid var(--line);border-radius:10px;background:var(--chip)}
+.br:hover:not(:disabled){border-color:var(--accent)}
+.bin{font:1.15rem var(--f-math);width:8.5ch;min-width:0;flex:1 1 7ch;max-width:12ch;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--sheet);color:var(--ink);text-align:center}
+.semi{font:1.5rem var(--f-math);color:var(--muted)}
+.rm{border:0;background:none;color:var(--muted);padding:8px;font-size:.9rem}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys button{border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:6px 11px;font-family:var(--f-math);font-size:1.02rem}
+.keys button[aria-pressed="true"]{border-color:var(--accent);background:var(--chip);color:var(--accent)}
+.keys .sep{flex-basis:8px}
+.preview{font-size:.95rem;color:var(--muted);min-height:1.6em}
+.preview .math{color:var(--ink)}
+.preview .err{color:var(--bad)}
+.hint{font-size:.82rem;color:var(--muted)}
+
+.feedback{border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;border:1.5px solid var(--line);min-width:0}
+.feedback.ok{border-color:var(--ok);background:var(--ok-soft)}
+.feedback.bad{border-color:var(--bad);background:var(--bad-soft)}
+.verdict{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.verdict b{font-family:var(--f-display);font-size:1.3rem}
+.feedback.ok .verdict b{color:var(--ok)}
+.feedback.bad .verdict b{color:var(--bad)}
+.explain{font-size:.95rem;line-height:1.6}
+.explain p{margin:0 0 6px}
+.explain ul{margin:4px 0 0;padding-left:18px}
+.nl{overflow-x:auto;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:6px 4px}
+.nl svg{display:block;width:100%;min-width:480px;height:auto}
+.nl .cap{font-size:.82rem;color:var(--muted);padding:0 10px 4px}
+
+/* svg classes */
+.ax{stroke:var(--muted);stroke-width:1.2;fill:none}
+.axf{fill:var(--muted)}
+.guide{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.rowbase{stroke:var(--line);stroke-width:1}
+.lbl{fill:var(--ink);font:600 14px var(--f-math)}
+.tick{fill:var(--ink);font:13px var(--f-math)}
+.tick.muted{fill:var(--muted)}
+.sA{stroke:var(--accent);fill:var(--accent)} .sB{stroke:var(--b);fill:var(--b)} .sR{stroke:var(--res);fill:var(--res)}
+.seg{stroke-width:5;stroke-linecap:butt}
+.dot{stroke-width:2.2}
+.dot.open{fill:var(--sheet)}
+
+/* end */
+.score-big{font-family:var(--f-display);font-weight:800;font-size:clamp(3rem,12vw,5rem);line-height:1;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .val{font-family:var(--f-display);font-weight:700;font-size:1.4rem;font-variant-numeric:tabular-nums}
+table.brk{width:100%;border-collapse:collapse;font-size:.95rem;font-variant-numeric:tabular-nums}
+table.brk td{padding:8px 4px;border-bottom:1px solid var(--line)}
+table.brk td:last-child{text-align:right;font-weight:600}
+.bar{height:6px;background:var(--chip);border-radius:3px;overflow:hidden;width:100px;display:inline-block;vertical-align:middle;margin-right:8px}
+.bar i{display:block;height:100%;background:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.pop{animation:pop .35s ease-out}
+@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+</style>
+
+<div class="wrap">
+  <header class="brand">
+    <svg width="44" height="22" viewBox="0 0 44 22" aria-hidden="true"><line x1="2" y1="15" x2="42" y2="15" class="ax"/><line x1="11" y1="15" x2="33" y2="15" class="sA seg"/><circle cx="11" cy="15" r="4" class="sA dot"/><circle cx="33" cy="15" r="4" class="sA dot open"/></svg>
+    <div><b>Cursa pe axă</b><br><span>Intervale de numere reale · Evaluarea Națională, clasa a VIII-a</span></div>
+  </header>
+
+  <!-- START -->
+  <section id="start" class="sheet">
+    <div class="hero">
+      <h1>Paranteza <em>[</em> sau <em>(</em> decide tot.</h1>
+      <p>Operații cu intervale, inecuații cu modul, sisteme, numărare de întregi și probleme cu parametru. Capetele cu radicali și fracții sunt făcute să te încurce.</p>
+    </div>
+    <div class="nl" id="demoLine"></div>
+    <div class="setting">
+      <span class="eyebrow">Dificultate</span>
+      <div class="seg" id="diffSeg">
+        <button type="button" data-v="mediu"><b>Mediu</b><small>Capete întregi, operații de bază</small></button>
+        <button type="button" data-v="greu"><b>Greu</b><small>Fracții, radicali, capete comune</small></button>
+        <button type="button" data-v="extrem"><b>Extrem</b><small>Diferență simetrică, ℕ și ℤ⁻, cazuri-capcană</small></button>
+      </div>
+    </div>
+    <div class="setting">
+      <span class="eyebrow">Mod</span>
+      <div class="seg" id="modeSeg">
+        <button type="button" data-v="concurs"><b>Concurs</b><small>3 vieți, cronometru, bonus de timp</small></button>
+        <button type="button" data-v="antrenament"><b>Antrenament</b><small>Fără timp și fără vieți</small></button>
+      </div>
+    </div>
+    <ul class="rules">
+      <li><b>12 întrebări</b> din 7 tipuri: alegere multiplă, răspuns numeric și construcție de interval.</li>
+      <li>O singură paranteză greșită înseamnă răspuns greșit.</li>
+      <li>Fiecare răspuns corect la rând crește multiplicatorul cu 0,25, până la <b>×2</b>.</li>
+      <li>După fiecare întrebare vezi rezolvarea pe axă.</li>
+    </ul>
+    <div class="cta">
+      <button class="btn" id="startBtn" type="button">Începe runda</button>
+      <span class="best" id="bestLine"></span>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" hidden>
+    <div class="sheet">
+      <div class="hud">
+        <div class="cell"><span class="eyebrow">Întrebarea</span><span class="val" id="hQ">1/12</span></div>
+        <div class="cell"><span class="eyebrow">Scor</span><span class="val" id="hScore">0</span></div>
+        <div class="cell"><span class="eyebrow">Serie</span><span class="val" id="hStreak">×1</span></div>
+        <div class="cell" id="livesCell"><span class="eyebrow">Vieți</span><span class="lives" id="hLives"></span></div>
+      </div>
+      <div id="timerWrap"><div class="timer" id="timer"><div id="timerBar"></div></div></div>
+      <div class="qhead"><span class="tag" id="qType"></span><span class="pts" id="qPts"></span></div>
+      <div class="prompt" id="qPrompt"></div>
+      <div id="answerArea"></div>
+      <div id="fbArea"></div>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section id="end" class="sheet" hidden>
+    <span class="eyebrow" id="endTitle">Rundă încheiată</span>
+    <div class="score-big" id="endScore">0</div>
+    <div class="stats" id="endStats"></div>
+    <table class="brk" id="endTable"></table>
+    <div class="cta">
+      <button class="btn" id="againBtn" type="button">Joacă din nou</button>
+      <button class="btn ghost" id="setBtn" type="button">Schimbă setările</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ===================== numbers ===================== */
+const M='−', EPS=1e-9;
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const chance=p=>Math.random()<p;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const eq=(a,b)=>a===b||Math.abs(a-b)<1e-7;
+const fmtNum=n=>n<0?M+(-n):String(n);
+const V=(v,s)=>({v,s});
+const PINF=V(Infinity,'+∞'), NINF=V(-Infinity,M+'∞');
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1}
+function frac(n,d){if(d<0){n=-n;d=-d}const g=gcd(n,d);n/=g;d/=g;return V(n/d,d===1?fmtNum(n):(n<0?M:'')+Math.abs(n)+'/'+d)}
+const int=n=>V(n,fmtNum(n));
+function rad(m,k){return V(m*Math.sqrt(k),(m<0?M:'')+(Math.abs(m)===1?'':Math.abs(m))+'√'+k)}
+const SQF=[2,3,5,6,7,10,11,13,14,15,17,19,21,22,23,26,29,30,31,33,35,37,39,41,43,47,51,53,55,57,58,59,61,62,65,66,67,69,70,71,73,74,77,78,79];
+function dec(v){const r=Math.round(v*100)/100;return (r<0?M:'')+Math.abs(r).toFixed(2).replace(/\.?0+$/,'').replace('.',',')}
+function approx(val){if(!isFinite(val.v)||Number.isInteger(val.v))return '';const exact=Math.abs(val.v*100-Math.round(val.v*100))<1e-7;return ` ${exact?'=':'≈'} ${dec(val.v)}`}
+
+function pickValue(diff,lo,hi){
+  for(let t=0;t<80;t++){
+    const r=Math.random();
+    const kind=diff==='mediu'?'i':diff==='greu'?(r<.55?'i':r<.78?'f':'r'):(r<.35?'i':r<.6?'f':'r');
+    let val;
+    if(kind==='i'){const a=Math.ceil(lo),b=Math.floor(hi);if(a>b)continue;val=int(rnd(a,b))}
+    else if(kind==='f'){const d=pick(diff==='extrem'?[2,3,4,5]:[2,3]);const a=Math.ceil(lo*d),b=Math.floor(hi*d);if(a>b)continue;const n=rnd(a,b);if(n%d===0)continue;val=frac(n,d)}
+    else{const s=chance(.35)?-1:1;val=chance(.3)?rad(s*pick([2,3]),pick([2,3,5,6,7])):rad(s,pick(SQF))}
+    if(val.v>=lo-EPS&&val.v<=hi+EPS)return val;
+  }
+  return int(Math.round((lo+hi)/2));
+}
+
+/* ===================== interval algebra ===================== */
+const cl=I=>({l:I.l,li:I.li,r:I.r,ri:I.ri});
+function fix(I){if(I.l.v===-Infinity)I.li=false;if(I.r.v===Infinity)I.ri=false;return I}
+function isEmptyI(I){if(eq(I.l.v,I.r.v))return !(I.li&&I.ri)||!isFinite(I.l.v);return I.l.v>I.r.v}
+function normalize(S){
+  const a=S.map(cl).map(fix).filter(I=>!isEmptyI(I)).sort((x,y)=>eq(x.l.v,y.l.v)?(y.li-x.li):x.l.v-y.l.v);
+  const out=[];
+  for(const I of a){
+    const c=out[out.length-1];
+    if(c&&((I.l.v<c.r.v&&!eq(I.l.v,c.r.v))||(eq(I.l.v,c.r.v)&&(I.li||c.ri)))){
+      if(eq(I.r.v,c.r.v))c.ri=c.ri||I.ri;else if(I.r.v>c.r.v){c.r=I.r;c.ri=I.ri}
+    }else out.push(I);
+  }
+  return out;
+}
+function interI(A,B){
+  let l,li,r,ri;
+  if(eq(A.l.v,B.l.v)){l=A.l;li=A.li&&B.li}else if(A.l.v>B.l.v){l=A.l;li=A.li}else{l=B.l;li=B.li}
+  if(eq(A.r.v,B.r.v)){r=A.r;ri=A.ri&&B.ri}else if(A.r.v<B.r.v){r=A.r;ri=A.ri}else{r=B.r;ri=B.ri}
+  return {l,li,r,ri};
+}
+function intersect(X,Y){const o=[];for(const a of X)for(const b of Y)o.push(interI(a,b));return normalize(o)}
+function complement(S){S=normalize(S);const o=[];let cur=NINF,ci=false;for(const I of S){o.push({l:cur,li:ci,r:I.l,ri:!I.li});cur=I.r;ci=!I.ri}o.push({l:cur,li:ci,r:PINF,ri:false});return normalize(o)}
+const union=(X,Y)=>normalize([...X,...Y]);
+const minus=(X,Y)=>intersect(X,complement(Y));
+function inI(I,x){const okL=eq(x,I.l.v)?I.li:x>I.l.v;const okR=eq(x,I.r.v)?I.ri:x<I.r.v;return okL&&okR}
+const inS=(S,x)=>S.some(I=>inI(I,x));
+function fmtI(I){if(eq(I.l.v,I.r.v))return '{'+I.l.s+'}';if(I.l.v===-Infinity&&I.r.v===Infinity)return 'ℝ';return (I.li?'[':'(')+I.l.s+'; '+I.r.s+(I.ri?']':')')}
+const fmtSet=S=>S.length?S.map(fmtI).join(' ∪ '):'∅';
+const r6=v=>isFinite(v)?Math.round(v*1e6)/1e6:v;
+const key=S=>normalize(S).map(I=>(I.li?'[':'(')+r6(I.l.v)+';'+r6(I.r.v)+(I.ri?']':')')).join('U')||'E';
+function intStats(S,dom){
+  let count=0,sum=0;const list=[];
+  for(const I of S){
+    let lo=I.l.v===-Infinity?-Infinity:(I.li?Math.ceil(I.l.v-1e-7):Math.floor(I.l.v+1e-7)+1);
+    let hi=I.r.v===Infinity?Infinity:(I.ri?Math.floor(I.r.v+1e-7):Math.ceil(I.r.v-1e-7)-1);
+    if(dom==='N')lo=Math.max(lo,0);if(dom==='Ns')lo=Math.max(lo,1);if(dom==='Zn')hi=Math.min(hi,-1);
+    if(hi<lo)continue;
+    if(!isFinite(lo)||!isFinite(hi))return null;
+    const c=hi-lo+1;count+=c;sum+=(lo+hi)*c/2;
+    for(let x=lo;x<=hi&&list.length<80;x++)list.push(x);
+  }
+  return {count,sum,list};
+}
+const DOM={Z:{sym:'ℤ',word:'întregi'},N:{sym:'ℕ',word:'naturale'},Ns:{sym:'ℕ*',word:'naturale nenule'},Zn:{sym:'ℤ⁻',word:'întregi negative'}};
+
+/* ===================== generators ===================== */
+function randInterval(diff,R=8){
+  let a,b,t=0;do{a=pickValue(diff,-R,R);b=pickValue(diff,-R,R);t++}while(Math.abs(a.v-b.v)<.4&&t<50);
+  if(a.v>b.v)[a,b]=[b,a];
+  const I={l:a,li:chance(.5),r:b,ri:chance(.5)};
+  if(chance(diff==='mediu'?.12:diff==='greu'?.22:.28)){if(chance(.5)){I.l=NINF;I.li=false}else{I.r=PINF;I.ri=false}}
+  return I;
+}
+function randB(diff,A){
+  const share=diff==='mediu'?.3:diff==='greu'?.55:.8;
+  const fin=[A.l,A.r].filter(e=>isFinite(e.v));
+  if(fin.length&&chance(share)){
+    const e=pick(fin), infP=diff==='mediu'?.08:.2;
+    for(let t=0;t<10;t++){
+      if(chance(.5)){const o=pickValue(diff,e.v+.5,e.v+7);if(o.v>e.v+.3){const B={l:e,li:chance(.5),r:o,ri:chance(.5)};if(chance(infP)){B.r=PINF;B.ri=false}return B}}
+      else{const o=pickValue(diff,e.v-7,e.v-.5);if(o.v<e.v-.3){const B={l:o,li:chance(.5),r:e,ri:chance(.5)};if(chance(infP)){B.l=NINF;B.li=false}return B}}
+    }
+  }
+  return randInterval(diff);
+}
+const OPS={
+  inter:{t:'A ∩ B',f:(A,B)=>intersect(A,B)},
+  uni:{t:'A ∪ B',f:(A,B)=>union(A,B)},
+  dAB:{t:'A ∖ B',f:(A,B)=>minus(A,B)},
+  dBA:{t:'B ∖ A',f:(A,B)=>minus(B,A)},
+  sym:{t:'(A ∪ B) ∖ (A ∩ B)',f:(A,B)=>minus(union(A,B),intersect(A,B))},
+  cmp:{t:'ℝ ∖ (A ∩ B)',f:(A,B)=>complement(intersect(A,B))},
+};
+const opsFor=d=>d==='mediu'?['inter','uni','dAB']:d==='greu'?['inter','uni','dAB','dBA','dAB']:['inter','dAB','dBA','sym','sym','cmp','uni'];
+const esc=s=>String(s).replace(/</g,'&lt;');
+const mth=s=>`<span class="math">${esc(s)}</span>`;
+const setsDef=(A,B)=>`<p>Fie mulțimile ${mth('A = '+fmtI(A))} și ${mth('B = '+fmtI(B))}.</p>`;
+
+function endpointNotes(A,B,S,label){
+  const seen=[];const items=[];
+  for(const e of [A.l,A.r,B.l,B.r]){if(!isFinite(e.v)||seen.some(x=>eq(x,e.v)))continue;seen.push(e.v);
+    const a=inI(A,e.v),b=inI(B,e.v),s=inS(S,e.v);
+    items.push(`<li>${mth('x = '+e.s)}${approx(e)}: ${a?'∈':'∉'} A, ${b?'∈':'∉'} B ⇒ ${s?'∈':'∉'} ${label}</li>`)}
+  return items.length?`<p>Verificăm capetele, unde se fac greșelile:</p><ul>${items.join('')}</ul>`:'';
+}
+
+function qOps(diff){
+  for(let t=0;t<60;t++){
+    const A=randInterval(diff),B=randB(diff,A),opk=pick(opsFor(diff)),op=OPS[opk];
+    const C=op.f([A],[B]),ck=key(C);
+    const flips=[],others=[];
+    C.forEach((I,i)=>['li','ri'].forEach(sd=>{const e=sd==='li'?I.l:I.r;if(!isFinite(e.v))return;const D=C.map(cl);D[i][sd]=!D[i][sd];flips.push(normalize(D))}));
+    if(C.length&&flips.length>1){const D=C.map(x=>({...x,li:!x.li,ri:!x.ri}));flips.push(normalize(D))}
+    for(const k of Object.keys(OPS))if(k!==opk)others.push(OPS[k].f([A],[B]));
+    others.push([A],[B]);
+    const uniq=new Map();
+    for(const S of shuffle(flips))if(key(S)!==ck&&!uniq.has(key(S))&&uniq.size<2)uniq.set(key(S),S);
+    for(const S of shuffle(others))if(key(S)!==ck&&!uniq.has(key(S))&&uniq.size<3)uniq.set(key(S),S);
+    for(const S of flips)if(key(S)!==ck&&!uniq.has(key(S))&&uniq.size<3)uniq.set(key(S),S);
+    if(uniq.size<3)continue;
+    const opts=shuffle([C,...uniq.values()]);
+    return {type:'ops',kind:'mc',prompt:setsDef(A,B)+`<p>Mulțimea ${mth(op.t)} este:</p>`,
+      options:opts.map(fmtSet),correct:opts.indexOf(C),answerText:fmtSet(C),
+      explain:`<p>${mth(op.t+' = '+fmtSet(C))}</p>`+endpointNotes(A,B,C,'S'),
+      rows:[{label:'A',set:[A],c:'sA'},{label:'B',set:[B],c:'sB'},{label:'S',set:C,c:'sR'}],caption:'S = '+op.t};
+  }
+}
+
+function qCount(diff,sum=false){
+  const doms=diff==='mediu'?['Z']:diff==='greu'?['Z','Z','N']:['Z','N','Ns','Zn'];
+  for(let t=0;t<120;t++){
+    const A=randInterval(diff),B=randB(diff,A),opk=pick(opsFor(diff).filter(k=>k!=='cmp')),op=OPS[opk];
+    const S=op.f([A],[B]),dom=sum?pick(diff==='mediu'?['Z']:['Z','Z','N','Zn']):pick(doms);
+    const st=intStats(S,dom);
+    if(!st||st.count>(sum?22:30))continue;
+    if(sum&&st.count<2)continue;
+    if(!sum&&st.count===0&&chance(.8))continue;
+    const target=opk==='inter'||opk==='uni'||opk==='dAB'||opk==='dBA'?'('+op.t+')':'['+op.t+']';
+    let q;
+    if(sum)q=dom==='Zn'?`<p>Calculați suma numerelor întregi negative care aparțin mulțimii ${mth(op.t)}.</p>`:`<p>Calculați suma elementelor mulțimii ${mth(target+' ∩ '+DOM[dom].sym)}.</p>`;
+    else q=dom==='Zn'?`<p>Câte numere întregi negative aparțin mulțimii ${mth(op.t)}?</p>`:`<p>Câte elemente are mulțimea ${mth(target+' ∩ '+DOM[dom].sym)}?</p>`;
+    const ans=sum?st.sum:st.count;
+    const listTxt=st.count?'{'+st.list.map(fmtNum).join(', ')+'}':'∅';
+    return {type:sum?'sum':'count',kind:'num',prompt:setsDef(A,B)+q,answer:ans,answerText:fmtNum(ans),
+      explain:`<p>${mth(op.t+' = '+fmtSet(S))}</p><p>Numerele ${DOM[dom].word} din această mulțime: ${mth(listTxt)}${sum?` ⇒ suma = ${mth(fmtNum(st.sum))}`:` ⇒ ${mth(String(st.count))} elemente`}.</p>`+endpointNotes(A,B,S,'S'),
+      rows:[{label:'A',set:[A],c:'sA'},{label:'B',set:[B],c:'sB'},{label:'S',set:S,c:'sR'}],caption:'S = '+op.t};
+  }
+  return qOps(diff);
+}
+
+function term(a){return a===1?'x':a===-1?M+'x':fmtNum(a)+'x'}
+function lin(a,b){if(a===0)return fmtNum(b);let s=term(a);if(b>0)s+=' + '+b;else if(b<0)s+=' '+M+' '+(-b);return s}
+const FLIP={'<':'>','>':'<','≤':'≥','≥':'≤'};
+function ray(rel,v){return rel==='<'?{l:NINF,li:false,r:v,ri:false}:rel==='≤'?{l:NINF,li:false,r:v,ri:true}:rel==='>'?{l:v,li:false,r:PINF,ri:false}:{l:v,li:true,r:PINF,ri:false}}
+
+function qAbs(diff){
+  const a=pick(diff==='mediu'?[1,1,2]:diff==='greu'?[1,2,3,-2]:[2,3,-3,4,-2,5]);
+  const b=rnd(-9,9)||1;let c=rnd(1,diff==='mediu'?7:9);
+  const rel=pick(diff==='mediu'?['≤','<']:['≤','<','≥','>','≤']);
+  if(diff==='extrem'&&chance(.18))c=pick([0,-rnd(1,4)]);
+  else if(diff==='greu'&&chance(.08))c=0;
+  const E=lin(a,b);
+  let lo=frac(-c-b,a),hi=frac(c-b,a);if(lo.v>hi.v)[lo,hi]=[hi,lo];
+  let S,ex;
+  const R=[{l:NINF,li:false,r:PINF,ri:false}];
+  if(c<0){S=(rel==='≤'||rel==='<')?[]:R;ex=`Modulul este întotdeauna ≥ 0, deci ${mth('|'+E+'| '+rel+' '+fmtNum(c))} ${S.length?'este adevărată pentru orice x real':'nu are soluții'}.`}
+  else if(c===0){const p=frac(-b,a);
+    if(rel==='≤'){S=[{l:p,li:true,r:p,ri:true}];ex=`${mth('|'+E+'| ≤ 0')} doar când ${mth(E+' = 0')}, adică ${mth('x = '+p.s)}.`}
+    else if(rel==='<'){S=[];ex=`Un modul nu poate fi negativ, deci ${mth('|'+E+'| < 0')} nu are soluții.`}
+    else if(rel==='≥'){S=R;ex=`Orice modul este ≥ 0, deci orice x real verifică.`}
+    else{S=complement([{l:p,li:true,r:p,ri:true}]);ex=`${mth('|'+E+'| > 0')} pentru orice x, cu excepția lui ${mth('x = '+p.s)}, unde modulul este 0.`}}
+  else if(rel==='≤'||rel==='<'){
+    S=[{l:lo,li:rel==='≤',r:hi,ri:rel==='≤'}];
+    ex=`${mth('|'+E+'| '+rel+' '+c)} ⇔ ${mth(M+c+' '+rel+' '+E+' '+rel+' '+c)} ⇔ ${mth(fmtNum(-c-b)+' '+rel+' '+term(a)+' '+rel+' '+fmtNum(c-b))}`+(a!==1?(a<0?` ⇔ împărțim la ${mth(fmtNum(a))} < 0 și schimbăm sensul inegalităților`:` ⇔ împărțim la ${a}`):'')+` ⇒ ${mth(lo.s+' '+rel+' x '+rel+' '+hi.s)}.`;
+  }else{
+    S=complement([{l:lo,li:rel==='>',r:hi,ri:rel==='>'}]);
+    const inv=rel==='≥'?'≤':'<';
+    ex=`${mth('|'+E+'| '+rel+' '+c)} ⇔ ${mth(E+' '+inv+' '+M+c)} sau ${mth(E+' '+rel+' '+c)}`+(a<0?` (atenție: coeficientul lui x este negativ, sensul se schimbă la împărțire)`:'')+`. Soluțiile sunt în afara intervalului dintre ${mth(lo.s)} și ${mth(hi.s)}.`;
+  }
+  return {type:'abs',kind:'build',prompt:`<p>Determinați mulțimea ${mth('A = {x ∈ ℝ | |'+E+'| '+rel+' '+fmtNum(c)+'}')}.</p>`,
+    set:S,answerText:fmtSet(S),explain:`<p>${ex}</p><p>${mth('A = '+fmtSet(S))}</p>`,rows:[{label:'A',set:S,c:'sR'}]};
+}
+
+function qSys(diff){
+  for(let t=0;t<80;t++){
+    const parts=[],steps=[];let S=[{l:NINF,li:false,r:PINF,ri:false}];
+    const dirs=chance(.8)?shuffle(['up','down']):[pick(['up','down']),pick(['up','down'])];
+    for(let i=0;i<2;i++){
+      const k=pick(diff==='mediu'?[1,2,3,-1]:[1,2,3,4,-1,-2,-3,-4,5]);
+      let a,c;if(diff==='mediu'||chance(.35)){a=k;c=0}else{c=rnd(-4,4)||1;a=k+c;if(a===0){a=k;c=0}}
+      const b=rnd(-9,9),m=rnd(-12,12),d=m+b;
+      const wantLower=dirs[i]==='up';
+      let rel=pick(wantLower?['>','≥']:['<','≤']);if(k<0)rel=FLIP[rel];
+      const v=frac(m,k);const fr=k<0?FLIP[rel]:rel;
+      const lhs=lin(a,b),rhs=c===0?fmtNum(d):lin(c,d);
+      parts.push(lhs+' '+rel+' '+rhs);
+      const R=ray(fr,v);S=intersect(S,[R]);
+      steps.push({txt:`${mth(lhs+' '+rel+' '+rhs)} ⇔ ${k!==1||c!==0?mth(term(k)+' '+rel+' '+fmtNum(m))+' ⇔ ':''}${mth('x '+fr+' '+v.s)}${k<0?' (am împărțit la un număr negativ, sensul s-a schimbat)':''}`,set:[R]});
+    }
+    if(Math.abs((S[0]||{l:{v:0}}).l.v)>14)continue;
+    const emptyOk=diff==='extrem'?.25:.08;
+    if(!S.length&&!chance(emptyOk))continue;
+    return {type:'sys',kind:'build',prompt:`<p>Determinați mulțimea soluțiilor reale ale sistemului:</p><div class="system"><div class="brace"></div><div class="eqs"><span>${esc(parts[0])}</span><span>${esc(parts[1])}</span></div></div>`,
+      set:S,answerText:fmtSet(S),
+      explain:`<p>(1) ${steps[0].txt}</p><p>(2) ${steps[1].txt}</p><p>Intersectăm: ${mth('S = '+fmtSet(S))}</p>`,
+      rows:[{label:'(1)',set:steps[0].set,c:'sA'},{label:'(2)',set:steps[1].set,c:'sB'},{label:'S',set:S,c:'sR'}]};
+  }
+  return qAbs(diff);
+}
+
+function qParam(diff){
+  for(let t=0;t<120;t++){
+    const dom=diff==='extrem'&&chance(.45)?'N':'Z';
+    const m=dom==='N'?rnd(1,7):rnd(-5,7),k=rnd(diff==='mediu'?2:3,diff==='extrem'?7:5);
+    const left=chance(.5),bl=chance(.5),br=chance(.5);
+    const f=a=>{const I=left?{l:V(a,''),li:bl,r:int(m),ri:br}:{l:int(m),li:bl,r:V(a,''),ri:br};if(isEmptyI(I))return 0;const s=intStats([I],dom);return s?s.count:-1};
+    const pieces=[];
+    for(let n=-30;n<=30;n++){if(f(n)===k)pieces.push({l:int(n),li:true,r:int(n),ri:true});if(n<30&&f(n+.5)===k)pieces.push({l:int(n),li:false,r:int(n+1),ri:false})}
+    let S=normalize(pieces);
+    if(S.length!==1)continue;
+    if(S[0].l.v<=-30+EPS){S[0].l=NINF;S[0].li=false}
+    if(S[0].r.v>=30-EPS){S[0].r=PINF;S[0].ri=false}
+    if(!isFinite(S[0].l.v)&&!isFinite(S[0].r.v))continue;
+    if(diff!=='extrem'&&!(isFinite(S[0].l.v)&&isFinite(S[0].r.v)))continue;
+    const I=S[0];const sample=isFinite(I.l.v)&&isFinite(I.r.v)?(I.l.v+I.r.v)/2:isFinite(I.l.v)?I.l.v+1.5:I.r.v-1.5;
+    const AI=left?{l:V(sample,''),li:bl,r:int(m),ri:br}:{l:int(m),li:bl,r:V(sample,''),ri:br};
+    const st=intStats([AI],dom);
+    const Atxt=left?`${bl?'[':'('}a; ${fmtNum(m)}${br?']':')'}`:`${bl?'[':'('}${fmtNum(m)}; a${br?']':')'}`;
+    const fixedEnd=`capătul ${mth(fmtNum(m))} ${(left?br:bl)?'aparține':'nu aparține'} lui A`;
+    return {type:'param',kind:'build',
+      prompt:`<p>Fie ${mth('A = '+Atxt)}, unde ${mth('a')} este un număr real.</p><p>Determinați mulțimea valorilor lui ${mth('a')} pentru care ${mth('A')} conține <b>exact ${k}</b> numere ${DOM[dom].word}.</p>`,
+      set:S,answerText:fmtSet(S),
+      explain:`<p>Deoarece ${fixedEnd}, numerele ${DOM[dom].word} din A trebuie să fie exact ${mth('{'+st.list.map(fmtNum).join(', ')+'}')}.</p><p>Verificăm ce se întâmplă când ${mth('a')} este chiar un număr întreg: capătul ${left?(bl?'[':'('):(br?']':')')} ${(left?bl:br)?'îl include':'îl exclude'}. De aici ${mth('a ∈ '+fmtSet(S))}.</p>`,
+      rows:[{label:'a',set:S,c:'sR'}],caption:'Valorile lui a'};
+  }
+  return qSys(diff);
+}
+
+function qMember(diff){
+  for(let t=0;t<80;t++){
+    const A=randInterval(diff),B=randB(diff,A),opk=pick(opsFor(diff)),op=OPS[opk];
+    const S=op.f([A],[B]);
+    const ends=[A.l,A.r,B.l,B.r].filter(e=>isFinite(e.v));
+    const lo=Math.min(...ends.map(e=>e.v))-2,hi=Math.max(...ends.map(e=>e.v))+2;
+    const near=[];for(let i=0;i<18;i++)near.push(pickValue(diff==='mediu'?'greu':'extrem',lo,hi));
+    const cand=[];for(const c of [...ends,...near])if(!cand.some(x=>eq(x.v,c.v)))cand.push(c);
+    const isEnd=c=>ends.some(e=>eq(e.v,c.v));
+    const ins=cand.filter(c=>inS(S,c.v)),outs=cand.filter(c=>!inS(S,c.v));
+    const neg=chance(.3);
+    const good=neg?outs:ins,bad=neg?ins:outs;
+    if(good.length<1||bad.length<3)continue;
+    const order=arr=>[...shuffle(arr.filter(isEnd)),...shuffle(arr.filter(c=>!isEnd(c)))];
+    const correct=chance(.6)?order(good)[0]:pick(good);
+    const ds=order(bad);const dist=[ds[0],...shuffle(ds.slice(1)).slice(0,2)];
+    const opts=shuffle([correct,...dist]);
+    return {type:'member',kind:'mc',prompt:setsDef(A,B)+`<p>Care dintre numerele de mai jos ${neg?'<b>nu</b> aparține':'aparține'} mulțimii ${mth(op.t)}?</p>`,
+      options:opts.map(o=>o.s),correct:opts.indexOf(correct),answerText:correct.s,
+      explain:`<p>${mth(op.t+' = '+fmtSet(S))}</p><ul>${opts.map(o=>`<li>${mth(o.s)}${approx(o)} ${inS(S,o.v)?'∈':'∉'} ${mth(op.t)}</li>`).join('')}</ul>`,
+      rows:[{label:'A',set:[A],c:'sA'},{label:'B',set:[B],c:'sB'},{label:'S',set:S,c:'sR'}],caption:'S = '+op.t};
+  }
+  return qOps(diff);
+}
+
+const TYPES={
+  ops:{name:'Operații cu intervale',base:100,gen:qOps},
+  member:{name:'Apartenență',base:110,gen:qMember},
+  count:{name:'Numărare',base:120,gen:d=>qCount(d,false)},
+  sum:{name:'Suma întregilor',base:140,gen:d=>qCount(d,true)},
+  abs:{name:'Inecuație cu modul',base:150,gen:qAbs},
+  sys:{name:'Sistem de inecuații',base:170,gen:qSys},
+  param:{name:'Parametru',base:200,gen:qParam},
+};
+const DMULT={mediu:1,greu:1.5,extrem:2.2};
+const TIME={mediu:75,greu:60,extrem:50};
+
+/* ===================== number line ===================== */
+function lineSVG(rows,caption){
+  const ends=[];rows.forEach(r=>r.set.forEach(I=>[I.l,I.r].forEach(e=>{if(isFinite(e.v)&&!ends.some(x=>eq(x.v,e.v)))ends.push(e)})));
+  let min,max;if(!ends.length){min=-4;max=4}else{min=Math.min(...ends.map(e=>e.v));max=Math.max(...ends.map(e=>e.v))}
+  if(max-min<2){min-=1.5;max+=1.5}
+  const sp=max-min;min-=sp*.16;max+=sp*.16;
+  const W=640,L=56,Rr=W-20,rowH=30,top=16,axisY=top+rows.length*rowH+6,H=axisY+50;
+  const X=v=>v===-Infinity?L:v===Infinity?Rr:L+(v-min)/(max-min)*(Rr-L);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reprezentare pe axa numerelor">`;
+  ends.forEach(e=>{s+=`<line class="guide" x1="${X(e.v)}" x2="${X(e.v)}" y1="${top-4}" y2="${axisY}"/>`});
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH+10;
+    s+=`<text class="lbl" x="10" y="${y+5}">${r.label}</text><line class="rowbase" x1="${L}" x2="${Rr}" y1="${y}" y2="${y}"/>`;
+    if(!r.set.length)s+=`<text class="tick muted" x="${L+8}" y="${y-6}">∅</text>`;
+    r.set.forEach(I=>{
+      const x1=X(I.l.v),x2=X(I.r.v);
+      if(!eq(I.l.v,I.r.v))s+=`<line class="seg ${r.c}" x1="${x1}" x2="${x2}" y1="${y}" y2="${y}"/>`;
+      if(I.l.v===-Infinity)s+=`<polygon class="${r.c}" points="${L-8},${y} ${L},${y-6} ${L},${y+6}"/>`;
+      if(I.r.v===Infinity)s+=`<polygon class="${r.c}" points="${Rr+8},${y} ${Rr},${y-6} ${Rr},${y+6}"/>`;
+      if(isFinite(I.l.v))s+=`<circle class="dot ${r.c}${I.li?'':' open'}" cx="${x1}" cy="${y}" r="5.5"/>`;
+      if(isFinite(I.r.v)&&!eq(I.l.v,I.r.v))s+=`<circle class="dot ${r.c}${I.ri?'':' open'}" cx="${x2}" cy="${y}" r="5.5"/>`;
+    });
+  });
+  s+=`<line class="ax" x1="${L-10}" x2="${Rr+6}" y1="${axisY}" y2="${axisY}"/><polygon class="axf" points="${Rr+14},${axisY} ${Rr+5},${axisY-4} ${Rr+5},${axisY+4}"/>`;
+  const ticks=[...ends];
+  if(min<0&&max>0&&!ends.some(e=>eq(e.v,0)))ticks.push({v:0,s:'0',muted:true});
+  ticks.sort((a,b)=>a.v-b.v);let lastX=-99,lvl=0;
+  ticks.forEach(e=>{const x=X(e.v);lvl=x-lastX<42?1-lvl:0;lastX=x;
+    s+=`<line class="ax" x1="${x}" x2="${x}" y1="${axisY-4}" y2="${axisY+4}"/><text class="tick${e.muted?' muted':''}" x="${x}" y="${axisY+19+lvl*16}" text-anchor="middle">${e.s}</text>`});
+  s+='</svg>';
+  return (caption?`<div class="cap">${caption}</div>`:'')+s;
+}
+
+/* ===================== value parsing (constructor) ===================== */
+function parseVal(str){
+  let t=String(str).trim().replace(/\s+/g,'').replace(/[−–]/g,'-').replace(/,/g,'.').replace(/sqrt\(?(\d+)\)?/ig,'√$1').replace(/^\+/,'');
+  if(!t)return null;
+  if(/^-?(inf|infinit|∞)$/i.test(t)||/^\+?∞$/.test(t))return t[0]==='-'?NINF:PINF;
+  let m;
+  if(m=t.match(/^(-?)(\d*(?:\.\d+)?)√(\d+(?:\.\d+)?)(?:\/(\d+(?:\.\d+)?))?$/)){const c=m[2]===''?1:parseFloat(m[2]);const d=m[4]?parseFloat(m[4]):1;if(!d)return undefined;return V((m[1]?-1:1)*c*Math.sqrt(parseFloat(m[3]))/d,str.trim())}
+  if(m=t.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/)){const d=parseFloat(m[2]);if(!d)return undefined;return V(parseFloat(m[1])/d,str.trim())}
+  if(/^-?(\d+(\.\d*)?|\.\d+)$/.test(t))return V(parseFloat(t),str.trim().replace('-',M));
+  return undefined;
+}
+
+/* ===================== state & UI ===================== */
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const G={diff:store.get('ax-diff')||'greu',mode:store.get('ax-mode')||'concurs'};
+let timerId=null,lastFocus=null;
+
+function segInit(id,prop){
+  const seg=$(id);
+  const upd=()=>seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===G[prop])));
+  seg.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;G[prop]=b.dataset.v;store.set('ax-'+prop,b.dataset.v);upd();showBest()});
+  upd();
+}
+function showBest(){const b=store.get(`ax-best-${G.diff}-${G.mode}`);$('bestLine').textContent=b?`Record (${G.diff}, ${G.mode}): ${b} puncte`:''}
+
+function show(id){['start','game','end'].forEach(s=>$(s).hidden=s!==id);window.scrollTo({top:0})}
+
+function makeSeq(diff){
+  const all=Object.keys(TYPES);
+  const extra=diff==='mediu'?['ops','member','count','sum','abs']:diff==='greu'?['ops','count','abs','sys','param','sum','member']:['ops','sys','param','param','abs','sum','member','count'];
+  let s=shuffle([...all]);for(let i=0;i<5;i++)s.push(pick(extra));s=shuffle(s);
+  for(let p=0;p<3;p++)for(let i=1;i<s.length;i++)if(s[i]===s[i-1]){const j=s.findIndex((x,k)=>k>i&&x!==s[i]&&x!==s[i-1]&&s[k-1]!==s[i]);if(j>0)[s[i],s[j]]=[s[j],s[i]]}
+  return s;
+}
+
+function startGame(){
+  Object.assign(G,{seq:makeSeq(G.diff),i:0,score:0,streak:0,best:0,lives:3,correct:0,per:{},done:false});
+  show('game');
+  $('livesCell').hidden=G.mode!=='concurs';$('timerWrap').hidden=G.mode!=='concurs';
+  nextQ();
+}
+function hud(){
+  $('hQ').textContent=`${Math.min(G.i+1,G.seq.length)}/${G.seq.length}`;
+  $('hScore').textContent=G.score.toLocaleString('ro-RO');
+  $('hStreak').textContent='×'+String(mult()).replace('.',',');
+  $('hLives').innerHTML=[0,1,2].map(i=>`<i class="${i<G.lives?'':'lost'}"></i>`).join('');
+}
+const mult=()=>Math.min(2,1+.25*Math.max(0,G.streak));
+
+function nextQ(){
+  const type=G.seq[G.i];
+  let q=null;for(let t=0;t<5&&!q;t++)q=TYPES[type].gen(G.diff);
+  q.type=q.type||type;G.q=q;G.answered=false;
+  hud();
+  $('qType').textContent=TYPES[q.type].name;
+  $('qPts').textContent=`${Math.round(TYPES[q.type].base*DMULT[G.diff])} p${mult()>1?' × '+String(mult()).replace('.',','):''}`;
+  $('qPrompt').innerHTML=q.prompt;
+  $('fbArea').innerHTML='';
+  const area=$('answerArea');
+  if(q.kind==='mc'){
+    area.innerHTML=`<div class="options">${q.options.map((o,i)=>`<button type="button" class="opt" data-i="${i}"><span class="k">${i+1}</span><span class="math">${o}</span></button>`).join('')}</div>`;
+    area.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>answerMC(+b.dataset.i)));
+  }else if(q.kind==='num'){
+    area.innerHTML=`<form class="numrow" id="numForm"><input id="numIn" inputmode="text" autocomplete="off" placeholder="?" aria-label="Răspunsul tău"><button class="btn" type="submit">Verifică</button></form><div class="preview" id="numErr"></div>`;
+    $('numForm').addEventListener('submit',e=>{e.preventDefault();answerNum()});
+    setTimeout(()=>$('numIn').focus({preventScroll:true}),30);
+  }else buildUI(area);
+  startTimer(q.kind==='build'?TIME[G.diff]+25:TIME[G.diff]);
+}
+
+/* ---------- constructor ---------- */
+function buildUI(area){
+  G.build={rows:[{lb:'[',rb:']'}],empty:false};
+  area.innerHTML=`<form class="build" id="buildForm"><div id="bRows"></div>
+  <div class="keys" id="bKeys">
+    <button type="button" data-ins="${M}">${M}</button><button type="button" data-ins="√">√</button><button type="button" data-ins="/">a/b</button><button type="button" data-inf="-">${M}∞</button><button type="button" data-inf="+">+∞</button>
+    <span class="sep"></span><button type="button" id="addU">+ ∪ încă un interval</button><button type="button" id="emptyBtn" aria-pressed="false">∅ mulțimea vidă</button>
+  </div>
+  <div class="preview" id="bPrev"></div>
+  <div class="cta"><button class="btn" type="submit">Verifică</button><span class="hint">Scrie fracții ca 7/2, radicali ca √7 sau 2√3. Apasă paranteza ca s-o schimbi. Un singur punct p se scrie [p; p].</span></div></form>`;
+  renderRows();
+  $('buildForm').addEventListener('submit',e=>{e.preventDefault();answerBuild()});
+  $('bKeys').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.id==='addU'){readRowVals();if(G.build.rows.length<2)G.build.rows.push({lb:'(',rb:')'});renderRows();return}
+    if(b.id==='emptyBtn'){G.build.empty=!G.build.empty;b.setAttribute('aria-pressed',String(G.build.empty));$('bRows').style.opacity=G.build.empty?.35:1;preview();return}
+    const inp=lastFocus&&document.body.contains(lastFocus)?lastFocus:$('b0l');
+    if(b.dataset.inf){inp.value=(b.dataset.inf==='-'?M:'+')+'∞';}
+    else{const p=inp.selectionStart??inp.value.length;inp.value=inp.value.slice(0,p)+b.dataset.ins+inp.value.slice(inp.selectionEnd??p);inp.setSelectionRange(p+1,p+1)}
+    inp.focus();preview();
+  });
+}
+function readRowVals(){G.build.rows.forEach((r,i)=>{const l=$('b'+i+'l'),rr=$('b'+i+'r');if(l){r.l=l.value;r.r=rr.value}})}
+function renderRows(){
+  $('bRows').innerHTML=G.build.rows.map((r,i)=>`<div class="brow">${i?'<span class="u">∪</span>':''}
+    <button type="button" class="br" data-i="${i}" data-s="lb" aria-label="Schimbă paranteza stângă">${r.lb}</button>
+    <input class="bin" id="b${i}l" autocomplete="off" placeholder="stânga" value="${(r.l||'').replace(/"/g,'')}" aria-label="Capătul stâng">
+    <span class="semi">;</span>
+    <input class="bin" id="b${i}r" autocomplete="off" placeholder="dreapta" value="${(r.r||'').replace(/"/g,'')}" aria-label="Capătul drept">
+    <button type="button" class="br" data-i="${i}" data-s="rb" aria-label="Schimbă paranteza dreaptă">${r.rb}</button>
+    ${i?`<button type="button" class="rm" data-rm="${i}">elimină</button>`:''}</div>`).join('');
+  $('bRows').querySelectorAll('.br').forEach(b=>b.addEventListener('click',()=>{const r=G.build.rows[b.dataset.i],sd=b.dataset.s;r[sd]=sd==='lb'?(r.lb==='['?'(':'['):(r.rb===']'?')':']');b.textContent=r[sd];preview()}));
+  $('bRows').querySelectorAll('.rm').forEach(b=>b.addEventListener('click',()=>{readRowVals();G.build.rows.splice(+b.dataset.rm,1);renderRows()}));
+  $('bRows').querySelectorAll('.bin').forEach(inp=>{inp.addEventListener('focus',()=>lastFocus=inp);inp.addEventListener('input',preview)});
+  $('addU').hidden=G.build.rows.length>=2;
+  preview();
+}
+function readBuild(){
+  if(G.build.empty)return {set:[],text:'∅'};
+  const out=[];
+  for(let i=0;i<G.build.rows.length;i++){
+    const r=G.build.rows[i],lv=$('b'+i+'l').value,rv=$('b'+i+'r').value;
+    if(!lv.trim()||!rv.trim())return {err:G.build.rows.length>1?`Completează ambele capete ale intervalului ${i+1}.`:'Completează ambele capete.'};
+    const l=parseVal(lv),rr=parseVal(rv);
+    if(!l)return {err:`Nu pot citi „${lv}”.`};if(!rr)return {err:`Nu pot citi „${rv}”.`};
+    if(l.v===Infinity||rr.v===-Infinity)return {err:'Capătul stâng nu poate fi +∞, iar cel drept nu poate fi −∞.'};
+    const I=fix({l:{v:l.v,s:l.v===-Infinity?NINF.s:l.s},li:r.lb==='[',r:{v:rr.v,s:rr.v===Infinity?PINF.s:rr.s},ri:r.rb===']'});
+    if(I.l.v>I.r.v&&!eq(I.l.v,I.r.v))return {err:'Capătul stâng trebuie să fie mai mic decât cel drept.'};
+    if(isEmptyI(I))return {err:'Intervalul scris este vid. Pentru mulțimea vidă folosește butonul ∅.'};
+    out.push(I);
+  }
+  return {set:out,text:out.map(fmtI).join(' ∪ ')};
+}
+function preview(){
+  const r=readBuild(),p=$('bPrev');if(!p)return;
+  const anyTyped=G.build.rows.some((_,i)=>$('b'+i+'l')&&($('b'+i+'l').value||$('b'+i+'r').value));
+  if(r.err)p.innerHTML=anyTyped?`<span class="err">${r.err}</span>`:'Răspunsul tău apare aici.';
+  else p.innerHTML=`Răspunsul tău: ${mth(r.text)}`;
+}
+
+/* ---------- timer ---------- */
+function startTimer(sec){
+  clearInterval(timerId);if(G.mode!=='concurs')return;
+  G.tTotal=sec;G.deadline=performance.now()+sec*1000;
+  const tick=()=>{const left=Math.max(0,(G.deadline-performance.now())/1000);G.left=left;
+    $('timerBar').style.width=(left/G.tTotal*100)+'%';$('timer').classList.toggle('low',left/G.tTotal<.25);
+    if(left<=0){clearInterval(timerId);if(!G.answered)finish(false,'timeout')}};
+  tick();timerId=setInterval(tick,100);
+}
+
+/* ---------- answering ---------- */
+function answerMC(i){
+  if(G.answered)return;const q=G.q;
+  $('answerArea').querySelectorAll('.opt').forEach((b,k)=>{b.disabled=true;if(k===q.correct)b.classList.add('correct');else if(k===i)b.classList.add('wrong')});
+  finish(i===q.correct);
+}
+function answerNum(){
+  if(G.answered)return;
+  const raw=$('numIn').value.trim().replace(/[−–]/g,'-');
+  if(!/^-?\d+$/.test(raw)){$('numErr').innerHTML='<span class="err">Scrie un număr întreg.</span>';return}
+  $('numIn').disabled=true;finish(parseInt(raw,10)===G.q.answer,null,fmtNum(parseInt(raw,10)));
+}
+function answerBuild(){
+  if(G.answered)return;const r=readBuild();
+  if(r.err){$('bPrev').innerHTML=`<span class="err">${r.err}</span>`;return}
+  $('answerArea').querySelectorAll('button,input').forEach(el=>el.disabled=true);
+  finish(key(r.set)===key(G.q.set),null,r.text);
+}
+function finish(ok,why,userText){
+  G.answered=true;clearInterval(timerId);
+  const q=G.q,t=q.type;G.per[t]=G.per[t]||{c:0,n:0};G.per[t].n++;
+  let pts=0;
+  if(ok){G.streak++;G.correct++;G.per[t].c++;
+    const bonus=G.mode==='concurs'?Math.round((G.left||0)*2):0;
+    pts=Math.round((TYPES[t].base*DMULT[G.diff]+bonus)*mult());G.score+=pts;
+  }else{G.streak=0;if(G.mode==='concurs')G.lives--}
+  G.best=Math.max(G.best,G.streak);
+  if(q.kind==='mc'&&why==='timeout')$('answerArea').querySelectorAll('.opt').forEach((b,k)=>{b.disabled=true;if(k===q.correct)b.classList.add('correct')});
+  if(why==='timeout')$('answerArea').querySelectorAll('button,input').forEach(el=>el.disabled=true);
+  hud();
+  const last=G.i>=G.seq.length-1||(G.mode==='concurs'&&G.lives<=0);
+  const head=ok?`<b>Corect</b><span>+${pts} puncte</span>`:why==='timeout'?`<b>Timpul a expirat</b><span>Răspuns corect: ${mth(q.answerText)}</span>`:`<b>Greșit</b><span>Răspuns corect: ${mth(q.answerText)}</span>`;
+  $('fbArea').innerHTML=`<div class="feedback ${ok?'ok':'bad'} pop">
+    <div class="verdict">${head}</div>
+    ${!ok&&userText?`<div class="explain"><p>Tu ai răspuns: ${mth(userText)}</p></div>`:''}
+    <div class="explain">${q.explain}</div>
+    <div class="nl">${lineSVG(q.rows,q.caption)}</div>
+    <div class="cta"><button class="btn" id="nextBtn" type="button">${last?'Vezi rezultatele':'Următoarea întrebare'}</button><span class="hint">sau apasă Enter</span></div></div>`;
+  $('nextBtn').addEventListener('click',advance);
+  setTimeout(()=>{$('nextBtn').focus({preventScroll:true});$('fbArea').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'})},40);
+}
+function advance(){
+  if(!G.answered)return;
+  if(G.i>=G.seq.length-1||(G.mode==='concurs'&&G.lives<=0))return endGame();
+  G.i++;nextQ();
+}
+function endGame(){
+  clearInterval(timerId);G.done=true;
+  const k=`ax-best-${G.diff}-${G.mode}`,prev=+(store.get(k)||0),rec=G.score>prev;if(rec)store.set(k,G.score);
+  $('endTitle').textContent=G.mode==='concurs'&&G.lives<=0?'Ai rămas fără vieți':'Rundă încheiată';
+  $('endScore').textContent=G.score.toLocaleString('ro-RO');
+  const asked=Object.values(G.per).reduce((a,b)=>a+b.n,0);
+  $('endStats').innerHTML=[
+    ['Corecte',`${G.correct}/${asked}`],['Cea mai lungă serie',G.best],['Dificultate',G.diff[0].toUpperCase()+G.diff.slice(1)],['Record',rec?'Nou record!':Math.max(prev,G.score)]
+  ].map(([a,b])=>`<div class="stat"><span class="eyebrow">${a}</span><div class="val">${b}</div></div>`).join('');
+  $('endTable').innerHTML=Object.keys(TYPES).filter(t=>G.per[t]).map(t=>{const p=G.per[t];return `<tr><td>${TYPES[t].name}</td><td><span class="bar"><i style="width:${p.c/p.n*100}%"></i></span></td><td>${p.c}/${p.n}</td></tr>`}).join('');
+  show('end');
+}
+
+document.addEventListener('keydown',e=>{
+  if($('game').hidden)return;
+  if(G.answered&&e.key==='Enter'){e.preventDefault();advance();return}
+  if(!G.answered&&G.q&&G.q.kind==='mc'&&/^[1-4]$/.test(e.key)&&!(e.target instanceof HTMLInputElement))answerMC(+e.key-1);
+});
+
+$('startBtn').addEventListener('click',startGame);
+$('againBtn').addEventListener('click',startGame);
+$('setBtn').addEventListener('click',()=>{showBest();show('start')});
+segInit('diffSeg','diff');segInit('modeSeg','mode');showBest();
+(function demo(){
+  const A={l:int(-2),li:true,r:rad(1,7),ri:false},B={l:frac(3,2),li:false,r:int(5),ri:true};
+  $('demoLine').innerHTML=lineSVG([{label:'A',set:[A],c:'sA'},{label:'B',set:[B],c:'sB'},{label:'A ∩ B',set:intersect([A],[B]),c:'sR'}],`Exemplu: A = [${M}2; √7), B = (3/2; 5], A ∩ B = (3/2; √7)`);
+})();
+</script>
+
+</body></html>
