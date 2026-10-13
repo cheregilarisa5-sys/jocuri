@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorul de unghiuri</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: o foaie de caiet cu raportor. Plan în 4 pași sus, laborator interactiv la mijloc, cartonașe și exerciții jos. */
+:root{
+  --bg:#f3f1ff;--card:#fff;--fg:#1d1b3a;--muted:#5d5a80;--accent:#5b3fe0;--accent-ink:#fff;
+  --sun:#ffc933;--sun-ink:#3a2a00;--aqua:#0f9d8e;--rose:#e0436a;--line:#d9d4f5;--grid:rgba(91,63,224,.07);--ok-soft:rgba(15,157,142,.14);--bad-soft:rgba(224,67,106,.13);
+  --f-d:"Fredoka","Trebuchet MS",system-ui,sans-serif;--f-b:"Nunito","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14122b;--card:#201d44;--fg:#f0eeff;--muted:#b3afd9;--accent:#a99aff;--accent-ink:#14122b;
+  --sun:#ffd54f;--sun-ink:#2b2000;--aqua:#4fd6c6;--rose:#ff7d9d;--line:#3a3570;--grid:rgba(169,154,255,.08);--ok-soft:rgba(79,214,198,.16);--bad-soft:rgba(255,125,157,.16);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14122b;--card:#201d44;--fg:#f0eeff;--muted:#b3afd9;--accent:#a99aff;--accent-ink:#14122b;
+  --sun:#ffd54f;--sun-ink:#2b2000;--aqua:#4fd6c6;--rose:#ff7d9d;--line:#3a3570;--grid:rgba(169,154,255,.08);--ok-soft:rgba(79,214,198,.16);--bad-soft:rgba(255,125,157,.16);color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background-color:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;color:var(--fg);font-family:var(--f-b);font-size:17px;line-height:1.5;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:640px;margin-inline:auto;display:flex;flex-direction:column;gap:22px}
+.kick{font-weight:800;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--f-d);font-weight:700;font-size:clamp(2.2rem,11vw,3.3rem);line-height:1;margin:0;text-wrap:balance}
+h1 mark{background:var(--sun);color:var(--sun-ink);padding:0 .18em;border-radius:.2em}
+h2{font-family:var(--f-d);font-weight:600;font-size:1.55rem;margin:0;line-height:1.1;text-wrap:balance}
+p{margin:0}.lead{color:var(--muted)}.by{font-family:var(--f-d);font-weight:600;color:var(--accent);font-size:1.05rem}
+section{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--aqua);transition:width .3s}
+.pl{font-weight:800}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step input{width:26px;height:26px;margin-top:4px;accent-color:var(--aqua);flex:none}
+.step .t{font-family:var(--f-d);font-weight:600;font-size:1.15rem;line-height:1.2}
+.step .m{color:var(--muted);font-size:15px}
+.step ul{margin:4px 0 0;padding-left:18px;color:var(--fg);font-size:16px}
+.step.done .t{text-decoration:line-through;text-decoration-thickness:2px;opacity:.65}
+.time{display:inline-block;background:var(--sun);color:var(--sun-ink);font-weight:800;font-size:12px;padding:1px 8px;border-radius:99px;margin-left:6px;vertical-align:2px;text-decoration:none}
+svg{max-width:100%;height:auto;display:block}
+.basics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.basics figure{margin:0;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:2px;align-items:center;text-align:center}
+.basics figcaption{font-size:14px;line-height:1.25}.basics b{font-family:var(--f-d);display:block;font-size:1rem}
+.s{stroke:var(--fg);stroke-width:2.4;fill:none;stroke-linecap:round}.pt{fill:var(--accent)}.tl{fill:var(--fg);font-family:var(--f-d);font-size:14px;font-weight:600}
+/* laborator */
+.lab svg{width:100%;background:var(--card);border:2px solid var(--line);border-radius:16px}
+.ctl{display:flex;flex-direction:column;gap:10px}
+.rowc{display:flex;align-items:center;gap:10px}
+.rowc input[type=range]{flex:1;min-width:0;min-height:36px;accent-color:var(--accent)}
+.nb{font:inherit;font-weight:800;min-width:46px;min-height:46px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;font-size:1.2rem}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opts label{display:flex;align-items:center;gap:6px;min-height:40px;padding:4px 12px;border:2px solid var(--line);border-radius:99px;background:var(--card);cursor:pointer;font-weight:700;font-size:15px}
+.opts input{accent-color:var(--accent);width:18px;height:18px}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.read div{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:8px 12px}
+.read small{display:block;font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.read b{font-family:var(--f-d);font-size:1.35rem;font-variant-numeric:tabular-nums}
+.big{font-family:var(--f-d);font-weight:700;font-size:1.3rem}
+.ang{fill:rgba(91,63,224,.18);stroke:var(--accent);stroke-width:2}
+.ray{stroke:var(--fg);stroke-width:3;stroke-linecap:round}
+.bis{stroke:var(--rose);stroke-width:3;stroke-dasharray:7 6;stroke-linecap:round}
+.comp{fill:rgba(15,157,142,.22);stroke:var(--aqua);stroke-width:2}
+.supp{fill:rgba(255,201,51,.35);stroke:var(--sun);stroke-width:2}
+.tick{stroke:var(--muted);stroke-width:1.2}.tk{fill:var(--muted);font-size:10px;font-weight:700;font-family:var(--f-b)}
+/* cartonașe */
+.fc{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.fc button{font:inherit;text-align:left;min-height:104px;border-radius:16px;border:2px solid var(--line);background:var(--card);color:var(--fg);padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.fc button .k{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.fc button .f{font-family:var(--f-d);font-weight:600;font-size:1.15rem;line-height:1.2}
+.fc button .b{font-size:15.5px;display:none}
+.fc button[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink);border-color:var(--sun)}
+.fc button[aria-pressed="true"] .k{color:var(--sun-ink)}
+.fc button[aria-pressed="true"] .f{display:none}.fc button[aria-pressed="true"] .b{display:block}
+
+/* teorie oficială */
+.th details.g{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:0 14px}
+.th details.g>summary{font-family:var(--f-d);font-weight:600;font-size:1.25rem;min-height:52px;display:flex;align-items:center;cursor:pointer}
+.th .it{display:flex;flex-direction:column;gap:4px;padding:12px 0;border-top:1px solid var(--line)}
+.th .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:2px 9px;border-radius:99px;color:var(--accent-ink);background:var(--accent)}
+.chip.ax{background:var(--sun);color:var(--sun-ink)}.chip.tm{background:var(--aqua);color:#fff}.chip.pr{background:var(--rose);color:#fff}
+.th .nm{font-family:var(--f-d);font-weight:600}
+.th .tx{font-size:16.5px}
+.th .tx i{font-family:var(--f-b)}
+.th details.pf{margin-top:2px;border-left:3px solid var(--aqua);padding-left:10px}
+.th details.pf summary{cursor:pointer;font-weight:800;color:var(--aqua);min-height:36px;display:flex;align-items:center;font-size:15px}
+.th details.pf p{font-size:15.5px}
+.th summary:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+/* exerciții */
+.qq{font-family:var(--f-d);font-weight:600;font-size:1.25rem;line-height:1.25}
+.ans{display:flex;gap:8px;flex-wrap:wrap}
+.ans input[type=number]{flex:1;min-width:110px;font:inherit;font-size:1.2rem;font-weight:800;padding:10px 12px;min-height:50px;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--fg)}
+.ans button,.go{font:inherit;font-weight:800;min-height:50px;padding:8px 18px;border-radius:12px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.ans .alt{background:var(--card);color:var(--fg);border-color:var(--line);flex:1}
+.ans button.mc{flex:1;background:var(--card);color:var(--fg);border-color:var(--line)}
+.fb{font-weight:700;min-height:2.6em}.fb.good{color:var(--aqua)}.fb.bad{color:var(--rose)}.fb span{display:block;font-weight:400;color:var(--muted);font-size:15px}
+.score{font-family:var(--f-d);font-weight:600;font-size:1.1rem;color:var(--muted)}
+input:focus-visible,button:focus-visible,.opts label:has(input:focus-visible){outline:3px solid var(--sun);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:8px">
+  <div class="kick">Recapitulare · clasa a VI-a · capitolul 1</div>
+  <h1>Unghiuri și <mark>bisectoare</mark></h1>
+  <p class="lead">Un plan în 4 pași, un laborator în care mișți unghiul cu degetul, cartonașe de teorie și exerciții generate la nesfârșit.</p>
+  <p class="by">PROF. ZOPOTA LARISA</p>
+</header>
+
+<section id="plan">
+  <h2>Planul tău în 4 pași</h2>
+  <div class="bar" aria-hidden="true"><i id="pb"></i></div>
+  <div class="pl" id="pt">0 din 4 pași făcuți</div>
+  <div class="card" id="steps"></div>
+</section>
+
+<section>
+  <h2>Figurile de bază</h2>
+  <div class="basics" id="basics"></div>
+</section>
+
+<section class="lab">
+  <h2>Laboratorul de unghiuri</h2>
+  <p class="lead">Mută cursorul și urmărește ce se întâmplă cu unghiul <b>AOB</b>, cu complementul, suplementul și bisectoarea lui.</p>
+  <svg id="lab" viewBox="0 0 320 190" role="img" aria-label="Raportor cu unghiul AOB"></svg>
+  <div class="ctl">
+    <div class="rowc"><button class="nb" id="m" type="button" aria-label="Scade 1 grad">−</button><input type="range" id="sl" min="1" max="179" value="64" aria-label="Măsura unghiului în grade"><button class="nb" id="p" type="button" aria-label="Crește 1 grad">+</button></div>
+    <div class="opts">
+      <label><input type="checkbox" id="cb" checked> Bisectoarea</label>
+      <label><input type="checkbox" id="cc"> Complementul</label>
+      <label><input type="checkbox" id="cs"> Suplementul</label>
+    </div>
+    <div class="read" aria-live="polite">
+      <div><small>∠AOB</small><b id="rv">64°</b></div>
+      <div><small>Tipul</small><b id="rt">ascuțit</b></div>
+      <div><small>Bisectoarea</small><b id="rb">32°</b></div>
+      <div><small>Complementul</small><b id="rc">26°</b></div>
+      <div><small>Suplementul</small><b id="rs">116°</b></div>
+    </div>
+  </div>
+  <p class="lead" id="why"></p>
+</section>
+
+<section>
+  <h2>Unghiuri opuse la vârf</h2>
+  <p class="lead">Două drepte care se taie formează patru unghiuri. Mută cursorul: cele din față sunt mereu egale.</p>
+  <svg id="ov" viewBox="0 0 320 190" role="img" aria-label="Două drepte concurente și unghiurile formate" style="background:var(--card);border:2px solid var(--line);border-radius:16px"></svg>
+  <div class="rowc"><input type="range" id="os" min="10" max="170" value="55" aria-label="Unghiul dintre drepte" style="flex:1;min-width:0;min-height:36px;accent-color:var(--accent)"></div>
+</section>
+
+<section>
+  <h2>Teoria oficială</h2>
+  <p class="lead">Definiții, axiome, proprietăți și teoreme din capitolul 1. Atinge un titlu ca să-l deschizi. La teoreme, apasă „Demonstrație”.</p>
+  <div class="th" id="th" style="display:flex;flex-direction:column;gap:10px"></div>
+</section>
+
+<section>
+  <h2>Cartonașe de teorie</h2>
+  <p class="lead">Spune definiția cu voce tare, apoi atinge cartonașul ca să verifici.</p>
+  <div class="fc" id="fc"></div>
+</section>
+
+<section>
+  <h2>Exerciții fără sfârșit</h2>
+  <div class="card">
+    <div class="score" id="sc">Corecte: 0 din 0</div>
+    <div class="qq" id="qq"></div>
+    <div class="ans" id="an"></div>
+    <div class="fb" id="fb" aria-live="polite"></div>
+    <button class="go" id="nx" type="button">Alt exercițiu</button>
+  </div>
+</section>
+<p class="by" style="text-align:center">PROF. ZOPOTA LARISA</p>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var NS='http://www.w3.org/2000/svg';
+// ---- plan ----
+var STEPS=[
+ {t:'Figurile de bază',m:'15 min',l:['punct, dreaptă, semidreaptă, segment, plan','notații: A, d, [AB], [OA, AB','ce înseamnă puncte coliniare']},
+ {t:'Unghiul și măsurarea lui',m:'20 min',l:['definiția unghiului, vârf, laturi','folosirea raportorului','ascuțit, drept, obtuz, alungit']},
+ {t:'Perechi de unghiuri',m:'20 min',l:['adiacente, complementare, suplementare','opuse la vârf sunt congruente','suma: 90° și 180°']},
+ {t:'Bisectoarea',m:'20 min',l:['definiție: împarte unghiul în două congruente','fiecare parte este jumătate din unghi','probleme cu ecuații simple']}];
+var sb=$('steps');
+STEPS.forEach(function(s,i){var d=document.createElement('div');d.className='step';
+ d.innerHTML='<input type="checkbox" id="st'+i+'" aria-labelledby="stt'+i+'"><div><div class="t" id="stt'+i+'">'+(i+1)+'. '+s.t+' <span class="time">'+s.m+'</span></div><ul>'+s.l.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div>';
+ sb.appendChild(d);d.querySelector('input').addEventListener('change',upd);});
+function upd(){var n=0;STEPS.forEach(function(s,i){var c=$('st'+i).checked;if(c)n++;$('st'+i).closest('.step').classList.toggle('done',c)});
+ $('pb').style.width=(n*25)+'%';$('pt').textContent=n+' din 4 pași făcuți'+(n===4?'. Ești pregătită!':'');}
+// ---- figuri ----
+var B=[
+ ['Punct','<circle class="pt" cx="60" cy="40" r="6"/><text class="tl" x="72" y="34">A</text>','se notează cu o literă mare'],
+ ['Dreaptă','<line class="s" x1="8" y1="62" x2="112" y2="18"/><circle class="pt" cx="40" cy="48.8" r="4"/><circle class="pt" cx="82" cy="31" r="4"/><text class="tl" x="30" y="68">A</text><text class="tl" x="82" y="52">B</text>','nemărginită în ambele sensuri'],
+ ['Semidreaptă','<line class="s" x1="24" y1="48" x2="112" y2="22"/><circle class="pt" cx="24" cy="48" r="4.5"/><text class="tl" x="14" y="68">O</text>','are început, nu are sfârșit'],
+ ['Segment','<line class="s" x1="20" y1="46" x2="100" y2="30"/><circle class="pt" cx="20" cy="46" r="4.5"/><circle class="pt" cx="100" cy="30" r="4.5"/><text class="tl" x="14" y="66">A</text><text class="tl" x="96" y="56">B</text>','are lungime: AB = 5 cm'],
+ ['Plan','<polygon points="14,58 84,58 112,18 42,18" fill="rgba(91,63,224,.18)" stroke="var(--accent)" stroke-width="2.4"/><text class="tl" x="84" y="50">α</text>','nemărginit, ca o foaie fără margini']];
+$('basics').innerHTML=B.map(function(b){return '<figure><svg viewBox="0 0 120 76" aria-hidden="true">'+b[1]+'</svg><figcaption><b>'+b[0]+'</b>'+b[2]+'</figcaption></figure>'}).join('');
+// ---- laborator ----
+var cx=160,cy=168,R=132,a=64;
+function pt(deg,r){var t=deg*Math.PI/180;return [cx+r*Math.cos(t),cy-r*Math.sin(t)]}
+function sector(a1,a2,r,cls){var p=pt(a1,r),q=pt(a2,r),large=Math.abs(a2-a1)>180?1:0,sw=a2>a1?0:1;
+ return '<path class="'+cls+'" d="M'+cx+' '+cy+' L'+p[0].toFixed(1)+' '+p[1].toFixed(1)+' A'+r+' '+r+' 0 '+large+' '+(a2>a1?0:1)+' '+q[0].toFixed(1)+' '+q[1].toFixed(1)+' Z"/>'}
+function lab(){
+ var s='';
+ for(var d=0;d<=180;d+=5){var p=pt(d,R),q=pt(d,R-(d%10===0?10:5));s+='<line class="tick" x1="'+p[0].toFixed(1)+'" y1="'+p[1].toFixed(1)+'" x2="'+q[0].toFixed(1)+'" y2="'+q[1].toFixed(1)+'"/>';
+  if(d%30===0){var t=pt(d,R-22);s+='<text class="tk" text-anchor="middle" x="'+t[0].toFixed(1)+'" y="'+(t[1]+3).toFixed(1)+'">'+d+'</text>';}}
+ s+='<path d="M'+(cx-R)+' '+cy+' A'+R+' '+R+' 0 0 1 '+(cx+R)+' '+cy+'" fill="none" stroke="var(--muted)" stroke-width="1.5"/><line x1="'+(cx-R-6)+'" y1="'+cy+'" x2="'+(cx+R+6)+'" y2="'+cy+'" stroke="var(--muted)" stroke-width="1.5"/>';
+ if($('cs').checked)s+=sector(a,180,64,'supp');
+ if($('cc').checked&&a<90)s+=sector(a,90,86,'comp');
+ s+=sector(0,a,100,'ang');
+ if($('cb').checked){var q=pt(a/2,R+2);s+='<line class="bis" x1="'+cx+'" y1="'+cy+'" x2="'+q[0].toFixed(1)+'" y2="'+q[1].toFixed(1)+'"/>';var m=pt(a/2,60);s+='<text class="tl" fill="var(--rose)" text-anchor="middle" x="'+m[0].toFixed(1)+'" y="'+(m[1]+5).toFixed(1)+'" style="fill:var(--rose)">'+(a/2)+'°</text>';}
+ var A=pt(0,R+4),Bp=pt(a,R+4);
+ s+='<line class="ray" x1="'+cx+'" y1="'+cy+'" x2="'+(cx+R+4)+'" y2="'+cy+'"/><line class="ray" x1="'+cx+'" y1="'+cy+'" x2="'+Bp[0].toFixed(1)+'" y2="'+Bp[1].toFixed(1)+'"/>';
+ s+='<circle class="pt" cx="'+cx+'" cy="'+cy+'" r="5"/><text class="tl" x="'+(cx-16)+'" y="'+(cy+16)+'">O</text><text class="tl" x="'+(cx+R-4)+'" y="'+(cy+16)+'">A</text>';
+ var lb=pt(a,R+16);s+='<text class="tl" text-anchor="middle" x="'+Math.min(300,Math.max(14,lb[0])).toFixed(1)+'" y="'+Math.max(14,lb[1]).toFixed(1)+'">B</text>';
+ var mm=pt(a/2+0,30);s+='<text class="tl" x="'+(cx+34)+'" y="'+(cy-8)+'" style="fill:var(--accent)">'+a+'°</text>';
+ $('lab').innerHTML=s;
+ var type=a<90?'ascuțit':a===90?'drept':'obtuz';
+ $('rv').textContent=a+'°';$('rt').textContent=type;$('rb').textContent=(a/2)+'°';$('rc').textContent=a<90?(90-a)+'°':'nu există';$('rs').textContent=(180-a)+'°';
+ $('why').textContent=a<90?'Unghi ascuțit: complementul este 90° − '+a+'° = '+(90-a)+'°, suplementul este 180° − '+a+'° = '+(180-a)+'°.':a===90?'Unghi drept: este propriul lui complement, iar suplementul este tot 90°.':'Unghi obtuz: nu are complement (depășește 90°). Suplementul este 180° − '+a+'° = '+(180-a)+'°.';
+}
+$('sl').addEventListener('input',function(){a=+this.value;lab()});
+$('m').onclick=function(){a=Math.max(1,a-1);$('sl').value=a;lab()};
+$('p').onclick=function(){a=Math.min(179,a+1);$('sl').value=a;lab()};
+['cb','cc','cs'].forEach(function(i){$(i).addEventListener('change',lab)});
+// ---- opuse la vârf ----
+function ov(){var al=+$('os').value,c=[160,95],L=130;
+ function P(d,r){var t=d*Math.PI/180;return [c[0]+r*Math.cos(t),c[1]-r*Math.sin(t)]}
+ function arc(a1,a2,r,col){var p=P(a1,r),q=P(a2,r);return '<path d="M'+c[0]+' '+c[1]+' L'+p[0].toFixed(1)+' '+p[1].toFixed(1)+' A'+r+' '+r+' 0 0 0 '+q[0].toFixed(1)+' '+q[1].toFixed(1)+' Z" fill="'+col+'"/>'}
+ var s=arc(0,al,52,'rgba(91,63,224,.3)')+arc(180,180+al,52,'rgba(91,63,224,.3)')+arc(al,180,52,'rgba(255,201,51,.4)')+arc(180+al,360,52,'rgba(255,201,51,.4)');
+ [0,al].forEach(function(d){var p=P(d,L),q=P(d+180,L);s+='<line class="ray" x1="'+p[0].toFixed(1)+'" y1="'+p[1].toFixed(1)+'" x2="'+q[0].toFixed(1)+'" y2="'+q[1].toFixed(1)+'"/>'});
+ function tx(d,t,col){var p=P(d,34);return '<text class="tl" text-anchor="middle" style="fill:'+col+'" x="'+p[0].toFixed(1)+'" y="'+(p[1]+5).toFixed(1)+'">'+t+'°</text>'}
+ s+=tx(al/2,al,'var(--accent)')+tx(180+al/2,al,'var(--accent)')+tx(al+(180-al)/2,180-al,'var(--fg)')+tx(180+al+(180-al)/2,180-al,'var(--fg)');
+ $('ov').innerHTML=s+'<circle class="pt" cx="160" cy="95" r="4"/>';}
+$('os').addEventListener('input',ov);
+
+// ---- teoria oficială ----
+var TH=[
+ ['Definiții',[
+  ['d','Puncte coliniare','Punctele care aparțin aceleiași drepte se numesc <b>puncte coliniare</b>. Punctele care nu sunt toate pe aceeași dreaptă se numesc <b>necoliniare</b>.'],
+  ['d','Semidreaptă','Fie <i>d</i> o dreaptă și O ∈ <i>d</i>. Punctul O împarte dreapta în două părți. Fiecare parte, împreună cu O, se numește <b>semidreaptă</b> cu originea O. Notație: [OA. Două semidrepte ale aceleiași drepte, cu aceeași origine și care nu coincid, se numesc <b>semidrepte opuse</b>.'],
+  ['d','Segment','Fie A și B două puncte distincte. Mulțimea formată din A, B și toate punctele dreptei AB situate între A și B se numește <b>segment</b> [AB]. Punctele A și B sunt capetele segmentului. <b>Lungimea</b> segmentului, AB, este distanța dintre A și B.'],
+  ['d','Segmente congruente','Două segmente care au aceeași lungime se numesc <b>congruente</b>. Notație: [AB] ≡ [CD].'],
+  ['d','Mijlocul unui segment','Punctul M ∈ [AB] cu proprietatea MA = MB se numește <b>mijlocul</b> segmentului [AB].'],
+  ['d','Unghi','Se numește <b>unghi</b> reuniunea a două semidrepte care au aceeași origine: ∠AOB = [OA ∪ [OB. Punctul O este <b>vârful</b>, iar semidreptele [OA și [OB sunt <b>laturile</b> unghiului.'],
+  ['d','Interiorul unui unghi','Pentru un unghi AOB cu măsura mai mică de 180°, <b>interiorul</b> este intersecția dintre semiplanul determinat de dreapta OA care conține punctul B și semiplanul determinat de dreapta OB care conține punctul A.'],
+  ['d','Unghiuri congruente','Două unghiuri care au aceeași măsură se numesc <b>congruente</b>. Notație: ∠AOB ≡ ∠CDE.'],
+  ['d','Clasificarea unghiurilor','<b>Unghi nul</b>: laturile coincid, ∠AOB = 0°. <b>Unghi ascuțit</b>: 0° &lt; ∠AOB &lt; 90°. <b>Unghi drept</b>: ∠AOB = 90°. <b>Unghi obtuz</b>: 90° &lt; ∠AOB &lt; 180°. <b>Unghi alungit</b>: laturile sunt semidrepte opuse, ∠AOB = 180°.'],
+  ['d','Unghiuri adiacente','Două unghiuri sunt <b>adiacente</b> dacă au același vârf, o latură comună și interioarele lor sunt disjuncte (nu au puncte comune).'],
+  ['d','Unghiuri complementare','Două unghiuri se numesc <b>complementare</b> dacă suma măsurilor lor este 90°. Fiecare este <b>complementul</b> celuilalt.'],
+  ['d','Unghiuri suplementare','Două unghiuri se numesc <b>suplementare</b> dacă suma măsurilor lor este 180°. Fiecare este <b>suplementul</b> celuilalt.'],
+  ['d','Unghiuri opuse la vârf','Două unghiuri sunt <b>opuse la vârf</b> dacă au același vârf și laturile unuia sunt semidreptele opuse laturilor celuilalt.'],
+  ['d','Bisectoarea unui unghi','<b>Bisectoarea</b> unui unghi AOB este semidreapta [OC, situată în interiorul unghiului, pentru care ∠AOC ≡ ∠COB.'],
+  ['d','Drepte perpendiculare','Două drepte concurente care formează un unghi drept se numesc <b>drepte perpendiculare</b>. Notație: <i>a</i> ⊥ <i>b</i>.']
+ ]],
+ ['Axiome',[
+  ['a','Axioma dreptei','Prin două puncte distincte trece o dreaptă și numai una.'],
+  ['a','Axioma existenței','Orice dreaptă conține cel puțin două puncte distincte. Orice plan conține cel puțin trei puncte necoliniare.'],
+  ['a','Axioma separării planului','Orice dreaptă dintr-un plan împarte planul în două submulțimi, numite <b>semiplane</b>, astfel încât segmentul care unește două puncte din semiplane diferite intersectează dreapta.'],
+  ['a','Axioma măsurii segmentului','Fiecărui segment i se asociază un număr real pozitiv, <b>lungimea</b> lui. Dacă punctul M se află între A și B, atunci AM + MB = AB.'],
+  ['a','Axioma construcției segmentului','Pe o semidreaptă dată, de la origine, există un singur punct aflat la o distanță dată.'],
+  ['a','Axioma măsurii unghiului','Fiecărui unghi i se asociază un număr din intervalul [0°, 180°], numit <b>măsura</b> lui. Unghiul nul are 0°, unghiul drept are 90°, iar unghiul alungit are 180°.'],
+  ['a','Axioma construcției unghiului','Se dau o semidreaptă [OA, unul dintre semiplanele determinate de dreapta OA și un număr real <i>x</i> ∈ (0°, 180°). Atunci există o singură semidreaptă [OB, în acel semiplan, astfel încât ∠AOB = <i>x</i>.'],
+  ['a','Axioma adunării unghiurilor','Dacă semidreapta [OC se află în interiorul unghiului AOB, atunci ∠AOB = ∠AOC + ∠COB.']
+ ]],
+ ['Proprietăți și teoreme',[
+  ['p','Mijlocul unui segment','Orice segment [AB] are un singur mijloc M și AM = MB = AB : 2.'],
+  ['t','Unghiuri adiacente suplementare','Dacă două unghiuri sunt adiacente și laturile lor necomune sunt semidrepte opuse, atunci unghiurile sunt suplementare.','Fie A, O, B coliniare, O între A și B, și C în afara dreptei AB. Unghiurile AOC și COB sunt adiacente. Semidreapta [OC este în interiorul unghiului alungit AOB, deci, după axioma adunării, ∠AOC + ∠COB = ∠AOB = 180°.'],
+  ['t','Reciproca teoremei de mai sus','Dacă două unghiuri adiacente sunt suplementare, atunci laturile lor necomune sunt semidrepte opuse.'],
+  ['p','Unghiuri în jurul unui punct','Suma măsurilor unghiurilor formate în jurul unui punct, adiacente consecutiv și cu interioarele disjuncte, este 360°.'],
+  ['t','Unghiuri opuse la vârf','Două unghiuri opuse la vârf sunt congruente.','Dreptele AB și CD se taie în O. Unghiurile AOC și BOD sunt opuse la vârf. Cum A, O, B sunt coliniare, ∠AOC + ∠COB = 180°. Cum C, O, D sunt coliniare, ∠COB + ∠BOD = 180°. Scăzând cei doi membri, rezultă ∠AOC = ∠BOD.'],
+  ['p','Complemente și suplemente','Complementele a două unghiuri congruente sunt congruente. Suplementele a două unghiuri congruente sunt congruente.','Dacă ∠1 = ∠2 = x, complementele lor au măsura 90° − x, iar suplementele 180° − x, deci sunt egale în fiecare pereche.'],
+  ['t','Existența și unicitatea bisectoarei','Orice unghi AOB nenul are o singură bisectoare [OC și ∠AOC = ∠COB = ∠AOB : 2.','Fie ∠AOB = x. Conform axiomei construcției unghiului, în semiplanul lui B față de OA există o singură semidreaptă [OC cu ∠AOC = x/2. Ea este în interiorul unghiului, deci, după axioma adunării, ∠COB = x − x/2 = x/2. Altă semidreaptă nu poate avea această proprietate, deci bisectoarea este unică.'],
+  ['t','Bisectoarele unghiurilor adiacente suplementare','Bisectoarele a două unghiuri adiacente suplementare sunt perpendiculare.','Fie ∠AOC și ∠COB adiacente suplementare, cu bisectoarele [OM și [ON. ∠MON = ∠MOC + ∠CON = ½ ∠AOC + ½ ∠COB = ½ · 180° = 90°. Deci OM ⊥ ON.'],
+  ['t','Unghiuri adiacente congruente și suplementare','Dacă două unghiuri adiacente sunt congruente și suplementare, atunci fiecare este un unghi drept.','Fie x măsura fiecăruia. x + x = 180°, deci x = 90°.'],
+  ['t','Unghiurile formate de drepte perpendiculare','Dacă două drepte formează un unghi drept, atunci toate cele patru unghiuri formate sunt drepte.','Unghiul adiacent suplementar unuia drept are 180° − 90° = 90°. Unghiul opus la vârf este congruent cu cel dat, deci tot 90°. Astfel toate cele patru unghiuri sunt de 90°.']
+ ]]];
+var CH={d:['Definiție','dd'],a:['Axiomă','ax'],t:['Teoremă','tm'],p:['Proprietate','pr']};
+$('th').innerHTML=TH.map(function(g,gi){return '<details class="g"'+(gi===0?' open':'')+'><summary>'+g[0]+' ('+g[1].length+')</summary>'+g[1].map(function(it){var c=CH[it[0]];
+ return '<div class="it"><div class="hd"><span class="chip '+c[1]+'">'+c[0]+'</span><span class="nm">'+it[1]+'</span></div><div class="tx">'+it[2]+'</div>'+(it[3]?'<details class="pf"><summary>Demonstrație</summary><p>'+it[3]+'</p></details>':'')+'</div>'}).join('')+'</details>'}).join('');
+// ---- cartonașe ----
+var C=[
+ ['Unghi','Reuniunea a două semidrepte cu aceeași origine. Originea este vârful, semidreptele sunt laturile.'],
+ ['Unghi drept','Are 90°.'],
+ ['Unghi ascuțit și obtuz','Ascuțit: între 0° și 90°. Obtuz: între 90° și 180°.'],
+ ['Unghi alungit','Are 180°. Laturile sunt semidrepte opuse.'],
+ ['Unghiuri adiacente','Au același vârf, o latură comună, iar celelalte laturi sunt de o parte și de alta a ei.'],
+ ['Unghiuri complementare','Suma măsurilor lor este 90°.'],
+ ['Unghiuri suplementare','Suma măsurilor lor este 180°.'],
+ ['Unghiuri opuse la vârf','Laturile unuia sunt semidreptele opuse ale celuilalt. Sunt congruente.'],
+ ['Bisectoarea unghiului','Semidreapta cu originea în vârf, care împarte unghiul în două unghiuri congruente. Fiecare are jumătate din măsura unghiului.'],
+ ['Puncte coliniare','Puncte aflate pe aceeași dreaptă.']];
+$('fc').innerHTML=C.map(function(c){return '<button type="button" aria-pressed="false"><span class="k">Cartonaș</span><span class="f">'+c[0]+'</span><span class="b">'+c[1]+'</span></button>'}).join('');
+$('fc').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true')});
+// ---- exerciții ----
+function ri(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+function ge(){var k=ri(0,8),x,y;
+ if(k===0){x=ri(10,80);return {q:'Complementul unui unghi de '+x+'° are măsura (în grade):',a:90-x,w:'90° − '+x+'° = '+(90-x)+'°.'}}
+ if(k===1){x=ri(20,160);return {q:'Suplementul unui unghi de '+x+'° are măsura (în grade):',a:180-x,w:'180° − '+x+'° = '+(180-x)+'°.'}}
+ if(k===2){x=2*ri(10,80);return {q:'Bisectoarea unui unghi de '+x+'° îl împarte în două unghiuri. Cât măsoară fiecare (în grade)?',a:x/2,w:x+'° : 2 = '+(x/2)+'°.'}}
+ if(k===3){x=ri(15,165);return {q:'Unghiurile AOB și COD sunt opuse la vârf, iar ∠AOB = '+x+'°. Cât măsoară ∠COD (în grade)?',a:x,w:'Unghiurile opuse la vârf sunt congruente.'}}
+ if(k===4){x=ri(15,165);return {q:'Două drepte se taie, iar un unghi format are '+x+'°. Cât măsoară unghiul adiacent lui (în grade)?',a:180-x,w:'Unghiurile adiacente de acest fel sunt suplementare: 180° − '+x+'° = '+(180-x)+'°.'}}
+ if(k===5){var r=[2,3,4,5][ri(0,3)];x=180/(r+1);return {q:'Două unghiuri adiacente suplementare sunt astfel încât unul este de '+r+' ori mai mare decât celălalt. Cât măsoară unghiul mai mic (în grade)?',a:x,w:'x + '+r+'x = 180° ⇒ '+(r+1)+'x = 180° ⇒ x = '+x+'°.'}}
+ if(k===6){var d=2*ri(3,30);x=(90+d)/2;return {q:'Două unghiuri complementare au diferența de '+d+'°. Cât măsoară unghiul mai mare (în grade)?',a:x,w:'x + y = 90° și x − y = '+d+'°. Adunând: 2x = '+(90+d)+'°, deci x = '+x+'°.'}}
+ if(k===7){x=2*ri(8,40);return {q:'[OC este bisectoarea unghiului AOB și ∠AOC = '+(x/2)+'°. Cât măsoară ∠AOB (în grade)?',a:x,w:'Bisectoarea împarte unghiul în două părți egale: 2 · '+(x/2)+'° = '+x+'°.'}}
+ x=[ri(10,89),90,ri(91,179),180][ri(0,3)];var t=x<90?'ascuțit':x===90?'drept':x<180?'obtuz':'alungit';
+ return {q:'Un unghi de '+x+'° este:',mc:['ascuțit','drept','obtuz','alungit'],a:t,w:'Ascuțit < 90°, drept = 90°, obtuz între 90° și 180°, alungit = 180°.'}}
+var cur,ok=0,tot=0,done=false;
+function nq(){cur=ge();done=false;$('qq').textContent=cur.q.replace('[OC','OC');$('fb').textContent='';$('fb').className='fb';var an=$('an');an.innerHTML='';
+ if(cur.mc){cur.mc.forEach(function(o){var b=document.createElement('button');b.type='button';b.className='mc';b.textContent=o;b.onclick=function(){chk(o)};an.appendChild(b)})}
+ else{an.innerHTML='<input type="number" inputmode="numeric" id="in" aria-label="Răspuns"><button type="button" id="ck">Verifică</button>';$('ck').onclick=function(){var v=$('in').value;if(v!=='')chk(+v)};$('in').addEventListener('keydown',function(e){if(e.key==='Enter')$('ck').click()});}}
+function chk(v){if(done)return;done=true;tot++;var good=v===cur.a,fb=$('fb');
+ if(good){ok++;fb.className='fb good';fb.innerHTML='Corect!<span>'+cur.w+'</span>'}else{fb.className='fb bad';fb.innerHTML='Nu e corect. Răspunsul era '+cur.a+(cur.mc?'':'°')+'.<span>'+cur.w+'</span>'}
+ $('sc').textContent='Corecte: '+ok+' din '+tot;}
+$('nx').onclick=nq;
+upd();lab();ov();nq();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1730 @@
+<title>Ciubotele Ogarului</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: a platformer screen (2:1 canvas), touch controls under it, then a quest panel for rules, duels and the homework sheet. Single dark world by design. */
+:root{
+  --night:#12111c; --panel:#1f1d2c; --panel-2:#2c2940; --ink:#f3f0e6; --muted:#aba6bf;
+  --torch:#f5b841; --good:#5bd08f; --bad:#f2605a; --exp:#ffd27a; --ice:#8fd8ff;
+  --f-display:"Pixelify Sans","Courier New",monospace;
+  --f-body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-math:"Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:16px 40px;display:grid;gap:12px}
+header{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-size:clamp(1.6rem,5vw,2.5rem);margin:0;line-height:1.05;text-shadow:3px 3px 0 #000}
+.sub{margin:0;color:var(--muted);font-size:.9rem}
+.author{margin:0 0 4px;font-family:var(--f-display);font-size:1.1rem;color:var(--torch);letter-spacing:.04em}
+.prof{background:var(--panel, #22252e);border:3px solid #000;padding:14px 16px;line-height:1.5}
+.prof summary{cursor:pointer;font-family:var(--f-display);font-size:1.1rem;color:var(--torch)}
+.prof p,.prof ul{margin:10px 0 0;color:var(--ink)}.prof ul{padding-left:1.3em;display:grid;gap:4px}.prof small{color:var(--muted)}
+sub{font-size:.6em;color:var(--muted);vertical-align:baseline;position:relative;top:.3em}
+.stage{border:3px solid #000;box-shadow:0 0 0 3px var(--panel-2);background:#000;line-height:0}
+canvas#cv{width:100%;aspect-ratio:2/1;display:block;image-rendering:pixelated;touch-action:none}
+.controls{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;user-select:none;-webkit-user-select:none}
+.pad{display:flex;gap:10px}
+.cbtn{font-family:var(--f-display);font-size:1.6rem;min-width:72px;height:64px;background:var(--panel-2);color:var(--ink);border:3px solid #000;box-shadow:inset 0 -5px 0 rgba(0,0,0,.35);touch-action:none;cursor:pointer}
+.cbtn.jump{background:var(--torch);color:#1d1504;min-width:120px;font-size:1.3rem}
+.cbtn.on{filter:brightness(1.3);transform:translateY(2px)}
+.keys{color:var(--muted);font-size:.85rem;margin:0}
+.panel{background:var(--panel);border:3px solid #000;box-shadow:inset 0 0 0 3px var(--panel-2);padding:18px;display:grid;gap:14px}
+.panel h2{font-family:var(--f-display);margin:0;font-size:1.45rem;color:var(--torch);text-wrap:balance}
+.panel p{margin:0}
+.eyebrow{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.formula{font-family:var(--f-math);font-weight:700;font-size:clamp(1.4rem,4.6vw,2.1rem);background:#141220;border:2px solid #000;padding:12px 18px;display:flex;flex-wrap:wrap;gap:8px 30px}
+sup{font-family:var(--f-math);font-weight:700;font-size:.68em;color:var(--exp);vertical-align:baseline;position:relative;top:-.62em;line-height:0;margin-left:.04em}
+.panel p sup,.ex sup,.rep sup{font-size:.78em;top:-.5em}
+.ex{color:var(--muted)}.ex b{color:var(--ink)}
+.q{font-family:var(--f-math);font-weight:700;font-size:clamp(1.55rem,5vw,2.3rem);line-height:1.6;background:#141220;border:2px solid #000;padding:12px 18px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.opts{grid-template-columns:minmax(0,1fr)}}
+.opt{font-family:var(--f-math);font-weight:700;font-size:clamp(1.3rem,4vw,1.7rem);line-height:1.6;text-align:left;padding:10px 14px;background:var(--panel-2);color:var(--ink);border:2px solid #000;box-shadow:inset 0 -4px 0 rgba(0,0,0,.35);cursor:pointer;display:flex;gap:12px;align-items:baseline}
+.opt .k{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
+.opt:hover:not(:disabled){box-shadow:inset 0 0 0 2px var(--torch)}
+.opt.right{background:#1f4a35;box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{background:#4f2229;box-shadow:inset 0 0 0 2px var(--bad)}
+.fb{padding:10px 14px;border:2px solid #000;background:#18161f;border-left:6px solid var(--muted)}
+.fb.ok{border-left-color:var(--good)}.fb.no{border-left-color:var(--bad)}
+.fb strong{font-family:var(--f-display);font-size:1.1rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font-family:var(--f-display);font-size:1.15rem;padding:10px 20px;border:2px solid #000;cursor:pointer;color:#1d1504;background:var(--torch);box-shadow:inset 0 -4px 0 rgba(0,0,0,.3)}
+.btn.ghost{background:var(--panel-2);color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.hero-btn:focus-visible,.cbtn:focus-visible,input:focus-visible{outline:3px solid var(--torch);outline-offset:3px}
+.heroes{display:flex;gap:12px;flex-wrap:wrap}
+.dif-btn{display:grid;justify-items:center;gap:2px;background:var(--panel-2);color:var(--ink);border:2px solid #000;padding:10px 18px;cursor:pointer;font-family:var(--f-display);font-size:1.1rem}.dif-btn small{color:var(--muted);font-family:var(--f-body);font-size:.8rem}.dif-btn[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--torch)}
+.q svg.fig{display:block;width:100%;max-width:440px;height:auto;margin:0 auto 10px;border:2px solid #000}
+.q{font-size:clamp(1.05rem,3vw,1.4rem)!important;line-height:1.5!important}
+.opt{font-size:clamp(1rem,2.6vw,1.25rem)!important;line-height:1.4!important}
+.hero-btn{display:grid;justify-items:center;gap:4px;background:var(--panel-2);color:var(--ink);border:2px solid #000;padding:10px 18px;cursor:pointer;font-family:var(--f-display);font-size:1.1rem}
+.hero-btn[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--torch)}
+.hero-btn canvas{width:48px;height:84px;image-rendering:pixelated}
+.hero-btn small{font-family:var(--f-body);font-size:.78rem;color:var(--muted)}
+label{display:grid;gap:6px;font-weight:700;max-width:360px}
+input[type=text]{font:inherit;font-size:1.1rem;padding:10px 12px;background:#141220;color:var(--ink);border:2px solid #000;box-shadow:inset 0 0 0 2px var(--panel-2)}
+.badge{display:inline-flex;gap:10px;align-items:center;font-family:var(--f-display);font-size:1.3rem}
+.badge i{width:22px;height:22px;border:3px solid #000}
+.goal{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:.92rem}
+.goal b{color:var(--ink)}
+.rep{display:grid;gap:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:#141220;border:2px solid #000;padding:10px 12px}
+.stat span{display:block;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat b{font-family:var(--f-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.mist{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.mist li{background:#141220;border:2px solid #000;border-left:5px solid var(--bad);padding:10px 12px;display:grid;gap:4px}
+.mist .mq{font-family:var(--f-math);font-weight:700;font-size:1.15rem}
+.mist .ma{color:var(--muted);font-size:.95rem}
+</style>
+
+<div id="nojs" style="position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#14213d;color:#fff;font:600 19px/1.5 -apple-system,system-ui,sans-serif;padding:28px;display:flex;flex-direction:column;justify-content:center;gap:14px"><div style="font-size:26px">Jocul nu poate porni aici</div><div>Ai deschis fișierul ca previzualizare. Deschide jocul din <b>linkul</b> primit de la profesor, în Chrome, Edge sau Safari.</div></div><script>(function(){var n=document.getElementById("nojs");if(n&&n.parentNode)n.parentNode.removeChild(n)})()</script>
+<script>window.addEventListener("error", function (e) {
+    try {
+        var d = document.getElementById("jsErr");
+        if (!d) {
+            d = document.createElement("div");
+            d.id = "jsErr";
+            d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#fff3f3;color:#7a1010;border:3px solid #7a1010;border-radius:14px;padding:12px 14px;font:600 15px/1.4 -apple-system,system-ui,sans-serif";
+            document.body.appendChild(d);
+        }
+        d.textContent = "A ap\u0103rut o eroare. Trimite o captur\u0103 de ecran profesorului: " + (e.message || "eroare") + " (linia " + (e.lineno || "?") + ")";
+    }
+    catch (x) {
+    }
+});
+</script>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="author">Prof. Zopota Larisa</p>
+      <h1>Ciubotele Ogarului</h1>
+      <p class="sub">Matematică · <b>Clasa a VI-a</b> · Drepte paralele și perechi de unghiuri congruente</p>
+    </div>
+  </header>
+
+  <div class="stage"><canvas id="cv" width="1536" height="768"></canvas></div>
+
+  <div class="controls" id="controls" hidden>
+    <div class="pad">
+      <button class="cbtn" id="bl" type="button" aria-label="Mergi la stânga">◀</button>
+      <button class="cbtn" id="br" type="button" aria-label="Mergi la dreapta">▶</button>
+    </div>
+    <p class="keys">Tastatură: ← → mers · ↑ sau Space salt</p>
+    <button class="cbtn jump" id="bj" type="button">SALT</button>
+  </div>
+
+  <section class="panel" id="panel" aria-live="polite"></section>
+  <details class="prof">
+    <summary>Pentru profesori: corelarea cu programa școlară</summary>
+    <p>Programa școlară pentru disciplina <b>Matematică, clasele a V-a – a VIII-a</b>, aprobată prin OMEN nr. 3393/28.02.2017. <b>Clasa a VI-a</b>, Geometrie — „Unghiuri” și „Drepte paralele”.</p>
+    <ul><li><b>Conținuturi:</b> unghiuri opuse la vârf, congruența lor; unghiuri adiacente, complementare, suplementare; drepte paralele (definiție, notație); axioma paralelelor; unghiuri formate de două drepte cu o secantă (corespondente, alterne interne/externe, interne/externe de aceeași parte a secantei); criterii de paralelism; aplicații.</li>
+      <li><b>1.5</b> Recunoașterea unor figuri geometrice plane (drepte, unghiuri) în configurații date.</li>
+      <li><b>2.5</b> Recunoașterea unghiurilor opuse la vârf, adiacente, complementare sau suplementare și a paralelismului a două drepte.</li>
+      <li><b>4.5</b> Utilizarea limbajului geometric în descrierea unor configurații geometrice.</li>
+      <li><b>5.5</b> Analizarea unor configurații geometrice pentru stabilirea paralelismului.</li>
+      <li><b>6.5</b> Interpretarea informațiilor deduse din reprezentări geometrice în corelație cu anumite condiții date.</li>
+      <li><b>Niveluri de dificultate:</b> Începător, Mediu, Avansat și <b>Excelență</b> (pentru grupa de excelență: ecuații cu unghiuri, rapoarte, bisectoare, unghiul format cu un punct între paralele).</li>
+      <li>Fiecare întrebare este etichetată cu competența vizată; rezultatele pe competențe apar pe fișa de la final.</li></ul>
+    <p><small>Material realizat de Prof. Zopota Larisa. Tema jocului este inspirată din povestea „Ciubotele ogarului”.</small></p>
+  </details>
+</div>
+
+<script>var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+var R = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
+var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; };
+var shuffle = function (a) {
+    var _b;
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        _b = __read([a[j], a[i]], 2), a[i] = _b[0], a[j] = _b[1];
+    }
+    return a;
+};
+var pw = function (a, n) { return "".concat(a, "<sup>").concat(n, "</sup>"); };
+var D = " \xB7 ";
+function mk(q, correct, dis, explain) {
+    var e_1, _b;
+    var set = [correct];
+    try {
+        for (var dis_1 = __values(dis), dis_1_1 = dis_1.next(); !dis_1_1.done; dis_1_1 = dis_1.next()) {
+            var d = dis_1_1.value;
+            if (!set.includes(d) && set.length < 4)
+                set.push(d);
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (dis_1_1 && !dis_1_1.done && (_b = dis_1.return)) _b.call(dis_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    shuffle(set);
+    return { q: q, opts: set, ans: set.indexOf(correct), explain: explain };
+}
+var T = function (c, f) { return function () {
+    var q = f();
+    q.c = c;
+    return q;
+}; };
+var sub2 = function (s) { return "".concat(s, "<sub>(2)</sub>"); };
+var COMP = { "1.1": "Identificarea numerelor naturale \xEEn contexte variate", "2.1": "Efectuarea de calcule cu numere naturale folosind opera\u021Biile aritmetice \u0219i propriet\u0103\u021Bile acestora", "3.1": "Utilizarea regulilor de calcul pentru efectuarea opera\u021Biilor cu numere naturale", "4.1": "Exprimarea \xEEn limbaj matematic a unor propriet\u0103\u021Bi referitoare la compar\u0103ri, aproxim\u0103ri, estim\u0103ri \u0219i ale opera\u021Biilor cu numere naturale", "5.1": "Analizarea unor situa\u021Bii date \xEEn care intervin numere naturale pentru a estima sau pentru a verifica validitatea unor calcule", "6.1": "Modelarea matematic\u0103, folosind numere naturale, a unei situa\u021Bii date" };
+function pow2terms(n) {
+    var t = [];
+    for (var p = 6; p >= 0; p--)
+        if (n & 1 << p)
+            t.push(p === 0 ? "1" : pw(2, p));
+    return t.join(" + ");
+}
+function b10terms(n) {
+    var s = String(n), L2 = s.length, t = [];
+    for (var i = 0; i < L2; i++) {
+        var d = +s[i], p = L2 - 1 - i;
+        if (!d)
+            continue;
+        t.push(p === 0 ? "".concat(d) : p === 1 ? "".concat(d, "\u00B710") : "".concat(d, "\u00B7").concat(pw(10, p)));
+    }
+    return t.join(" + ");
+}
+var DIFFS = [
+  { name: "Începător", tag: "recunoaștere" },
+  { name: "Mediu", tag: "ca la clasă" },
+  { name: "Avansat", tag: "calcule în doi pași" },
+  { name: "Excelență", tag: "grupa de excelență" }
+];
+var dif = function () { return S.diff || 1; };
+var AN = "∢";
+var G0 = "°";
+/* poziția unghiurilor: A = intersecția cu a (sus), B = cu b (jos)
+   1 sus-stânga, 2 sus-dreapta, 3 jos-dreapta, 4 jos-stânga (la A); 5..8 la fel la B */
+var POS = { 1: ["A", "up", "L"], 2: ["A", "up", "R"], 3: ["A", "dn", "R"], 4: ["A", "dn", "L"], 5: ["B", "up", "L"], 6: ["B", "up", "R"], 7: ["B", "dn", "R"], 8: ["B", "dn", "L"] };
+function isInt(k) { var p = POS[k]; return (p[0] === "A" && p[1] === "dn") || (p[0] === "B" && p[1] === "up"); }
+function relName(i, j) {
+  var p = POS[i], q = POS[j];
+  if (p[0] === q[0]) {
+    if (p[1] !== q[1] && p[2] !== q[2]) return "opuse la vârf";
+    return "adiacente suplementare";
+  }
+  if (p[1] === q[1] && p[2] === q[2]) return "corespondente";
+  var ii = isInt(i), ij = isInt(j);
+  if (ii && ij) return p[2] !== q[2] ? "alterne interne" : "interne de aceeași parte a secantei";
+  if (!ii && !ij) return p[2] !== q[2] ? "alterne externe" : "externe de aceeași parte a secantei";
+  return "nicio pereche cu nume special";
+}
+/* măsura unghiului k când unghiul ascuțit/de referință (sus-dreapta) are măsura t */
+function meas(k, t) { var p = POS[k]; return ((p[1] === "up" && p[2] === "R") || (p[1] === "dn" && p[2] === "L")) ? t : 180 - t; }
+var PAIRS = ["corespondente", "alterne interne", "alterne externe", "interne de aceeași parte a secantei", "externe de aceeași parte a secantei", "opuse la vârf", "adiacente suplementare"];
+function pairOf(type) {
+  var c = [];
+  for (var i = 1; i <= 8; i++) for (var j = i + 1; j <= 8; j++) if (relName(i, j) === type) c.push([i, j]);
+  var p = pick(c);
+  return Math.random() < 0.5 ? p : [p[1], p[0]];
+}
+var COLS = ["#ffb43a", "#5ec8ff", "#8be37a"];
+function fig(t, marks, par, labels) {
+  marks = marks || {}; labels = labels || {};
+  var th = Math.max(38, Math.min(78, t <= 90 ? t : 180 - t)) * Math.PI / 180;
+  if (t > 90) th = Math.PI - th;
+  var W = 340, H = 205, ya = 70, yb = 150, Ax = 205, Bx = Ax - (yb - ya) / Math.tan(th);
+  var ux = Math.cos(th), uy = -Math.sin(th);
+  var s = '<svg class="fig" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Două drepte a și b tăiate de secanta c">';
+  s += '<rect x="0" y="0" width="' + W + '" height="' + H + '" rx="10" fill="#f6efdc"/>';
+  var ln = function (x1, y1, x2, y2, c, w) { return '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="' + c + '" stroke-width="' + w + '" stroke-linecap="round"/>'; };
+  var P = { A: [Ax, ya], B: [Bx, yb] };
+  var dirs = { R: [1, 0], L: [-1, 0], U: [ux, uy], D: [-ux, -uy] };
+  var rays = function (k) { var p = POS[k]; return [p[1] === "up" ? dirs.U : dirs.D, p[2] === "R" ? dirs.R : dirs.L]; };
+  for (var k = 1; k <= 8; k++) if (marks[k]) {
+    var r = rays(k), c0 = P[POS[k][0]], a1 = Math.atan2(r[0][1], r[0][0]), a2 = Math.atan2(r[1][1], r[1][0]);
+    var d = a2 - a1; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+    var pts = [c0[0].toFixed(1) + "," + c0[1].toFixed(1)];
+    for (var i = 0; i <= 12; i++) { var a = a1 + d * i / 12; pts.push((c0[0] + 26 * Math.cos(a)).toFixed(1) + "," + (c0[1] + 26 * Math.sin(a)).toFixed(1)); }
+    s += '<polygon points="' + pts.join(" ") + '" fill="' + marks[k] + '" opacity=".75"/>';
+  }
+  s += ln(10, ya, W - 30, ya, "#2b2116", 3) + ln(10, yb, W - 30, yb, "#2b2116", 3);
+  s += ln(Ax + 60 * ux, ya + 60 * uy, Bx - 60 * ux, yb - 60 * uy, "#7a2d1a", 3);
+  if (par) {
+    [ya, yb].forEach(function (y) { s += '<path d="M 40 ' + (y - 6) + ' l 8 6 l -8 6" fill="none" stroke="#2b2116" stroke-width="2.5"/>'; });
+  }
+  var tx = function (x, y, str, c, sz, b) { return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + c + '" font-size="' + sz + '" font-weight="' + (b ? 800 : 600) + '" text-anchor="middle" dominant-baseline="middle" font-family="Atkinson Hyperlegible,Arial,sans-serif">' + str + '</text>'; };
+  s += tx(W - 18, ya, "a", "#2b2116", 20, 1) + tx(W - 18, yb, "b", "#2b2116", 20, 1);
+  s += tx(Ax + 68 * ux, ya + 68 * uy - 2, "c", "#7a2d1a", 20, 1);
+  for (var k2 = 1; k2 <= 8; k2++) {
+    var rr = rays(k2), c1 = P[POS[k2][0]], bx = rr[0][0] + rr[1][0], by = rr[0][1] + rr[1][1], nn = Math.sqrt(bx * bx + by * by) || 1;
+    var lab = labels[k2] || String(k2), far = labels[k2] ? 44 : 36;
+    s += tx(c1[0] + far * bx / nn, c1[1] + far * by / nn, lab, marks[k2] ? "#000" : "#5a4a38", labels[k2] ? 15 : 17, !!marks[k2]);
+  }
+  return s + "</svg>";
+}
+var A = function (k) { return AN + k; };
+var dg = function (x) { return x + G0; };
+
+/* ---------- Nivelul 1: drepte paralele, unghiuri opuse la vârf, suplementare ---------- */
+var GA = [
+  T("4.5", function () {
+    return mk("Două drepte se numesc <b>paralele</b> dacă:", "sunt situate în același plan și nu au niciun punct comun", ["au exact un punct comun", "formează un unghi drept", "au aceeași lungime"],
+      "Definiție: două drepte coplanare (în același plan) care nu au puncte comune sunt paralele. Notăm a ∥ b.");
+  }),
+  T("1.5", function () {
+    return mk("Printr-un punct exterior unei drepte se pot duce câte paralele la acea dreaptă?", "o singură paralelă", ["două paralele", "o infinitate de paralele", "niciuna"],
+      "Axioma paralelelor (axioma lui Euclid): printr-un punct exterior unei drepte trece <b>o singură</b> paralelă la acea dreaptă.");
+  }),
+  T("2.5", function () {
+    var t = R(dif() < 2 ? 3 : 2, 17) * 5;
+    var k = pick([1, 2, 3, 4]), o = { 1: 3, 2: 4, 3: 1, 4: 2 }[k], m = meas(k, t);
+    var mk2 = {}; mk2[k] = COLS[0]; mk2[o] = COLS[1];
+    return mk(fig(t, mk2) + "<br>" + A(k) + " = " + dg(m) + ". Cât este " + A(o) + "?", dg(m), [dg(180 - m), dg(90 - m > 0 ? 90 - m : m + 10), dg(2 * m <= 180 ? 2 * m : m - 10)],
+      A(k) + " și " + A(o) + " sunt <b>opuse la vârf</b>, deci sunt congruente: " + A(o) + " = " + dg(m) + ".");
+  }),
+  T("2.5", function () {
+    var t = R(4, 16) * 5, k = pick([1, 2, 3, 4]), nb = { 1: 2, 2: 1, 3: 4, 4: 3 }[k], m = meas(k, t);
+    var mk2 = {}; mk2[k] = COLS[0]; mk2[nb] = COLS[1];
+    return mk(fig(t, mk2) + "<br>" + A(k) + " = " + dg(m) + ". Cât este " + A(nb) + "?", dg(180 - m), [dg(m), dg(Math.abs(90 - m)), dg(360 - m)],
+      A(k) + " și " + A(nb) + " sunt <b>adiacente suplementare</b> (formează împreună un unghi alungit): " + A(nb) + " = 180" + G0 + " − " + dg(m) + " = " + dg(180 - m) + ".");
+  }),
+  T("6.5", function () {
+    if (dif() === 1) return GA[0]();
+    var x = R(2, 17) * 5, t = R(0, 1);
+    if (x === 45 || x === 90) x = 40;
+    if (t) return mk("Complementul unui unghi de " + dg(x) + " are măsura:", dg(90 - x), [dg(180 - x), dg(x), dg(90 + x)], "Două unghiuri sunt complementare dacă suma lor este 90" + G0 + ": 90" + G0 + " − " + dg(x) + " = " + dg(90 - x) + ".");
+    return mk("Suplementul unui unghi de " + dg(x) + " are măsura:", dg(180 - x), [dg(90 - x), dg(x), dg(360 - x)], "Două unghiuri sunt suplementare dacă suma lor este 180" + G0 + ": 180" + G0 + " − " + dg(x) + " = " + dg(180 - x) + ".");
+  })
+];
+
+/* ---------- Nivelul 2: recunoașterea perechilor ---------- */
+var GB = [
+  T("1.5", function () {
+    var type = pick(PAIRS.slice(0, dif() === 1 ? 3 : 5)), p = pairOf(type), mk2 = {};
+    mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    var others = PAIRS.slice(0, 5).filter(function (x) { return x !== type; });
+    return mk(fig(60, mk2) + "<br>Unghiurile " + A(p[0]) + " și " + A(p[1]) + " sunt:", type, shuffle(others),
+      A(p[0]) + " și " + A(p[1]) + " sunt <b>" + type + "</b>. " + ({
+        "corespondente": "Sunt în aceeași poziție la cele două intersecții (aceeași parte a secantei, aceeași parte a dreptelor).",
+        "alterne interne": "Sunt între dreptele a și b (interne) și de o parte și de alta a secantei (alterne).",
+        "alterne externe": "Sunt în afara dreptelor a și b (externe) și de o parte și de alta a secantei (alterne).",
+        "interne de aceeași parte a secantei": "Sunt între dreptele a și b și de aceeași parte a secantei.",
+        "externe de aceeași parte a secantei": "Sunt în afara dreptelor a și b și de aceeași parte a secantei."
+      })[type]);
+  }),
+  T("1.5", function () {
+    var type = pick(["corespondente", "alterne interne", "alterne externe"].concat(dif() > 1 ? ["interne de aceeași parte a secantei"] : []));
+    var p = pairOf(type), mk2 = {}; mk2[p[0]] = COLS[0];
+    var wrong = [];
+    for (var j = 1; j <= 8; j++) if (j !== p[0] && j !== p[1]) wrong.push(A(j));
+    var cand = shuffle(wrong);
+    return mk(fig(60, mk2) + "<br>Care unghi formează cu " + A(p[0]) + " o pereche de unghiuri <b>" + type + "</b>?", A(p[1]), cand,
+      A(p[0]) + " și " + A(p[1]) + " sunt " + type + ".");
+  }),
+  T("4.5", function () {
+    return pick([
+      function () { return mk("Două drepte tăiate de o secantă formează în total:", "8 unghiuri", ["4 unghiuri", "6 unghiuri", "2 unghiuri"], "La fiecare dintre cele două puncte de intersecție se formează 4 unghiuri: 4 + 4 = 8 unghiuri."); },
+      function () { return mk("Câte perechi de unghiuri <b>alterne interne</b> se formează la două drepte tăiate de o secantă?", "2 perechi", ["4 perechi", "1 pereche", "8 perechi"], "Sunt două perechi alterne interne (în figura noastră: " + A(3) + " cu " + A(5) + " și " + A(4) + " cu " + A(6) + ")."); },
+      function () { return mk("Câte perechi de unghiuri <b>corespondente</b> se formează?", "4 perechi", ["2 perechi", "8 perechi", "1 pereche"], "Fiecare dintre cele 4 unghiuri de sus are un corespondent jos: (1,5), (2,6), (3,7), (4,8)."); }
+    ])();
+  })
+];
+
+/* ---------- Nivelul 3: calculul măsurilor (a ∥ b) ---------- */
+var GC = [
+  T("6.5", function () {
+    var t = R(7, 16) * 5;
+    if (dif() >= 3 && Math.random() < 0.5) t = R(35, 85);
+    var k = R(1, 8), j; do { j = R(1, 8); } while (j === k);
+    var m = meas(k, t), mj = meas(j, t), mk2 = {}; mk2[k] = COLS[0]; mk2[j] = COLS[1];
+    var why = mj === m ? "Pentru a ∥ b, unghiurile ascuțite din figură sunt toate congruente între ele, iar cele obtuze la fel." : "Un unghi ascuțit și unul obtuz din figură sunt suplementare (suma 180" + G0 + ").";
+    return mk(fig(t, mk2, true) + "<br>a ∥ b și " + A(k) + " = " + dg(m) + ". Cât este " + A(j) + "?", dg(mj), [dg(180 - mj), dg(mj === 90 ? 80 : 90), dg(Math.abs(mj - 10))],
+      A(k) + " și " + A(j) + " sunt " + relName(k, j) + ". " + why + " Deci " + A(j) + " = " + dg(mj) + ".");
+  }),
+  T("6.5", function () {
+    var t = R(8, 16) * 5, p = pairOf("interne de aceeași parte a secantei"), m = meas(p[0], t), mk2 = {};
+    mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    return mk(fig(t, mk2, true) + "<br>a ∥ b. " + A(p[0]) + " = " + dg(m) + ". Cât este " + A(p[1]) + "?", dg(180 - m), [dg(m), dg(Math.abs(90 - m)), dg(360 - m)],
+      "Unghiurile interne de aceeași parte a secantei sunt <b>suplementare</b> când a ∥ b: " + A(p[1]) + " = 180" + G0 + " − " + dg(m) + " = " + dg(180 - m) + ".");
+  }),
+  T("6.5", function () {
+    if (dif() === 1) return GC[0]();
+    var t = R(8, 16) * 5, p = pairOf(pick(["alterne interne", "corespondente", "alterne externe"])), m = meas(p[0], t), s = 2 * m;
+    var mk2 = {}; mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    return mk(fig(t, mk2, true) + "<br>a ∥ b, iar " + A(p[0]) + " + " + A(p[1]) + " = " + dg(s) + ". Cât este " + A(p[0]) + "?", dg(m), [dg(180 - m), dg(s), dg(m + 10)],
+      A(p[0]) + " și " + A(p[1]) + " sunt " + relName(p[0], p[1]) + ", deci congruente. Atunci 2" + X0() + A(p[0]) + " = " + dg(s) + ", deci " + A(p[0]) + " = " + dg(m) + ".");
+  }),
+  T("6.5", function () {
+    if (dif() < 3) return GC[1]();
+    var x = R(5, 20), a1 = R(2, 4), b1 = R(5, 30), m = a1 * x + b1;
+    if (m >= 180 || m <= 10) { x = 15; a1 = 3; b1 = 20; m = 65; }
+    var a2 = a1 + R(1, 2), b2 = m - a2 * x;
+    var p = pairOf(pick(["alterne interne", "corespondente"])), mk2 = {}; mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    var e2 = a2 + "x " + (b2 >= 0 ? "+ " + b2 : "− " + (-b2));
+    return mk(fig(meas(p[0], m), mk2, true) + "<br>a ∥ b, " + A(p[0]) + " = " + a1 + "x + " + b1 + G0 + " și " + A(p[1]) + " = " + e2 + G0 + ". Aflați x.", "x = " + x, ["x = " + (x + 5), "x = " + (x - 2), "x = " + m],
+      "Unghiurile sunt " + relName(p[0], p[1]) + ", deci egale: " + a1 + "x + " + b1 + " = " + e2 + ". Rezultă " + (b1 - b2) + " = " + (a2 - a1) + "x, deci x = " + x + ". (Fiecare unghi are " + dg(m) + ".)");
+  })
+];
+function X0() { return " · "; }
+
+/* ---------- Nivelul 4: criterii de paralelism, aplicații ---------- */
+var GD = [
+  T("5.5", function () {
+    var type = pick(["alterne interne", "corespondente", "alterne externe"]), p = pairOf(type), t = R(8, 16) * 5, par = R(0, 1);
+    var m1 = meas(p[0], t), m2 = par ? m1 : m1 + pick([5, 10, -5, -10]);
+    var mk2 = {}; mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    return mk(fig(t, mk2) + "<br>" + A(p[0]) + " = " + dg(m1) + ", " + A(p[1]) + " = " + dg(m2) + ". Sunt dreptele a și b paralele?", par ? "Da, a ∥ b" : "Nu", [par ? "Nu" : "Da, a ∥ b", "Nu se poate stabili"],
+      A(p[0]) + " și " + A(p[1]) + " sunt " + type + ". Criteriu: dacă două unghiuri " + type + " sunt congruente, dreptele sunt paralele. " + (par ? "Aici sunt egale, deci a ∥ b." : "Aici " + dg(m1) + " ≠ " + dg(m2) + ", deci dreptele NU sunt paralele."));
+  }),
+  T("5.5", function () {
+    var p = pairOf("interne de aceeași parte a secantei"), t = R(8, 16) * 5, m1 = meas(p[0], t), ok = R(0, 1), m2 = ok ? 180 - m1 : 180 - m1 + pick([10, -10, 5]);
+    var mk2 = {}; mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    return mk(fig(t, mk2) + "<br>" + A(p[0]) + " = " + dg(m1) + ", " + A(p[1]) + " = " + dg(m2) + ". Sunt a și b paralele?", ok ? "Da, a ∥ b" : "Nu", [ok ? "Nu" : "Da, a ∥ b", "Nu se poate stabili"],
+      "Sunt unghiuri interne de aceeași parte a secantei. Dreptele sunt paralele dacă suma lor este 180" + G0 + ". Suma: " + dg(m1 + m2) + (ok ? ", deci a ∥ b." : " ≠ 180" + G0 + ", deci nu sunt paralele."));
+  }),
+  T("4.5", function () {
+    return mk("Care condiție arată că a ∥ b?", pick(["două unghiuri alterne interne sunt congruente", "două unghiuri corespondente sunt congruente", "două unghiuri interne de aceeași parte a secantei sunt suplementare"]), ["două unghiuri alterne interne sunt suplementare", "două unghiuri corespondente au suma 90" + G0, "două unghiuri opuse la vârf sunt congruente"],
+      "Criteriile de paralelism: alterne interne (sau externe) congruente, corespondente congruente, interne (sau externe) de aceeași parte a secantei suplementare. Unghiurile opuse la vârf sunt mereu congruente, deci nu spun nimic despre paralelism.");
+  }),
+  T("6.5", function () {
+    var a = pick([[2, 3], [1, 2], [4, 5], [1, 3], [2, 7], [3, 5], [1, 5], [7, 8]]), u = 180 / (a[0] + a[1]);
+    if (u !== Math.floor(u)) { a = [4, 5]; u = 20; }
+    return mk("a ∥ b. Două unghiuri interne de aceeași parte a secantei sunt direct proporționale cu " + a[0] + " și " + a[1] + ". Care sunt măsurile lor?", dg(a[0] * u) + " și " + dg(a[1] * u), [dg(a[0] * 90 / (a[0] + a[1]) | 0) + " și " + dg(a[1] * 90 / (a[0] + a[1]) | 0), dg(a[0] * 10) + " și " + dg(a[1] * 10), dg(a[1] * u) + " și " + dg(180 + a[0] * u)],
+      "Sunt suplementare: suma 180" + G0 + ". Împărțim 180" + G0 + " în " + (a[0] + a[1]) + " părți egale: o parte = " + dg(u) + ". Unghiurile: " + a[0] + X0() + dg(u) + " = " + dg(a[0] * u) + " și " + a[1] + X0() + dg(u) + " = " + dg(a[1] * u) + ".");
+  })
+];
+
+/* ---------- Grupa de excelență ---------- */
+var GX = [
+  T("6.5", function () {
+    var m = R(7, 16) * 5, x = m;
+    return mk("a ∥ b. Bisectoarele a două unghiuri <b>interne de aceeași parte a secantei</b> formează între ele un unghi de:", dg(90), [dg(180), dg(m), dg(45)],
+      "Cele două unghiuri au suma 180" + G0 + ". Bisectoarele iau jumătate din fiecare: 90" + G0 + " în total, deci în triunghiul format al treilea unghi este 180" + G0 + " − 90" + G0 + " = 90" + G0 + ". Bisectoarele sunt perpendiculare.");
+  }),
+  T("6.5", function () {
+    var d = R(2, 8) * 10, s = 180 + 0, a1 = (180 + d) / 2, a2 = (180 - d) / 2;
+    return mk("a ∥ b. Diferența a două unghiuri interne de aceeași parte a secantei este " + dg(d) + ". Aflați unghiul mai mare.", dg(a1), [dg(a2), dg(180 - d), dg(a1 + d)],
+      "x + y = 180" + G0 + " și x − y = " + dg(d) + ". Adunăm: 2x = " + dg(180 + d) + ", deci x = " + dg(a1) + " (iar y = " + dg(a2) + ").");
+  }),
+  T("6.5", function () {
+    var x = R(10, 30), a1 = 3, b1 = R(0, 20), m1 = a1 * x + b1;
+    if (m1 >= 170) { x = 20; b1 = 10; m1 = 70; }
+    var m2 = 180 - m1, a2 = 2, b2 = m2 - 2 * x;
+    var e2 = a2 + "x " + (b2 >= 0 ? "+ " + b2 : "− " + (-b2));
+    var p = pairOf("interne de aceeași parte a secantei"), mk2 = {}; mk2[p[0]] = COLS[0]; mk2[p[1]] = COLS[1];
+    return mk(fig(meas(p[0], m1), mk2, true) + "<br>a ∥ b, " + A(p[0]) + " = 3x + " + b1 + G0 + ", " + A(p[1]) + " = " + e2 + G0 + ". Aflați x.", "x = " + x, ["x = " + (x + 4), "x = " + (2 * x), "x = " + (x - 3)],
+      "Sunt interne de aceeași parte a secantei, deci suplementare: 3x + " + b1 + " + " + e2 + " = 180. 5x + " + (b1 + b2) + " = 180, 5x = " + (180 - b1 - b2) + ", x = " + x + ".");
+  }),
+  T("5.5", function () {
+    var a = R(30, 70), b = R(30, 80);
+    return mk("a ∥ b, A ∈ a, B ∈ b, iar punctul M este între cele două drepte, la dreapta lui AB. Semidreptele Ax ⊂ a și By ⊂ b sunt îndreptate spre dreapta. Dacă " + AN + "xAM = " + dg(a) + " și " + AN + "yBM = " + dg(b) + ", cât este " + AN + "AMB?", dg(a + b), [dg(180 - a - b > 0 ? 180 - a - b : a), dg(Math.abs(a - b) || 10), dg(360 - a - b)],
+      "Ducem prin M paralela d la a (deci și la b). Ea împarte " + AN + "AMB în două unghiuri alterne interne cu cele date: " + dg(a) + " + " + dg(b) + " = " + dg(a + b) + ".");
+  }),
+  T("4.5", function () {
+    var n = R(3, 6);
+    return mk(n + " drepte paralele sunt tăiate de o secantă. Câte unghiuri se formează?", String(4 * n), [String(2 * n), String(8 * n), String(n * n)],
+      "La fiecare punct de intersecție se formează 4 unghiuri: " + n + X0() + "4 = " + 4 * n + " unghiuri.");
+  })
+];
+
+var G = [GA, GB, GC, GD, GX];
+var TOPICS_BY = [[0], [1], [2], [0, 1, 2, 3]];
+function qFor(lvIndex) {
+  if (dif() === 4 && Math.random() < 0.4) return pick(GX)();
+  if (lvIndex === 3) return pick(Math.random() < 0.6 ? GD : G[pick([0, 1, 2])])();
+  if (dif() >= 3 && Math.random() < 0.25) return pick(GD)();
+  return pick(G[TOPICS_BY[lvIndex][0]])();
+}
+var COMP = {
+  "1.5": "Recunoașterea unor figuri geometrice plane (drepte, unghiuri) în configurații date",
+  "2.5": "Recunoașterea unghiurilor opuse la vârf, adiacente, complementare sau suplementare și a paralelismului a două drepte",
+  "4.5": "Utilizarea limbajului geometric în descrierea unor configurații geometrice",
+  "5.5": "Analizarea unor configurații geometrice pentru stabilirea paralelismului",
+  "6.5": "Interpretarea informațiilor deduse din reprezentări geometrice în corelație cu anumite condiții date"
+};
+
+var HERO_TOP_ADA = ["EE....EE", "EGGGGGGE", ".GGGGGG.", ".GKGGKG.", ".GGGGGG.", "..GNNG..", "...GG...", ".VVVVVV.", "GVVVVVVG", "GVVBBVVG", ".VVVVVV."];
+var HERO_TOP_RADU = ["EER..REE", "EGRRRRGE", ".GGGGGG.", ".GKGGKG.", ".GGGGGG.", "..GNNG..", "...GG...", ".VVVVVV.", "GVVVVVVG", "GVVBBVVG", ".VVVVVV."];
+var LEGS = [[".GG..GG.", ".GG..GG.", ".OO..OO."], [".GG.GG..", "GG...GG.", "OO...OO."], ["GG....GG", "G......G", "O......O"]];
+var HEROES = [
+    { name: "Ogarul", tag: "cu ciubote roșii", top: HERO_TOP_ADA, pal: { E: "#6b5a4a", G: "#c9b79c", K: "#1a1410", N: "#2a1a14", V: "#3f6fb5", B: "#d9a441", O: "#c0392b", R: "#e84a6a" } },
+    { name: "Ogărița", tag: "sora Ogarului", top: HERO_TOP_RADU, pal: { E: "#8a6a50", G: "#ead9c0", K: "#1a1410", N: "#2a1a14", V: "#8a4fc0", B: "#f2c230", O: "#c0392b", R: "#e84a6a" } }
+];
+var FOES = {
+    blob: { name: "Ariciul țepos", map: ["..S.S.S...", ".SSSSSSS..", "SSSSSSSSF.", "SSSSSSSFKF", "SSSSSSSFFF", ".SSSSSSFFN", "..F..F...."], pal: { S: "#5a3a22", F: "#d9b48a", K: "#111111", N: "#111111" }, p: 4, fly: false, speed: 45 },
+    bat: { name: "Cioara gureșă", map: ["BB........BB", ".BBB.BB.BBB.", "..BBBBBBBB..", "...BBYBBO...", "....BBBB....", ".....BB....."], pal: { B: "#2a2a33", Y: "#f4d24a", O: "#e8912a" }, p: 4, fly: true, speed: 60 },
+    golem: { name: "Ursul morocănos", map: ["..GGGGGG..", ".GGGGGGGG.", ".GOGGGGOG.", ".GGGGGGGG.", "GGGCGGCGGG", "GGGGGGGGGG", "GG.GGGG.GG", "GG.GCGG.GG", "GG.GGGG.GG", "...GG.GG..", "...GG.GG..", "..GGG.GGG."], pal: { G: "#7a4a2a", O: "#1a1a1a", C: "#a8744a" }, p: 4, fly: false, speed: 35 }
+};
+var DRAGON = ["...WW.....WW......", "...WP.....WP......", "...WP.....WP......", "...WW.....WW......", "..WWWWWWWWWW......", ".WWKWWWWWKWW......", ".WWWWNNWWWWW......", "..WWWWWWWWWW.WWW..", "...WWWWWWWWWWWWWW.", "...WWWWWWWWWWWWWW.", "...OOO.WWWWW.OOO..", "..OOOO.......OOOO."];
+var DRAGON_PAL = { W: "#e9e4dc", P: "#f2a0b0", K: "#1a1a1a", N: "#e8708a", O: "#c0392b" };
+function drawMap(g2, map, pal, x, y, p, flip) {
+    for (var j = 0; j < map.length; j++) {
+        var row = map[j];
+        for (var i = 0; i < row.length; i++) {
+            var c = pal[row[i]];
+            if (c) {
+                var ii = flip ? row.length - 1 - i : i;
+                g2.fillStyle = c;
+                g2.fillRect(Math.round(x + ii * p), Math.round(y + j * p), p, p);
+            }
+        }
+    }
+}
+var TS = 32, VW = 768, VH = 384;
+function L(cols) {
+    var t = Array.from({ length: 12 }, function () { return Array(cols).fill("."); });
+    var o = { t: t, cols: cols, ent: [] };
+    o.g = function (a, b, top, ch) {
+        if (ch === void 0) { ch = "#"; }
+        for (var x = a; x <= b; x++)
+            for (var y = top; y < 12; y++)
+                t[y][x] = ch;
+    };
+    o.p = function (x, y, len) {
+        for (var i = 0; i < len; i++)
+            t[y][x + i] = "=";
+    };
+    o.s = function (a, b, y) {
+        for (var x = a; x <= b; x++)
+            t[y][x] = "^";
+    };
+    o.ceil = function () {
+        for (var x = 0; x < cols; x++)
+            t[0][x] = "#";
+    };
+    o.e = function (type, x, y) { return o.ent.push({ type: type, tx: x, ty: y }); };
+    return o;
+}
+var MAPS = [
+    function () {
+        var o = L(90);
+        o.g(0, 14, 10);
+        o.g(17, 30, 10);
+        o.g(31, 40, 9);
+        o.g(44, 60, 10);
+        o.g(61, 64, 8);
+        o.g(65, 70, 6);
+        o.g(71, 78, 8);
+        o.g(79, 89, 10);
+        o.p(20, 7, 3);
+        o.p(47, 6, 4);
+        o.p(65, 3, 3);
+        o.s(48, 49, 9);
+        o.e("spawn", 2, 9);
+        [5, 6, 7].forEach(function (x) { return o.e("c", x, 9); });
+        [20, 21, 22].forEach(function (x) { return o.e("c", x, 6); });
+        o.e("c", 42, 6);
+        [47, 48, 49, 50].forEach(function (x) { return o.e("c", x, 5); });
+        [65, 66, 67].forEach(function (x) { return o.e("c", x, 2); });
+        [82, 83, 84].forEach(function (x) { return o.e("c", x, 9); });
+        o.e("foe", 10, 9);
+        o.e("door", 28, 8);
+        o.e("check", 32, 8);
+        o.e("foe", 36, 8);
+        o.e("foe", 53, 9);
+        o.e("chest", 56, 9);
+        o.e("door", 69, 4);
+        o.e("check", 72, 7);
+        o.e("foe", 75, 7);
+        o.e("flag", 86, 9);
+        return o;
+    },
+    function () {
+        var o = L(95);
+        o.ceil();
+        o.g(0, 12, 10);
+        o.g(17, 26, 10);
+        o.g(27, 34, 7);
+        o.g(40, 55, 10);
+        o.g(56, 65, 11);
+        o.g(66, 80, 5);
+        o.g(81, 94, 10);
+        o.p(19, 6, 3);
+        o.p(57, 8, 2);
+        o.p(60, 6, 2);
+        o.p(63, 4, 2);
+        o.s(44, 46, 9);
+        o.s(56, 65, 10);
+        o.e("spawn", 2, 9);
+        [4, 5, 6].forEach(function (x) { return o.e("c", x, 9); });
+        [19, 20, 21].forEach(function (x) { return o.e("c", x, 5); });
+        o.e("c", 36, 5);
+        o.e("c", 37, 4);
+        o.e("c", 38, 5);
+        [57, 58].forEach(function (x) { return o.e("c", x, 7); });
+        [60, 61].forEach(function (x) { return o.e("c", x, 5); });
+        [63, 64].forEach(function (x) { return o.e("c", x, 3); });
+        [84, 85, 86].forEach(function (x) { return o.e("c", x, 9); });
+        o.e("foe", 8, 9);
+        o.e("door", 25, 8);
+        o.e("check", 28, 6);
+        o.e("foe", 32, 6);
+        o.e("foe", 50, 9);
+        o.e("chest", 53, 9);
+        o.e("check", 67, 4);
+        o.e("foe", 72, 4);
+        o.e("door", 78, 3);
+        o.e("foe", 87, 9);
+        o.e("flag", 92, 9);
+        return o;
+    },
+    function () {
+        var o = L(100);
+        var I = "~";
+        o.g(0, 15, 10, I);
+        o.g(20, 32, 9, I);
+        o.g(38, 50, 10, I);
+        o.g(51, 56, 7, I);
+        o.g(57, 62, 4, I);
+        o.g(68, 80, 8, I);
+        o.g(81, 99, 10, I);
+        o.p(10, 7, 3);
+        o.p(40, 6, 3);
+        o.p(64, 6, 3);
+        o.s(42, 43, 9);
+        o.s(85, 86, 9);
+        o.e("spawn", 2, 9);
+        [10, 11, 12].forEach(function (x) { return o.e("c", x, 6); });
+        [17, 18].forEach(function (x) { return o.e("c", x, 7); });
+        o.e("c", 35, 6);
+        o.e("c", 36, 5);
+        [40, 41, 42].forEach(function (x) { return o.e("c", x, 5); });
+        [59, 60].forEach(function (x) { return o.e("c", x, 2); });
+        [64, 65, 66].forEach(function (x) { return o.e("c", x, 5); });
+        [92, 93, 94].forEach(function (x) { return o.e("c", x, 9); });
+        o.e("foe", 8, 9);
+        o.e("check", 21, 8);
+        o.e("foe", 25, 8);
+        o.e("door", 30, 7);
+        o.e("foe", 46, 9);
+        o.e("chest", 48, 9);
+        o.e("check", 58, 3);
+        o.e("foe", 71, 7);
+        o.e("foe", 76, 7);
+        o.e("door", 79, 6);
+        o.e("foe", 90, 9);
+        o.e("flag", 97, 9);
+        return o;
+    },
+    function () {
+        var o = L(24);
+        o.g(0, 23, 10);
+        o.p(3, 7, 4);
+        o.p(13, 6, 3);
+        o.e("spawn", 2, 9);
+        return o;
+    }
+];
+var LEVELS = [
+    {
+        name: "Pădurea Ogarului",
+        sky: ["#8fd3f4", "#e4f6d8"],
+        far: "#5f9f68",
+        top: "#4caf50",
+        body: "#7a5230",
+        plat: "#a0703c",
+        foe: "blob",
+        topics: [0],
+        rule: { title: "Drepte paralele. Unghiuri opuse la vârf", formula: ["a ∥ b", "∢1 = ∢3 (opuse la vârf)", "∢1 + ∢2 = 180°"], extra: "Două drepte din același plan care nu au niciun punct comun sunt <b>paralele</b> (a ∥ b). <b>Axioma paralelelor:</b> printr-un punct exterior unei drepte trece o singură paralelă la ea. Unghiurile <b>opuse la vârf</b> sunt congruente, iar două unghiuri <b>adiacente suplementare</b> au suma 180°. Iepurele a fugit cu ciubotele Ogarului — pornește după el!", ex: "Exemplu: dacă ∢1 = 70°, atunci ∢3 = 70° (opus la vârf) și ∢2 = 180° − 70° = 110°." },
+        power: { name: "Saltul Ogarului", color: "#ffd84a", text: "Acum poți sări de două ori: apasă SALT încă o dată în aer." }
+    },
+    {
+        name: "Lunca Secantei",
+        sky: ["#f6c27a", "#fbe7c6"],
+        far: "#b98b5a",
+        top: "#8bbf4a",
+        body: "#8a6236",
+        plat: "#a0703c",
+        foe: "bat",
+        topics: [1],
+        rule: { title: "Unghiuri formate de două drepte cu o secantă", formula: ["corespondente", "alterne interne", "alterne externe", "interne de aceeași parte"], extra: "Când dreptele a și b sunt tăiate de secanta c se formează 8 unghiuri. <b>Interne</b> = între a și b; <b>externe</b> = în afara lor. <b>Alterne</b> = de o parte și de alta a secantei. <b>Corespondente</b> = în aceeași poziție la cele două intersecții.", ex: "În figurile din joc: ∢3 și ∢5 sunt alterne interne, ∢1 și ∢5 sunt corespondente, ∢1 și ∢7 sunt alterne externe, ∢4 și ∢5 sunt interne de aceeași parte a secantei." },
+        power: { name: "Inima de Pădure", color: "#f2605a", text: "Primești o inimă în plus pentru tot restul drumului." }
+    },
+    {
+        name: "Dealul Măsurilor",
+        sky: ["#2b3a6b", "#7a8cc4"],
+        far: "#3a4a7a",
+        top: "#6aa84f",
+        body: "#5a4630",
+        plat: "#a0703c",
+        foe: "golem",
+        topics: [2],
+        dark: true,
+        rule: { title: "Dacă a ∥ b, atunci…", formula: ["alterne interne: congruente", "corespondente: congruente", "interne de aceeași parte: suma 180°"], extra: "Când a ∥ b, toate unghiurile ascuțite din figură sunt congruente între ele, iar toate cele obtuze sunt congruente între ele. Un unghi ascuțit și unul obtuz sunt suplementare.", ex: "Exemplu: a ∥ b și ∢2 = 60°. Atunci ∢4 = ∢6 = ∢8 = 60°, iar ∢1 = ∢3 = ∢5 = ∢7 = 120°." },
+        power: { name: "Nasul de Ogar", color: "#ffb627", text: "Stelele din apropiere vin singure spre tine." }
+    },
+    {
+        name: "Vizuina Iepurelui",
+        sky: ["#3a2a1a", "#7a5a3a"],
+        far: "#4a3a2a",
+        top: "#7a8a4a",
+        body: "#4a3a2a",
+        plat: "#7a5a3a",
+        foe: null,
+        topics: [3],
+        boss: true,
+        dark: true,
+        rule: { title: "Criterii de paralelism. Înfruntă Iepurele!", formula: ["alterne interne ≡ ⇒ a ∥ b", "corespondente ≡ ⇒ a ∥ b", "interne aceeași parte: 180° ⇒ a ∥ b"], extra: "Ca să arătăm că a ∥ b, găsim o pereche de unghiuri alterne (interne sau externe) congruente, corespondente congruente sau interne (externe) de aceeași parte a secantei suplementare. Iepurele aruncă morcovi — ferește-te! Când obosește și coboară, atinge runa și răspunde corect ca să-ți recuperezi ciubotele. Are 5 vieți.", ex: "Atenție: unghiurile opuse la vârf sunt mereu congruente, deci NU dovedesc paralelismul." },
+        power: { name: "Ciubotele Ogarului", color: "#c0392b", text: "Ți-ai recuperat ciubotele!" }
+    }
+];
+var cv = document.getElementById("cv"), g = cv.getContext("2d");
+g.setTransform(2, 0, 0, 2, 0, 0);
+g.imageSmoothingEnabled = false;
+var S = { diff: 1, mode: "start", name: "", hero: 0, lvl: 0, maxH: 3, hearts: 3, gems: 0, dj: false, magnet: false, log: [], t: 0, start: 0, end: 0, lv: null, q: null, ctx: null, answered: false, parts: [], shake: 0 };
+var P = { x: 0, y: 0, w: 22, h: 40, vx: 0, vy: 0, on: false, jumps: 0, face: 1, inv: 0, coyote: 0, rx: 0, ry: 0, ground: "" };
+var K = { l: false, r: false, j: false, jPrev: false };
+function loadLevel(i) {
+    var e_2, _b;
+    var L0 = LEVELS[i], M = MAPS[i]();
+    var lv = { i: i, def: L0, t: M.t, cols: M.cols, w: M.cols * TS, foes: [], gems: [], doors: [], chests: [], checks: [], flag: null, fire: [], boss: null, rune: null };
+    try {
+        for (var _c = __values(M.ent), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var e = _d.value;
+            var x = e.tx * TS, y = e.ty * TS;
+            if (e.type === "spawn") {
+                P.rx = x + 5;
+                P.ry = (e.ty + 1) * TS - P.h;
+            }
+            else if (e.type === "c")
+                lv.gems.push({ x: x + 16, y: y + 16, taken: false, ph: Math.random() * 6 });
+            else if (e.type === "foe") {
+                var F = FOES[L0.foe], w = F.map[0].length * F.p, h = F.map.length * F.p;
+                var fy = (e.ty + 1) * TS - h - (F.fly ? 10 : 0);
+                lv.foes.push({ kind: L0.foe, x: x + 16 - w / 2, y: fy, y0: fy, x0: x, w: w, h: h, vx: -F.speed, alive: true, ph: Math.random() * 6 });
+            }
+            else if (e.type === "door")
+                lv.doors.push({ tx: e.tx, ty: e.ty, open: false, cd: 0 });
+            else if (e.type === "chest")
+                lv.chests.push({ x: x + 2, y: y + 8, w: 28, h: 24, used: false });
+            else if (e.type === "check")
+                lv.checks.push({ x: x + 8, y: y, on: false });
+            else if (e.type === "flag")
+                lv.flag = { x: x + 8, y: y - 64 };
+        }
+    }
+    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_2) throw e_2.error; }
+    }
+    if (L0.boss) {
+        lv.boss = { x: 560, y: 90, w: 108, h: 72, hp: 5, state: "attack", tm: 5.5, cool: 1.2, flinch: 0, y0: 90 };
+        lv.rune = { x: 368, y: 288, w: 32, h: 32, on: false };
+    }
+    S.lv = lv;
+    P.x = P.rx;
+    P.y = P.ry;
+    P.vx = P.vy = 0;
+    P.inv = 0;
+    P.jumps = 0;
+    S.hearts = S.maxH;
+}
+function tileAt(tx, ty) {
+    var lv = S.lv;
+    if (tx < 0 || tx >= lv.cols)
+        return "#";
+    if (ty < 0 || ty >= 12)
+        return ".";
+    return lv.t[ty][tx];
+}
+function solid(tx, ty) {
+    var e_3, _b;
+    var c = tileAt(tx, ty);
+    if (c === "#" || c === "~")
+        return true;
+    try {
+        for (var _c = __values(S.lv.doors), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var d = _d.value;
+            if (!d.open && d.tx === tx && (ty === d.ty || ty === d.ty + 1))
+                return true;
+        }
+    }
+    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_3) throw e_3.error; }
+    }
+    return false;
+}
+function overlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+function update(dt) {
+    var e_4, _b, e_5, _c, e_6, _d, e_7, _e, e_8, _f;
+    var lv = S.lv;
+    S.t += dt;
+    if (S.shake > 0)
+        S.shake -= dt;
+    if (S.mode !== "play") {
+        updParts(dt);
+        return;
+    }
+    var dir = (K.r ? 1 : 0) - (K.l ? 1 : 0);
+    if (dir)
+        P.face = dir;
+    var onIce = P.on && P.ground === "~";
+    var acc = P.on ? onIce ? 2.2 : 18 : 9;
+    P.vx += (dir * 230 - P.vx) * Math.min(1, acc * dt);
+    if (P.on)
+        P.coyote = 0.09;
+    else
+        P.coyote -= dt;
+    if (K.j && !K.jPrev) {
+        if (P.coyote > 0) {
+            P.vy = -620;
+            P.jumps = 1;
+            P.coyote = 0;
+            dust();
+        }
+        else if (S.dj && P.jumps < 2) {
+            P.vy = -560;
+            P.jumps = 2;
+            burst(P.x + P.w / 2, P.y + P.h, "#ffd84a", 10);
+        }
+    }
+    if (!K.j && P.vy < -260)
+        P.vy = -260;
+    K.jPrev = K.j;
+    P.vy = Math.min(P.vy + 1800 * dt, 900);
+    P.x += P.vx * dt;
+    var y0 = Math.floor(P.y / TS), y1 = Math.floor((P.y + P.h - 0.01) / TS);
+    if (P.vx > 0) {
+        var tx = Math.floor((P.x + P.w) / TS);
+        for (var ty = y0; ty <= y1; ty++)
+            if (solid(tx, ty)) {
+                P.x = tx * TS - P.w;
+                P.vx = 0;
+                break;
+            }
+    }
+    else if (P.vx < 0) {
+        var tx = Math.floor(P.x / TS);
+        for (var ty = y0; ty <= y1; ty++)
+            if (solid(tx, ty)) {
+                P.x = (tx + 1) * TS;
+                P.vx = 0;
+                break;
+            }
+    }
+    if (P.x < 0)
+        P.x = 0;
+    if (P.x + P.w > lv.w)
+        P.x = lv.w - P.w;
+    var prevB = P.y + P.h;
+    P.y += P.vy * dt;
+    P.on = false;
+    var x0 = Math.floor(P.x / TS), x1 = Math.floor((P.x + P.w - 0.01) / TS);
+    if (P.vy > 0) {
+        var ty = Math.floor((P.y + P.h) / TS);
+        for (var tx = x0; tx <= x1; tx++) {
+            var c = tileAt(tx, ty);
+            if (solid(tx, ty) || c === "=" && prevB <= ty * TS + 0.5) {
+                P.y = ty * TS - P.h;
+                P.vy = 0;
+                P.on = true;
+                P.ground = c;
+                P.jumps = 0;
+                break;
+            }
+        }
+    }
+    else if (P.vy < 0) {
+        var ty = Math.floor(P.y / TS);
+        for (var tx = x0; tx <= x1; tx++)
+            if (solid(tx, ty)) {
+                P.y = (ty + 1) * TS;
+                P.vy = 0;
+                break;
+            }
+    }
+    if (P.inv > 0)
+        P.inv -= dt;
+    var feet = { x: P.x + 5, y: P.y + P.h - 14, w: P.w - 10, h: 14 };
+    for (var tx = Math.floor(feet.x / TS); tx <= Math.floor((feet.x + feet.w) / TS); tx++)
+        for (var ty = Math.floor(feet.y / TS); ty <= Math.floor((feet.y + feet.h) / TS); ty++)
+            if (tileAt(tx, ty) === "^" && feet.y + feet.h > ty * TS + 12 && P.inv <= 0) {
+                return hurt("Te-ai \u00EEn\u021Bepat \u00EEn m\u0103r\u0103cini!");
+            }
+    if (P.y > VH + 40)
+        return hurt("Ai c\u0103zut \xEEn pr\u0103pastie!");
+    var near = { x: P.x - 4, y: P.y, w: P.w + 8, h: P.h };
+    try {
+        for (var _g = __values(lv.doors), _h = _g.next(); !_h.done; _h = _g.next()) {
+            var d = _h.value;
+            if (d.cd > 0)
+                d.cd -= dt;
+            if (!d.open && d.cd <= 0 && overlap(near, { x: d.tx * TS, y: d.ty * TS, w: TS, h: TS * 2 })) {
+                return ask("door", d);
+            }
+        }
+    }
+    catch (e_4_1) { e_4 = { error: e_4_1 }; }
+    finally {
+        try {
+            if (_h && !_h.done && (_b = _g.return)) _b.call(_g);
+        }
+        finally { if (e_4) throw e_4.error; }
+    }
+    try {
+        for (var _j = __values(lv.foes), _k = _j.next(); !_k.done; _k = _j.next()) {
+            var f = _k.value;
+            if (!f.alive)
+                continue;
+            var F = FOES[f.kind];
+            f.ph += dt;
+            if (F.fly) {
+                f.x += f.vx * dt;
+                if (Math.abs(f.x - f.x0) > 90)
+                    f.vx = -f.vx;
+                f.y = f.y0 + Math.sin(f.ph * 3) * 14;
+            }
+            else {
+                f.x += f.vx * dt;
+                var ahead = f.vx > 0 ? f.x + f.w + 2 : f.x - 2;
+                var ftx = Math.floor(ahead / TS), fty = Math.floor((f.y + f.h - 4) / TS), gty = Math.floor((f.y + f.h + 4) / TS);
+                if (solid(ftx, fty) || !solid(ftx, gty) && tileAt(ftx, gty) !== "=" || ahead < 0 || ahead > lv.w)
+                    f.vx = -f.vx;
+            }
+            if (P.inv <= 0 && overlap({ x: P.x + 3, y: P.y + 3, w: P.w - 6, h: P.h - 6 }, { x: f.x + 4, y: f.y + 4, w: f.w - 8, h: f.h - 8 }))
+                return ask("foe", f);
+        }
+    }
+    catch (e_5_1) { e_5 = { error: e_5_1 }; }
+    finally {
+        try {
+            if (_k && !_k.done && (_c = _j.return)) _c.call(_j);
+        }
+        finally { if (e_5) throw e_5.error; }
+    }
+    try {
+        for (var _l = __values(lv.gems), _m = _l.next(); !_m.done; _m = _l.next()) {
+            var c = _m.value;
+            if (c.taken)
+                continue;
+            c.ph += dt;
+            if (S.magnet) {
+                var dx = P.x + P.w / 2 - c.x, dy = P.y + P.h / 2 - c.y, dd = Math.hypot(dx, dy);
+                if (dd < 130) {
+                    c.x += dx / dd * 320 * dt;
+                    c.y += dy / dd * 320 * dt;
+                }
+            }
+            if (overlap({ x: P.x, y: P.y, w: P.w, h: P.h }, { x: c.x - 8, y: c.y - 8, w: 16, h: 16 })) {
+                c.taken = true;
+                S.gems++;
+                burst(c.x, c.y, "#ffd84a", 8);
+            }
+        }
+    }
+    catch (e_6_1) { e_6 = { error: e_6_1 }; }
+    finally {
+        try {
+            if (_m && !_m.done && (_d = _l.return)) _d.call(_l);
+        }
+        finally { if (e_6) throw e_6.error; }
+    }
+    try {
+        for (var _o = __values(lv.chests), _p = _o.next(); !_p.done; _p = _o.next()) {
+            var c = _p.value;
+            if (!c.used && overlap(P, c))
+                return ask("chest", c);
+        }
+    }
+    catch (e_7_1) { e_7 = { error: e_7_1 }; }
+    finally {
+        try {
+            if (_p && !_p.done && (_e = _o.return)) _e.call(_o);
+        }
+        finally { if (e_7) throw e_7.error; }
+    }
+    try {
+        for (var _q = __values(lv.checks), _r = _q.next(); !_r.done; _r = _q.next()) {
+            var c = _r.value;
+            if (!c.on && overlap(P, { x: c.x, y: c.y, w: 16, h: 32 })) {
+                lv.checks.forEach(function (o) { return o.on = false; });
+                c.on = true;
+                P.rx = c.x;
+                P.ry = c.y + 32 - P.h;
+                burst(c.x + 8, c.y, "#f5b841", 12);
+            }
+        }
+    }
+    catch (e_8_1) { e_8 = { error: e_8_1 }; }
+    finally {
+        try {
+            if (_r && !_r.done && (_f = _q.return)) _f.call(_q);
+        }
+        finally { if (e_8) throw e_8.error; }
+    }
+    if (lv.flag && overlap(P, { x: lv.flag.x, y: lv.flag.y, w: 20, h: 96 }))
+        return levelWin();
+    if (lv.boss)
+        updBoss(dt);
+    updParts(dt);
+}
+function updBoss(dt) {
+    var e_9, _b;
+    var lv = S.lv, b = lv.boss;
+    b.tm -= dt;
+    if (b.flinch > 0)
+        b.flinch -= dt;
+    if (b.state === "attack") {
+        b.y = b.y0 + Math.sin(S.t * 1.6) * 50;
+        b.x = 560 + Math.sin(S.t * 0.7) * 30;
+        b.cool -= dt;
+        if (b.cool <= 0) {
+            var sx = b.x + 10, sy = b.y + 40;
+            var dx = P.x + P.w / 2 - sx, dy = P.y + P.h / 2 - sy, dd = Math.hypot(dx, dy) || 1;
+            var sp = 230 + (5 - b.hp) * 25;
+            lv.fire.push({ x: sx, y: sy, vx: dx / dd * sp, vy: dy / dd * sp, r: 9 });
+            b.cool = Math.max(0.55, 1.25 - (5 - b.hp) * 0.15);
+        }
+        if (b.tm <= 0) {
+            b.state = "tired";
+            b.tm = 5;
+            lv.rune.on = true;
+        }
+    }
+    else {
+        b.y += (VH - 64 - b.h - b.y) * Math.min(1, 3 * dt);
+        if (b.tm <= 0) {
+            b.state = "attack";
+            b.tm = 5.5;
+            lv.rune.on = false;
+        }
+    }
+    try {
+        for (var _c = __values(lv.fire), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var f = _d.value;
+            f.x += f.vx * dt;
+            f.y += f.vy * dt;
+            S.parts.push({ x: f.x, y: f.y, vx: 0, vy: -30, l: 0.25, c: Math.random() < 0.5 ? "#ffb03a" : "#ff5a2a" });
+            if (P.inv <= 0 && overlap({ x: P.x + 4, y: P.y + 4, w: P.w - 8, h: P.h - 8 }, { x: f.x - f.r, y: f.y - f.r, w: f.r * 2, h: f.r * 2 })) {
+                f.dead = true;
+                return hurt("Te-a atins o minge de foc!", true);
+            }
+            if (f.x < -40 || f.x > VW + 40 || f.y > VH || f.y < -40)
+                f.dead = true;
+        }
+    }
+    catch (e_9_1) { e_9 = { error: e_9_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_9) throw e_9.error; }
+    }
+    lv.fire = lv.fire.filter(function (f) { return !f.dead; });
+    if (b.state === "attack" && P.inv <= 0 && overlap(P, { x: b.x + 10, y: b.y + 10, w: b.w - 20, h: b.h - 20 }))
+        return hurt("Te-a nimerit un morcov!", true);
+    if (lv.rune.on && overlap(P, lv.rune))
+        return ask("boss", b);
+}
+function hurt(msg, stay) {
+    S.hearts--;
+    P.inv = 1.6;
+    S.shake = 0.3;
+    burst(P.x + P.w / 2, P.y + P.h / 2, "#f2605a", 16);
+    if (S.hearts <= 0)
+        return fail(msg);
+    if (!stay) {
+        P.x = P.rx;
+        P.y = P.ry;
+        P.vx = P.vy = 0;
+    }
+    toast(msg + " \u22121 inim\u0103");
+}
+function updParts(dt) {
+    var e_10, _b;
+    try {
+        for (var _c = __values(S.parts), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var p = _d.value;
+            p.l -= dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += 500 * dt;
+        }
+    }
+    catch (e_10_1) { e_10 = { error: e_10_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_10) throw e_10.error; }
+    }
+    S.parts = S.parts.filter(function (p) { return p.l > 0; });
+}
+function burst(x, y, c, n) {
+    for (var i = 0; i < n; i++)
+        S.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 280, vy: -Math.random() * 240, l: 0.5 + Math.random() * 0.4, c: c });
+}
+function dust() {
+    for (var i = 0; i < 5; i++)
+        S.parts.push({ x: P.x + P.w / 2, y: P.y + P.h, vx: (Math.random() - 0.5) * 120, vy: -Math.random() * 60, l: 0.3, c: "rgba(255,255,255,.6)" });
+}
+function hash(n) {
+    n = n ^ 61 ^ n >>> 16;
+    n = n + (n << 3);
+    n = n ^ n >>> 4;
+    n = Math.imul(n, 668265261);
+    n = n ^ n >>> 15;
+    return (n >>> 0) / 4294967295;
+}
+var toastMsg = "", toastT = 0;
+function toast(m) {
+    toastMsg = m;
+    toastT = 2;
+}
+function draw() {
+    var e_11, _b, e_12, _c, e_13, _d, e_14, _e, e_15, _f, e_16, _g, e_17, _h;
+    var lv = S.lv;
+    if (!lv) {
+        g.fillStyle = "#12111c";
+        g.fillRect(0, 0, VW, VH);
+        return;
+    }
+    var L0 = lv.def;
+    var cam = Math.max(0, Math.min(lv.w - VW, P.x + P.w / 2 - VW * 0.4));
+    var sx0 = S.shake > 0 ? (Math.random() - 0.5) * 8 : 0;
+    g.save();
+    g.translate(sx0, 0);
+    var gr = g.createLinearGradient(0, 0, 0, VH);
+    gr.addColorStop(0, L0.sky[0]);
+    gr.addColorStop(1, L0.sky[1]);
+    g.fillStyle = gr;
+    g.fillRect(-10, 0, VW + 20, VH);
+    if (L0.dark) {
+        g.fillStyle = "rgba(255,255,255,.55)";
+        for (var i = 0; i < 50; i++) {
+            g.fillRect(((hash(i * 13) * VW * 2 - cam * 0.15) % VW + VW) % VW, hash(i * 29) * VH * 0.6, 2, 2);
+        }
+    }
+    g.fillStyle = L0.far;
+    var pc = cam * 0.35;
+    for (var i = Math.floor(pc / 48) - 1; i < (pc + VW) / 48 + 1; i++) {
+        var h = 60 + hash(i * 7 + 3) * 120;
+        g.fillRect(i * 48 - pc, VH - h, 48, h);
+    }
+    if (L0.ice) {
+        g.fillStyle = "#ffffff";
+        for (var i = Math.floor(pc / 48) - 1; i < (pc + VW) / 48 + 1; i++) {
+            var h = 60 + hash(i * 7 + 3) * 120;
+            g.fillRect(i * 48 - pc, VH - h, 48, 10);
+        }
+    }
+    g.translate(-Math.round(cam), 0);
+    var c0 = Math.floor(cam / TS), c1 = Math.ceil((cam + VW) / TS);
+    for (var ty = 0; ty < 12; ty++)
+        for (var tx = c0; tx <= c1 && tx < lv.cols; tx++) {
+            var c = lv.t[ty][tx], x = tx * TS, y = ty * TS;
+            if (c === "#" || c === "~") {
+                var top = !(ty > 0 && (lv.t[ty - 1][tx] === "#" || lv.t[ty - 1][tx] === "~"));
+                g.fillStyle = L0.body;
+                g.fillRect(x, y, TS, TS);
+                g.fillStyle = "rgba(0,0,0,.18)";
+                for (var k = 0; k < 4; k++)
+                    g.fillRect(x + Math.floor(hash(tx * 31 + ty * 7 + k) * 28), y + Math.floor(hash(tx * 17 + ty * 13 + k) * 28), 4, 4);
+                g.fillStyle = "rgba(255,255,255,.07)";
+                g.fillRect(x, y, TS, 2);
+                g.fillStyle = "rgba(0,0,0,.25)";
+                g.fillRect(x + TS - 1, y, 1, TS);
+                if (top) {
+                    g.fillStyle = L0.top;
+                    g.fillRect(x, y, TS, 9);
+                    if (c === "~") {
+                        g.fillStyle = "rgba(255,255,255,.8)";
+                        g.fillRect(x + 4, y + 2, 10, 2);
+                    }
+                    else {
+                        g.fillStyle = "rgba(0,0,0,.15)";
+                        g.fillRect(x + Math.floor(hash(tx) * 24), y + 9, 6, 3);
+                    }
+                }
+            }
+            else if (c === "=") {
+                g.fillStyle = L0.plat;
+                g.fillRect(x, y, TS, 10);
+                g.fillStyle = "rgba(0,0,0,.3)";
+                g.fillRect(x, y + 8, TS, 2);
+                g.fillRect(x + 15, y, 2, 10);
+            }
+            else if (c === "^") {
+                g.fillStyle = "#c9ccd6";
+                for (var k = 0; k < 3; k++) {
+                    g.beginPath();
+                    g.moveTo(x + k * 11, y + TS);
+                    g.lineTo(x + k * 11 + 5, y + 12);
+                    g.lineTo(x + k * 11 + 10, y + TS);
+                    g.fill();
+                }
+                g.fillStyle = "#7a7d88";
+                g.fillRect(x, y + TS - 3, TS, 3);
+            }
+        }
+    try {
+        for (var _j = __values(lv.doors), _k = _j.next(); !_k.done; _k = _j.next()) {
+            var d = _k.value;
+            var x = d.tx * TS, y = d.ty * TS;
+            if (d.open) {
+                g.fillStyle = "rgba(0,0,0,.25)";
+                g.fillRect(x, y, TS, TS * 2);
+                continue;
+            }
+            g.fillStyle = "#5a3418";
+            g.fillRect(x, y, TS, TS * 2);
+            g.fillStyle = "#7a4a24";
+            g.fillRect(x + 3, y + 3, TS - 6, TS * 2 - 6);
+            g.fillStyle = "#3a200c";
+            g.fillRect(x + 15, y + 3, 2, TS * 2 - 6);
+            g.fillStyle = "#f5b841";
+            g.font = '700 26px "Pixelify Sans", monospace';
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.fillText("?", x + 16, y + 26 + Math.sin(S.t * 4) * 2);
+            g.fillStyle = "#f5b841";
+            g.fillRect(x + 22, y + 40, 4, 4);
+        }
+    }
+    catch (e_11_1) { e_11 = { error: e_11_1 }; }
+    finally {
+        try {
+            if (_k && !_k.done && (_b = _j.return)) _b.call(_j);
+        }
+        finally { if (e_11) throw e_11.error; }
+    }
+    try {
+        for (var _l = __values(lv.checks), _m = _l.next(); !_m.done; _m = _l.next()) {
+            var c = _m.value;
+            g.fillStyle = "#5a3a22";
+            g.fillRect(c.x + 6, c.y + 16, 4, 16);
+            g.fillStyle = "#6b6b6b";
+            g.fillRect(c.x, c.y + 28, 16, 4);
+            if (c.on) {
+                g.fillStyle = Math.sin(S.t * 20) > 0 ? "#ffb03a" : "#ff6a2a";
+                g.fillRect(c.x + 3, c.y + 6, 10, 10);
+                g.fillStyle = "#ffe066";
+                g.fillRect(c.x + 6, c.y + 9, 4, 6);
+            }
+            else {
+                g.fillStyle = "#4a4a4a";
+                g.fillRect(c.x + 4, c.y + 12, 8, 4);
+            }
+        }
+    }
+    catch (e_12_1) { e_12 = { error: e_12_1 }; }
+    finally {
+        try {
+            if (_m && !_m.done && (_c = _l.return)) _c.call(_l);
+        }
+        finally { if (e_12) throw e_12.error; }
+    }
+    try {
+        for (var _o = __values(lv.chests), _p = _o.next(); !_p.done; _p = _o.next()) {
+            var c = _p.value;
+            if (c.used) {
+                g.fillStyle = "#4a2c14";
+                g.fillRect(c.x, c.y + 8, c.w, c.h - 8);
+                continue;
+            }
+            g.fillStyle = "#8a5a2b";
+            g.fillRect(c.x, c.y, c.w, c.h);
+            g.fillStyle = "#5a3418";
+            g.fillRect(c.x, c.y + 9, c.w, 3);
+            g.fillStyle = "#f5b841";
+            g.fillRect(c.x + 11, c.y + 7, 6, 8);
+        }
+    }
+    catch (e_13_1) { e_13 = { error: e_13_1 }; }
+    finally {
+        try {
+            if (_p && !_p.done && (_d = _o.return)) _d.call(_o);
+        }
+        finally { if (e_13) throw e_13.error; }
+    }
+    try {
+        for (var _q = __values(lv.gems), _r = _q.next(); !_r.done; _r = _q.next()) {
+            var c = _r.value;
+            if (c.taken)
+                continue;
+            var y = c.y + Math.sin(c.ph * 3) * 3;
+            g.fillStyle = "#ffd84a";
+            g.beginPath();
+            g.moveTo(c.x, y - 9);
+            g.lineTo(c.x + 7, y - 2);
+            g.lineTo(c.x, y + 9);
+            g.lineTo(c.x - 7, y - 2);
+            g.fill();
+            g.fillStyle = "#ffffff";
+            g.fillRect(c.x - 2, y - 5, 3, 3);
+        }
+    }
+    catch (e_14_1) { e_14 = { error: e_14_1 }; }
+    finally {
+        try {
+            if (_r && !_r.done && (_e = _q.return)) _e.call(_q);
+        }
+        finally { if (e_14) throw e_14.error; }
+    }
+    if (lv.flag) {
+        var f = lv.flag;
+        g.fillStyle = "#d8d8d8";
+        g.fillRect(f.x, f.y, 4, 96);
+        var wv = Math.sin(S.t * 6) * 3;
+        g.fillStyle = "#f5b841";
+        g.beginPath();
+        g.moveTo(f.x + 4, f.y + 4);
+        g.lineTo(f.x + 40, f.y + 14 + wv);
+        g.lineTo(f.x + 4, f.y + 26);
+        g.fill();
+        g.fillStyle = "#1d1504";
+        g.font = '700 12px "Atkinson Hyperlegible", sans-serif';
+        g.textAlign = "left";
+        g.fillText("a\u207F", f.x + 10, f.y + 16);
+    }
+    try {
+        for (var _s = __values(lv.foes), _t = _s.next(); !_t.done; _t = _s.next()) {
+            var f = _t.value;
+            if (!f.alive)
+                continue;
+            var F = FOES[f.kind];
+            drawMap(g, F.map, F.pal, f.x, f.y + (F.fly ? 0 : -Math.abs(Math.sin(f.ph * 6)) * 2), F.p, f.vx > 0);
+        }
+    }
+    catch (e_15_1) { e_15 = { error: e_15_1 }; }
+    finally {
+        try {
+            if (_t && !_t.done && (_f = _s.return)) _f.call(_s);
+        }
+        finally { if (e_15) throw e_15.error; }
+    }
+    if (lv.boss) {
+        var b = lv.boss;
+        if (lv.rune.on) {
+            var r = lv.rune;
+            g.fillStyle = "rgba(196,155,255,".concat(0.5 + 0.4 * Math.sin(S.t * 8), ")");
+            g.fillRect(r.x, r.y, r.w, r.h);
+            g.fillStyle = "#fff";
+            g.font = '700 22px "Atkinson Hyperlegible", sans-serif';
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.fillText("\u207F", r.x + 16, r.y + 16);
+        }
+        if (b.flinch > 0)
+            g.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(S.t * 40));
+        drawMap(g, DRAGON, DRAGON_PAL, b.x, b.y, 6, false);
+        g.globalAlpha = 1;
+        if (b.state === "tired") {
+            g.fillStyle = "#fff";
+            g.font = '700 16px "Pixelify Sans", monospace';
+            g.textAlign = "center";
+            g.fillText("Z z z", b.x + 70, b.y - 8);
+        }
+        try {
+            for (var _u = __values(lv.fire), _v = _u.next(); !_v.done; _v = _u.next()) {
+                var f = _v.value;
+                g.fillStyle = "#f07a1a";
+                g.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
+                g.fillStyle = "#ffe066";
+                g.fillRect(f.x - 4, f.y - 4, 8, 8);
+            }
+        }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        finally {
+            try {
+                if (_v && !_v.done && (_g = _u.return)) _g.call(_u);
+            }
+            finally { if (e_16) throw e_16.error; }
+        }
+    }
+    var H0 = HEROES[S.hero];
+    var fr = 0;
+    if (!P.on)
+        fr = 2;
+    else if (Math.abs(P.vx) > 30)
+        fr = Math.floor(S.t * 10) % 2;
+    if (S.dj || S.magnet) {
+        g.fillStyle = S.magnet ? "rgba(245,184,65,.25)" : "rgba(111,227,234,.2)";
+        g.fillRect(P.x - 6, P.y - 4, P.w + 12, P.h + 8);
+    }
+    if (!(P.inv > 0 && Math.floor(S.t * 16) % 2))
+        drawMap(g, H0.top.concat(LEGS[fr]), H0.pal, P.x - 1, P.y - 2, 3, P.face < 0);
+    try {
+        for (var _w = __values(S.parts), _x = _w.next(); !_x.done; _x = _w.next()) {
+            var p = _x.value;
+            g.fillStyle = p.c;
+            g.fillRect(p.x - 2, p.y - 2, 5, 5);
+        }
+    }
+    catch (e_17_1) { e_17 = { error: e_17_1 }; }
+    finally {
+        try {
+            if (_x && !_x.done && (_h = _w.return)) _h.call(_w);
+        }
+        finally { if (e_17) throw e_17.error; }
+    }
+    g.restore();
+    hudDraw();
+}
+function heart(x, y, full) {
+    g.fillStyle = full ? "#f2605a" : "#3d3346";
+    var m = [".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."];
+    m.forEach(function (r, j) {
+        for (var i = 0; i < 7; i++)
+            if (r[i] === "X")
+                g.fillRect(x + i * 3, y + j * 3, 3, 3);
+    });
+}
+function hudDraw() {
+    var lv = S.lv;
+    g.fillStyle = "rgba(0,0,0,.5)";
+    g.fillRect(8, 8, Math.max(250, S.maxH * 26 + 190), 30);
+    for (var i = 0; i < S.maxH; i++)
+        heart(16 + i * 26, 14, i < S.hearts);
+    var gx = 24 + S.maxH * 26;
+    g.fillStyle = "#ffd84a";
+    g.beginPath();
+    g.moveTo(gx, 14);
+    g.lineTo(gx + 7, 21);
+    g.lineTo(gx, 32);
+    g.lineTo(gx - 7, 21);
+    g.fill();
+    g.fillStyle = "#f3f0e6";
+    g.font = '700 16px "Pixelify Sans", monospace';
+    g.textAlign = "left";
+    g.textBaseline = "middle";
+    g.fillText("".concat(S.gems), gx + 14, 24);
+    g.fillText("Nivel ".concat(lv.i + 1, ": ").concat(lv.def.name), gx + 60, 24);
+    if (lv.boss) {
+        var b = lv.boss;
+        g.fillStyle = "rgba(0,0,0,.5)";
+        g.fillRect(VW - 200, 8, 192, 30);
+        g.fillStyle = "#f3f0e6";
+        g.fillText("Iepurele", VW - 192, 24);
+        for (var i = 0; i < 5; i++) {
+            g.fillStyle = i < b.hp ? "#ff5a2a" : "#3d3346";
+            g.fillRect(VW - 110 + i * 20, 16, 16, 14);
+        }
+    }
+    if (toastT > 0) {
+        toastT -= 1 / 60;
+        g.font = '700 18px "Pixelify Sans", monospace';
+        var w = g.measureText(toastMsg).width + 30;
+        g.fillStyle = "rgba(0,0,0,.7)";
+        g.fillRect(VW / 2 - w / 2, VH - 56, w, 34);
+        g.fillStyle = "#ffd27a";
+        g.textAlign = "center";
+        g.fillText(toastMsg, VW / 2, VH - 39);
+    }
+}
+var last = performance.now();
+function loop(now) {
+    var dt = Math.min(0.033, (now - last) / 1e3);
+    last = now;
+    if (S.lv)
+        update(dt);
+    draw();
+    requestAnimationFrame(loop);
+}
+var PN = document.getElementById("panel"), CT = document.getElementById("controls");
+function setMode(m) {
+    S.mode = m;
+    CT.hidden = m !== "play";
+    if (m !== "play") {
+        K.l = K.r = K.j = false;
+    }
+}
+function playPanel() {
+    var _a;
+    var lv = S.lv;
+    setMode("play");
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(lv.i + 1, " din 4 \u00B7 ").concat(lv.def.name, "</p><div class=\"goal\">").concat(lv.def.boss ? "<span><b>\u021Ainta:</b> \xEEnvinge Iepurele \u0219i ia-\u021Bi ciubotele</span><span>Fere\u0219te morcovii, apoi atinge runa c\xE2nd iepurele obose\u0219te.</span>" : "<span><b>\u021Ainta:</b> ajunge la steagul galben</span><span>U\u0219ile cu <b>?</b> se deschid cu r\u0103spunsul corect \u00B7 Atingerea unui paznic porne\u0219te un duel \u00B7 Cuf\u0103rul d\u0103 o inim\u0103</span>", "</div>");
+    (_a = cv.focus) == null ? void 0 : _a.call(cv);
+}
+function startPanel() {
+    setMode("start");
+    PN.innerHTML = "<p class=\"eyebrow\">Clasa a VI-a \u00B7 Drepte paralele \u00B7 Unghiuri</p><h2>Ciubotele Ogarului</h2>\n  <p>Iepurele i-a luat Ogarului ciubotele \u0219i a fugit! Treci prin patru niveluri, rezolv\u0103 problemele cu drepte paralele \u0219i unghiuri \u0219i prinde-l pe iepure. La final prime\u0219ti o fi\u0219\u0103 cu rezultatele tale pentru profesor.</p>\n  <label for=\"nm\">Numele t\u0103u (apare pe fi\u0219a de tem\u0103)<input type=\"text\" id=\"nm\" maxlength=\"40\" placeholder=\"Prenume \u0219i nume\" autocomplete=\"name\"></label>\n  <div class=\"heroes\">".concat(HEROES.map(function (h, i) { return "<button class=\"hero-btn\" type=\"button\" data-h=\"".concat(i, "\" aria-pressed=\"").concat(i === S.hero, "\"><canvas width=\"8\" height=\"14\"></canvas>").concat(h.name, "<small>").concat(h.tag, "</small></button>"); }).join(""), "</div><p class=\"eyebrow\">Nivel de dificultate</p><div class=\"heroes\">" + DIFFS.map(function (d, i) { return "<button class=\"dif-btn\" type=\"button\" data-d=\"" + (i + 1) + "\" aria-pressed=\"" + ((i + 1) === (S.diff || 1)) + "\">" + d.name + "<small>" + d.tag + "</small></button>"; }).join("") + "</div>\n  <div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">Porne\u0219te dup\u0103 iepure</button></div>");
+    PN.querySelectorAll(".hero-btn").forEach(function (b) {
+        var h = HEROES[+b.dataset.h];
+        drawMap(b.querySelector("canvas").getContext("2d"), h.top.concat(LEGS[0]), h.pal, 0, 0, 1);
+        b.onclick = function () {
+            S.hero = +b.dataset.h;
+            PN.querySelectorAll(".hero-btn").forEach(function (x) { return x.setAttribute("aria-pressed", x === b); });
+        };
+    });
+    PN.querySelectorAll(".dif-btn").forEach(function (b) {
+        b.onclick = function () {
+            S.diff = +b.dataset.d;
+            PN.querySelectorAll(".dif-btn").forEach(function (x) { return x.setAttribute("aria-pressed", x === b); });
+        };
+    });
+    document.getElementById("go").onclick = function () {
+        S.name = document.getElementById("nm").value.trim() || "Elev";
+        S.gems = 0;
+        S.log = [];
+        S.maxH = 3;
+        S.dj = false;
+        S.magnet = false;
+        S.start = Date.now();
+        intro(0);
+    };
+}
+function intro(i) {
+    S.lvl = i;
+    loadLevel(i);
+    setMode("intro");
+    var L0 = LEVELS[i], r = L0.rule;
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(i + 1, " din 4 \u00B7 ").concat(L0.name, "</p><h2>").concat(r.title, "</h2><div class=\"formula\">").concat(r.formula.map(function (f) { return "<span>".concat(f, "</span>"); }).join(""), "</div><p>").concat(r.extra, "</p><p class=\"ex\">").concat(r.ex, "</p><div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">").concat(L0.boss ? "Intr\u0103 \xEEn vizuin\u0103" : "\xCEncepe nivelul", "</button></div>");
+    var b = document.getElementById("go");
+    b.focus();
+    b.onclick = playPanel;
+}
+function ask(kind, obj) {
+    var _a;
+    setMode("question");
+    S.ctx = { kind: kind, obj: obj };
+    S.answered = false;
+    var lv = S.lv;
+    S.q = qFor(lv.i);
+    var q = S.q;
+    var head = { door: ["U\u0219a fermecat\u0103", "R\u0103spunde corect ca s\u0103 deschizi u\u0219a."], foe: ["Duel cu ".concat(((_a = FOES[lv.def.foe]) == null ? void 0 : _a.name) || ""), "R\u0103spunde corect ca s\u0103-l \xEEnvingi."], chest: ["Co\u0219ul cu merinde", "R\u0103spuns corect: +1 inim\u0103 \u0219i 5 stele. R\u0103spunsul gre\u0219it nu te cost\u0103 nimic."], boss: ["Runa Paralelelor", "R\u0103spuns corect: iepurele pierde o via\u021B\u0103."] }[kind];
+    PN.innerHTML = "<p class=\"eyebrow\">".concat(head[0], "</p><p>").concat(head[1], "</p><div class=\"q\">").concat(q.q, "</div><div class=\"opts\">").concat(q.opts.map(function (o, i) { return "<button class=\"opt\" type=\"button\" data-i=\"".concat(i, "\"><span class=\"k\">").concat(i + 1, "</span><span>").concat(o, "</span></button>"); }).join(""), "</div><div id=\"fb\"></div>");
+    PN.querySelectorAll(".opt").forEach(function (b) { return b.onclick = function () { return answer(+b.dataset.i); }; });
+    PN.querySelector(".opt").focus();
+}
+function answer(i) {
+    if (S.answered)
+        return;
+    S.answered = true;
+    var q = S.q, ok = i === q.ans, _b = S.ctx, kind = _b.kind, obj = _b.obj, lv = S.lv;
+    var btns = PN.querySelectorAll(".opt");
+    btns.forEach(function (b) { return b.disabled = true; });
+    btns[q.ans].classList.add("right");
+    if (!ok)
+        btns[i].classList.add("wrong");
+    S.log.push({ q: q.q, chosen: q.opts[i], correct: q.opts[q.ans], explain: q.explain, ok: ok, lvl: lv.i + 1, c: q.c || "2.1" });
+    var msg;
+    if (ok) {
+        S.gems += 2;
+        if (kind === "door") {
+            obj.open = true;
+            burst(obj.tx * TS + 16, obj.ty * TS + 32, "#f5b841", 20);
+            msg = "U\u0219a se deschide!";
+        }
+        else if (kind === "foe") {
+            obj.alive = false;
+            burst(obj.x + obj.w / 2, obj.y + obj.h / 2, "#c08ff0", 26);
+            msg = "Paznicul a fost \xEEnvins!";
+        }
+        else if (kind === "chest") {
+            obj.used = true;
+            S.hearts = Math.min(S.maxH, S.hearts + 1);
+            S.gems += 5;
+            msg = "Cuf\u0103rul se deschide: +1 inim\u0103 \u0219i 5 stele!";
+        }
+        else {
+            obj.hp--;
+            obj.flinch = 0.8;
+            obj.state = "attack";
+            obj.tm = 5.5;
+            lv.rune.on = false;
+            lv.fire = [];
+            burst(obj.x + 50, obj.y + 36, "#ff5a2a", 40);
+            S.shake = 0.4;
+            msg = obj.hp > 0 ? "Prins! Iepurele mai are ".concat(obj.hp, " ").concat(obj.hp === 1 ? "via\u021B\u0103" : "vie\u021Bi", ".") : "Iepurele s-a predat \u0219i \u021Bi-a dat ciubotele \u00EEnapoi!";
+        }
+    }
+    else {
+        if (kind === "chest") {
+            obj.used = true;
+            msg = "Cuf\u0103rul s-a \xEEnchis pentru totdeauna, dar nu ai pierdut nimic.";
+        }
+        else {
+            S.hearts--;
+            P.inv = 1.6;
+            msg = "Ai pierdut o inim\u0103.";
+            if (kind === "foe") {
+                P.x = Math.max(0, P.x + (P.x < obj.x ? -70 : 70));
+                P.vx = 0;
+            }
+            if (kind === "door") {
+                obj.cd = 1;
+                P.x -= 24;
+            }
+            if (kind === "boss") {
+                obj.state = "attack";
+                obj.tm = 5.5;
+                lv.rune.on = false;
+                P.x = Math.max(0, P.x - 60);
+            }
+        }
+    }
+    document.getElementById("fb").innerHTML = "<div class=\"fb ".concat(ok ? "ok" : "no", "\"><strong>").concat(ok ? "Corect!" : "Gre\u0219it.", " ").concat(msg, "</strong><p>").concat(q.explain, "</p></div><div class=\"row\" style=\"margin-top:12px\"><button class=\"btn\" id=\"cont\" type=\"button\">Continu\u0103</button></div>");
+    var c = document.getElementById("cont");
+    c.focus();
+    c.onclick = function () {
+        if (S.hearts <= 0)
+            return fail("Ai r\u0103mas f\u0103r\u0103 inimi.");
+        if (kind === "boss" && obj.hp <= 0)
+            return levelWin();
+        playPanel();
+    };
+}
+function fail(msg) {
+    setMode("fail");
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(S.lv.i + 1, "</p><h2>").concat(msg, " Mai \u00EEncearc\u0103!</h2><p>Nivelul o ia de la \u00EEnceput, dar stelele \u0219i r\u0103spunsurile tale r\u0103m\u00E2n salvate pe fi\u0219\u0103.</p><div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">Reia nivelul</button><button class=\"btn ghost\" id=\"rule\" type=\"button\">Recite\u0219te regula</button></div>");
+    document.getElementById("go").onclick = function () {
+        loadLevel(S.lv.i);
+        playPanel();
+    };
+    document.getElementById("rule").onclick = function () { return intro(S.lv.i); };
+    document.getElementById("go").focus();
+}
+function levelWin() {
+    var i = S.lv.i, pwr = LEVELS[i].power;
+    setMode("win");
+    if (i === 0)
+        S.dj = true;
+    if (i === 1)
+        S.maxH = 4;
+    if (i === 2)
+        S.magnet = true;
+    if (i === 3) {
+        S.end = Date.now();
+        return report();
+    }
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(i + 1, " terminat</p><h2>Ai c\u00E2\u0219tigat o putere nou\u0103!</h2><div class=\"badge\"><i style=\"background:").concat(pwr.color, "\"></i>").concat(pwr.name, "</div><p>").concat(pwr.text, "</p><div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">Mergi la nivelul ").concat(i + 2, "</button></div>");
+    var b = document.getElementById("go");
+    b.focus();
+    b.onclick = function () { return intro(i + 1); };
+}
+function report() {
+    setMode("report");
+    var tot = S.log.length, ok = S.log.filter(function (x) { return x.ok; }).length, pct = tot ? Math.round(ok / tot * 100) : 0, sec = Math.round((S.end - S.start) / 1e3);
+    var mist = S.log.filter(function (x) { return !x.ok; });
+    var date = ( /* @__PURE__ */new Date()).toLocaleDateString("ro-RO", { day: "numeric", month: "long", year: "numeric" });
+    PN.innerHTML = "<div class=\"rep\"><p class=\"eyebrow\">Fi\u0219\u0103 de tem\u0103 \u00B7 Clasa a VI-a \u00B7 Drepte paralele \u00B7 Nivel " + DIFFS[dif() - 1].name + " \u00B7 ".concat(date, "</p><h2>Felicit\u0103ri, ").concat(esc(S.name), "! Ai \u00EEnvins iepurele \u0219i ai recuperat ciubotele Ogarului.</h2>\n  <div class=\"badge\"><i style=\"background:#c0392b\"></i>Ciubotele Ogarului</div>\n  <div class=\"stats\"><div class=\"stat\"><span>R\u0103spunsuri corecte</span><b>").concat(ok, " din ").concat(tot, "</b></div><div class=\"stat\"><span>Precizie</span><b>").concat(pct, "%</b></div><div class=\"stat\"><span>Stele</span><b>").concat(S.gems, "</b></div><div class=\"stat\"><span>Timp</span><b>").concat(Math.floor(sec / 60), " min ").concat(sec % 60, " s</b></div></div>\n  ").concat(mist.length ? "<p><b>De recapitulat</b> (gre\u0219elile tale, cu rezolvarea corect\u0103):</p><ul class=\"mist\">".concat(mist.map(function (m) { return "<li><span class=\"mq\">".concat(m.q.replace("<br>", " "), "</span><span class=\"ma\">Competen\u021Ba ").concat(m.c, "</span><span class=\"ma\">Ai ales ").concat(m.chosen, ". Corect: <b>").concat(m.correct, "</b></span><span class=\"ma\">").concat(m.explain, "</span></li>"); }).join(""), "</ul>") : "<p><b>Niciun r\u0103spuns gre\u0219it.</b> Excelent!</p>", "\n  <p><b>Rezultate pe competen\u021Be specifice</b> (programa de Matematic\u0103, clasa a VI-a):</p>").concat(compTable(), "\n  <p class=\"ex\">Profesor: <b>Prof. Zopota Larisa</b>. F\u0103 o captur\u0103 de ecran a acestei fi\u0219e \u0219i trimite-o profesorului ca dovad\u0103 a temei.</p>\n  <div class=\"row\"><button class=\"btn\" id=\"again\" type=\"button\">Joac\u0103 din nou</button></div></div>");
+    document.getElementById("again").onclick = startPanel;
+}
+function compTable() {
+    var e_18, _b;
+    var by = {};
+    try {
+        for (var _c = __values(S.log), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var x = _d.value;
+            var k = x.c;
+            by[k] = by[k] || { ok: 0, t: 0 };
+            by[k].t++;
+            if (x.ok)
+                by[k].ok++;
+        }
+    }
+    catch (e_18_1) { e_18 = { error: e_18_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_18) throw e_18.error; }
+    }
+    var ks = Object.keys(by).sort();
+    if (!ks.length)
+        return "";
+    return "<ul class=\"mist\">".concat(ks.map(function (k) { return "<li style=\"border-left-color:".concat(by[k].ok === by[k].t ? "var(--good)" : "var(--torch)", "\"><span class=\"mq\">").concat(k, " \u00B7 ").concat(by[k].ok, " din ").concat(by[k].t, " corecte</span><span class=\"ma\">").concat(COMP[k], "</span></li>"); }).join(""), "</ul>");
+}
+function esc(s) {
+    return s.replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; });
+}
+var KEYS = { ArrowLeft: "l", KeyA: "l", ArrowRight: "r", KeyD: "r", ArrowUp: "j", KeyW: "j", Space: "j" };
+addEventListener("keydown", function (e) {
+    if (S.mode === "play" && KEYS[e.code]) {
+        K[KEYS[e.code]] = true;
+        e.preventDefault();
+    }
+    else if (S.mode === "question" && !S.answered) {
+        var n = "1234".indexOf(e.key);
+        if (n >= 0 && n < S.q.opts.length)
+            answer(n);
+    }
+});
+addEventListener("keyup", function (e) {
+    if (KEYS[e.code])
+        K[KEYS[e.code]] = false;
+});
+addEventListener("blur", function () {
+    K.l = K.r = K.j = false;
+});
+[["bl", "l"], ["br", "r"], ["bj", "j"]].forEach(function (_b) {
+    var _c = __read(_b, 2), id = _c[0], k = _c[1];
+    var b = document.getElementById(id);
+    var on = function (e) {
+        e.preventDefault();
+        K[k] = true;
+        b.classList.add("on");
+        try {
+            b.setPointerCapture(e.pointerId);
+        }
+        catch (_) {
+        }
+    };
+    var off = function () {
+        K[k] = false;
+        b.classList.remove("on");
+    };
+    if (window.PointerEvent) {
+        b.addEventListener("pointerdown", on);
+        b.addEventListener("pointerup", off);
+        b.addEventListener("pointercancel", off);
+        b.addEventListener("lostpointercapture", off);
+        b.addEventListener("pointerleave", off);
+    }
+    else {
+        b.addEventListener("touchstart", function (e) {
+            e.preventDefault();
+            K[k] = true;
+            b.classList.add("on");
+        }, { passive: false });
+        b.addEventListener("touchend", off);
+        b.addEventListener("touchcancel", off);
+        b.addEventListener("mousedown", function (e) {
+            e.preventDefault();
+            K[k] = true;
+            b.classList.add("on");
+        });
+        b.addEventListener("mouseup", off);
+        b.addEventListener("mouseleave", off);
+    }
+    b.addEventListener("contextmenu", function (e) { return e.preventDefault(); });
+});
+loadLevel(0);
+S.mode = "start";
+startPanel();
+requestAnimationFrame(loop);
+</script>
+
