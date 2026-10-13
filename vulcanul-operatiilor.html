@@ -1,0 +1,1705 @@
+<title>Vulcanul Operațiilor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: a platformer screen (2:1 canvas), touch controls under it, then a quest panel for rules, duels and the homework sheet. Single dark world by design. */
+:root{
+  --night:#12111c; --panel:#1f1d2c; --panel-2:#2c2940; --ink:#f3f0e6; --muted:#aba6bf;
+  --torch:#ff9a2e; --good:#5bd08f; --bad:#f2605a; --exp:#ffd27a; --ice:#8fd8ff;
+  --f-display:"Pixelify Sans","Courier New",monospace;
+  --f-body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-math:"Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px;padding-block:16px 40px;display:grid;gap:12px}
+header{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-size:clamp(1.6rem,5vw,2.5rem);margin:0;line-height:1.05;text-shadow:3px 3px 0 #000}
+.sub{margin:0;color:var(--muted);font-size:.9rem}
+.author{margin:0 0 4px;font-family:var(--f-display);font-size:1.1rem;color:var(--torch);letter-spacing:.04em}
+.prof{background:var(--panel, #22252e);border:3px solid #000;padding:14px 16px;line-height:1.5}
+.prof summary{cursor:pointer;font-family:var(--f-display);font-size:1.1rem;color:var(--torch)}
+.prof p,.prof ul{margin:10px 0 0;color:var(--ink)}.prof ul{padding-left:1.3em;display:grid;gap:4px}.prof small{color:var(--muted)}
+sub{font-size:.6em;color:var(--muted);vertical-align:baseline;position:relative;top:.3em}
+.stage{border:3px solid #000;box-shadow:0 0 0 3px var(--panel-2);background:#000;line-height:0}
+canvas#cv{width:100%;aspect-ratio:2/1;display:block;image-rendering:pixelated;touch-action:none}
+.controls{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;user-select:none;-webkit-user-select:none}
+.pad{display:flex;gap:10px}
+.cbtn{font-family:var(--f-display);font-size:1.6rem;min-width:72px;height:64px;background:var(--panel-2);color:var(--ink);border:3px solid #000;box-shadow:inset 0 -5px 0 rgba(0,0,0,.35);touch-action:none;cursor:pointer}
+.cbtn.jump{background:var(--torch);color:#1d1504;min-width:120px;font-size:1.3rem}
+.cbtn.on{filter:brightness(1.3);transform:translateY(2px)}
+.keys{color:var(--muted);font-size:.85rem;margin:0}
+.panel{background:var(--panel);border:3px solid #000;box-shadow:inset 0 0 0 3px var(--panel-2);padding:18px;display:grid;gap:14px}
+.panel h2{font-family:var(--f-display);margin:0;font-size:1.45rem;color:var(--torch);text-wrap:balance}
+.panel p{margin:0}
+.eyebrow{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.formula{font-family:var(--f-math);font-weight:700;font-size:clamp(1.4rem,4.6vw,2.1rem);background:#141220;border:2px solid #000;padding:12px 18px;display:flex;flex-wrap:wrap;gap:8px 30px}
+sup{font-family:var(--f-math);font-weight:700;font-size:.68em;color:var(--exp);vertical-align:baseline;position:relative;top:-.62em;line-height:0;margin-left:.04em}
+.panel p sup,.ex sup,.rep sup{font-size:.78em;top:-.5em}
+.ex{color:var(--muted)}.ex b{color:var(--ink)}
+.q{font-family:var(--f-math);font-weight:700;font-size:clamp(1.55rem,5vw,2.3rem);line-height:1.6;background:#141220;border:2px solid #000;padding:12px 18px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.opts{grid-template-columns:minmax(0,1fr)}}
+.opt{font-family:var(--f-math);font-weight:700;font-size:clamp(1.3rem,4vw,1.7rem);line-height:1.6;text-align:left;padding:10px 14px;background:var(--panel-2);color:var(--ink);border:2px solid #000;box-shadow:inset 0 -4px 0 rgba(0,0,0,.35);cursor:pointer;display:flex;gap:12px;align-items:baseline}
+.opt .k{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
+.opt:hover:not(:disabled){box-shadow:inset 0 0 0 2px var(--torch)}
+.opt.right{background:#1f4a35;box-shadow:inset 0 0 0 2px var(--good)}
+.opt.wrong{background:#4f2229;box-shadow:inset 0 0 0 2px var(--bad)}
+.fb{padding:10px 14px;border:2px solid #000;background:#18161f;border-left:6px solid var(--muted)}
+.fb.ok{border-left-color:var(--good)}.fb.no{border-left-color:var(--bad)}
+.fb strong{font-family:var(--f-display);font-size:1.1rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font-family:var(--f-display);font-size:1.15rem;padding:10px 20px;border:2px solid #000;cursor:pointer;color:#1d1504;background:var(--torch);box-shadow:inset 0 -4px 0 rgba(0,0,0,.3)}
+.btn.ghost{background:var(--panel-2);color:var(--ink)}
+.btn:focus-visible,.opt:focus-visible,.hero-btn:focus-visible,.cbtn:focus-visible,input:focus-visible{outline:3px solid var(--torch);outline-offset:3px}
+.heroes{display:flex;gap:12px;flex-wrap:wrap}
+.dif-btn{display:grid;justify-items:center;gap:2px;background:var(--panel-2);color:var(--ink);border:2px solid #000;padding:10px 18px;cursor:pointer;font-family:var(--f-display);font-size:1.1rem}.dif-btn small{color:var(--muted);font-family:var(--f-body);font-size:.8rem}.dif-btn[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--torch)}
+.hero-btn{display:grid;justify-items:center;gap:4px;background:var(--panel-2);color:var(--ink);border:2px solid #000;padding:10px 18px;cursor:pointer;font-family:var(--f-display);font-size:1.1rem}
+.hero-btn[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--torch)}
+.hero-btn canvas{width:48px;height:84px;image-rendering:pixelated}
+.hero-btn small{font-family:var(--f-body);font-size:.78rem;color:var(--muted)}
+label{display:grid;gap:6px;font-weight:700;max-width:360px}
+input[type=text]{font:inherit;font-size:1.1rem;padding:10px 12px;background:#141220;color:var(--ink);border:2px solid #000;box-shadow:inset 0 0 0 2px var(--panel-2)}
+.badge{display:inline-flex;gap:10px;align-items:center;font-family:var(--f-display);font-size:1.3rem}
+.badge i{width:22px;height:22px;border:3px solid #000}
+.goal{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:.92rem}
+.goal b{color:var(--ink)}
+.rep{display:grid;gap:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:#141220;border:2px solid #000;padding:10px 12px}
+.stat span{display:block;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat b{font-family:var(--f-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.mist{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.mist li{background:#141220;border:2px solid #000;border-left:5px solid var(--bad);padding:10px 12px;display:grid;gap:4px}
+.mist .mq{font-family:var(--f-math);font-weight:700;font-size:1.15rem}
+.mist .ma{color:var(--muted);font-size:.95rem}
+</style>
+
+<div id="nojs" style="position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#14213d;color:#fff;font:600 19px/1.5 -apple-system,system-ui,sans-serif;padding:28px;display:flex;flex-direction:column;justify-content:center;gap:14px"><div style="font-size:26px">Jocul nu poate porni aici</div><div>Ai deschis fișierul ca previzualizare. Deschide jocul din <b>linkul</b> primit de la profesor, în Chrome, Edge sau Safari.</div></div><script>(function(){var n=document.getElementById("nojs");if(n&&n.parentNode)n.parentNode.removeChild(n)})()</script>
+<script>window.addEventListener("error", function (e) {
+    try {
+        var d = document.getElementById("jsErr");
+        if (!d) {
+            d = document.createElement("div");
+            d.id = "jsErr";
+            d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#fff3f3;color:#7a1010;border:3px solid #7a1010;border-radius:14px;padding:12px 14px;font:600 15px/1.4 -apple-system,system-ui,sans-serif";
+            document.body.appendChild(d);
+        }
+        d.textContent = "A ap\u0103rut o eroare. Trimite o captur\u0103 de ecran profesorului: " + (e.message || "eroare") + " (linia " + (e.lineno || "?") + ")";
+    }
+    catch (x) {
+    }
+});
+</script>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="author">Prof. Zopota Larisa</p>
+      <h1>Vulcanul Operațiilor</h1>
+      <p class="sub">Matematică · <b>Clasa a V-a</b> · Ordinea efectuării operațiilor și folosirea parantezelor</p>
+    </div>
+  </header>
+
+  <div class="stage"><canvas id="cv" width="1536" height="768"></canvas></div>
+
+  <div class="controls" id="controls" hidden>
+    <div class="pad">
+      <button class="cbtn" id="bl" type="button" aria-label="Mergi la stânga">◀</button>
+      <button class="cbtn" id="br" type="button" aria-label="Mergi la dreapta">▶</button>
+    </div>
+    <p class="keys">Tastatură: ← → mers · ↑ sau Space salt</p>
+    <button class="cbtn jump" id="bj" type="button">SALT</button>
+  </div>
+
+  <section class="panel" id="panel" aria-live="polite"></section>
+  <details class="prof">
+    <summary>Pentru profesori: corelarea cu programa școlară</summary>
+    <p>Programa școlară pentru disciplina <b>Matematică, clasele a V-a – a VIII-a</b>, aprobată prin OMEN nr. 3393/28.02.2017. <b>Clasa a V-a</b>, domeniul „Numere naturale”.</p>
+    <ul><li><b>Conținuturi:</b> ordinea efectuării operațiilor; utilizarea parantezelor rotunde, pătrate și acolade; puterea cu exponent natural a unui număr natural și reguli de calcul cu puteri (în exerciții de ordinea operațiilor); probleme care se rezolvă prin calcul.</li>
+      <li><b>1.1</b> Identificarea numerelor naturale în contexte variate (scrierea în baza 10).</li>
+      <li><b>2.1</b> Efectuarea de calcule cu numere naturale folosind operațiile aritmetice și proprietățile acestora (ordinea operațiilor, paranteze).</li>
+      <li><b>3.1</b> Utilizarea regulilor de calcul pentru efectuarea operațiilor cu numere naturale (reguli de calcul cu puteri, factor comun).</li>
+      <li><b>4.1</b> Exprimarea în limbaj matematic a unor situații (traducerea unui enunț în expresie, ordinea operațiilor într-o expresie).</li>
+      <li><b>5.1</b> Analizarea unor situații date pentru a verifica validitatea unor calcule (găsirea greșelii, plasarea parantezelor).</li>
+      <li><b>6.1</b> Modelarea matematică, folosind numere naturale, a unei situații date (probleme).</li>
+      <li><b>Niveluri de dificultate:</b> Începător, Mediu, Avansat și <b>Excelență</b> (pentru grupa de excelență: factor comun la puteri, ecuații exponențiale simple, ultima cifră a unei puteri, exerciții lungi cu paranteze).</li>
+      <li>Fiecare întrebare din joc este etichetată cu competența vizată; rezultatele pe competențe apar la final, pe fișa elevului.</li></ul>
+    <p><small>Material realizat de Prof. Zopota Larisa.</small></p>
+  </details>
+</div>
+
+<script>var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+var R = function (a, b) { return a + Math.floor(Math.random() * (b - a + 1)); };
+var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; };
+var shuffle = function (a) {
+    var _b;
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        _b = __read([a[j], a[i]], 2), a[i] = _b[0], a[j] = _b[1];
+    }
+    return a;
+};
+var pw = function (a, n) { return "".concat(a, "<sup>").concat(n, "</sup>"); };
+var D = " \xB7 ";
+function mk(q, correct, dis, explain) {
+    var e_1, _b;
+    var set = [correct];
+    try {
+        for (var dis_1 = __values(dis), dis_1_1 = dis_1.next(); !dis_1_1.done; dis_1_1 = dis_1.next()) {
+            var d = dis_1_1.value;
+            if (!set.includes(d) && set.length < 4)
+                set.push(d);
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (dis_1_1 && !dis_1_1.done && (_b = dis_1.return)) _b.call(dis_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    shuffle(set);
+    return { q: q, opts: set, ans: set.indexOf(correct), explain: explain };
+}
+var T = function (c, f) { return function () {
+    var q = f();
+    q.c = c;
+    return q;
+}; };
+var sub2 = function (s) { return "".concat(s, "<sub>(2)</sub>"); };
+var COMP = { "1.1": "Identificarea numerelor naturale \xEEn contexte variate", "2.1": "Efectuarea de calcule cu numere naturale folosind opera\u021Biile aritmetice \u0219i propriet\u0103\u021Bile acestora", "3.1": "Utilizarea regulilor de calcul pentru efectuarea opera\u021Biilor cu numere naturale", "4.1": "Exprimarea \xEEn limbaj matematic a unor propriet\u0103\u021Bi referitoare la compar\u0103ri, aproxim\u0103ri, estim\u0103ri \u0219i ale opera\u021Biilor cu numere naturale", "5.1": "Analizarea unor situa\u021Bii date \xEEn care intervin numere naturale pentru a estima sau pentru a verifica validitatea unor calcule", "6.1": "Modelarea matematic\u0103, folosind numere naturale, a unei situa\u021Bii date" };
+function pow2terms(n) {
+    var t = [];
+    for (var p = 6; p >= 0; p--)
+        if (n & 1 << p)
+            t.push(p === 0 ? "1" : pw(2, p));
+    return t.join(" + ");
+}
+function b10terms(n) {
+    var s = String(n), L2 = s.length, t = [];
+    for (var i = 0; i < L2; i++) {
+        var d = +s[i], p = L2 - 1 - i;
+        if (!d)
+            continue;
+        t.push(p === 0 ? "".concat(d) : p === 1 ? "".concat(d, "\u00B710") : "".concat(d, "\u00B7").concat(pw(10, p)));
+    }
+    return t.join(" + ");
+}
+var DIFFS = [
+  { name: "Începător", tag: "calcule scurte" },
+  { name: "Mediu", tag: "ca la clasă" },
+  { name: "Avansat", tag: "calcule lungi" },
+  { name: "Excelență", tag: "grupa de excelență" }
+];
+var dif = function () { return S.diff || 1; };
+var DD = function (a, b, c, d) { var x = [a, b, c, d][dif() - 1]; return R(x[0], x[1]); };
+var X = " · ", DV = " : ";
+var ns = function (n) { return String(n); };
+var near = function (v, arr) { return arr.map(String); };
+function divPair(qmax, dmax) { var d = R(2, dmax), q = R(2, qmax); return [d * q, d, q]; }
+function steps(a) { return a.map(function (s, i) { return (i + 1) + ") " + s; }).join("<br>"); }
+function ord(t) { return t; }
+
+/* ---------- Nivelul 1: ordinea fără paranteze ---------- */
+var G1 = [
+  T("2.1", function () {
+    var a = DD([2, 20], [10, 60], [20, 99], [50, 200]), b = DD([2, 6], [3, 9], [4, 12], [6, 15]), c = DD([2, 6], [3, 9], [4, 12], [6, 19]);
+    var v = a + b * c;
+    return mk(a + " + " + b + X + c + " = ?", ns(v), [ns((a + b) * c), ns(a + b + c), ns(a * b + c), ns(v + 1)],
+      steps(["Întâi înmulțirea: " + b + X + c + " = " + b * c + ".", "Apoi adunarea: " + a + " + " + b * c + " = " + v + "."]) + "<br>Înmulțirea se face înaintea adunării!");
+  }),
+  T("2.1", function () {
+    var p = divPair(dif() < 3 ? 9 : 15, dif() < 2 ? 5 : 9), b = p[0], c = p[1], q = p[2], a = b + DD([5, 30], [10, 80], [20, 150], [50, 400]);
+    var v = a - q;
+    return mk(a + " − " + b + DV + c + " = ?", ns(v), [ns((a - b) % c === 0 ? (a - b) / c : v + c), ns(a - b - c), ns(v - 1), ns(a + q)],
+      steps(["Întâi împărțirea: " + b + DV + c + " = " + q + ".", "Apoi scăderea: " + a + " − " + q + " = " + v + "."]));
+  }),
+  T("2.1", function () {
+    var a = DD([2, 5], [2, 9], [3, 12], [4, 20]), b = DD([2, 5], [2, 6], [2, 9], [3, 11]), t = R(0, 1);
+    if (t) {
+      var v = a * b * b;
+      return mk(a + X + pw(b, 2) + " = ?", ns(v), [ns((a * b) * (a * b)), ns(a * b * 2), ns(a * 2 * b), ns(v + a)],
+        steps(["Întâi puterea: " + pw(b, 2) + " = " + b + X + b + " = " + b * b + ".", "Apoi înmulțirea: " + a + X + b * b + " = " + v + "."]) + "<br>Atenție: puterea se aplică doar lui " + b + ", nu produsului.");
+    }
+    var c = DD([1, 20], [5, 50], [10, 99], [20, 300]), v2 = c + Math.pow(a, 2);
+    return mk(c + " + " + pw(a, 2) + " = ?", ns(v2), [ns(Math.pow(c + a, 2)), ns(c + 2 * a), ns(c + a), ns(v2 + 1)],
+      steps(["Întâi puterea: " + pw(a, 2) + " = " + a * a + ".", "Apoi adunarea: " + c + " + " + a * a + " = " + v2 + "."]));
+  }),
+  T("4.1", function () {
+    var e = pick([
+      [ "7 + 3" + X + pw(2, 3), "ridicarea la putere", ["adunarea", "înmulțirea", "oricare, rezultatul e același"], "Ordinea: 1) puterile, 2) înmulțirile și împărțirile, 3) adunările și scăderile. Deci prima este puterea " + pw(2, 3) + "." ],
+      [ "20 − 12" + DV + "4", "împărțirea", ["scăderea", "cea din stânga", "oricare"], "Împărțirea (operație de ordinul II) se face înaintea scăderii (ordinul I)." ],
+      [ "5" + X + "4 + " + pw(3, 2) + DV + "9", "ridicarea la putere", ["înmulțirea", "adunarea", "împărțirea"], "Prima dată calculăm puterile: " + pw(3, 2) + " = 9." ],
+      [ "48" + DV + "6" + X + "2", "împărțirea, pentru că e prima din stânga", ["înmulțirea, pentru că e mai importantă", "oricare, rezultatul e același", "nu se poate calcula"], "Înmulțirea și împărțirea sunt de același ordin: se fac de la stânga la dreapta. 48 : 6 = 8, apoi 8 · 2 = 16." ],
+      [ "30 − 10 + 5", "scăderea, pentru că e prima din stânga", ["adunarea, pentru că e mai importantă", "oricare, rezultatul e același", "nu se poate calcula"], "Adunarea și scăderea sunt de același ordin: de la stânga la dreapta. 30 − 10 = 20, apoi 20 + 5 = 25." ]
+    ]);
+    return mk("Care operație se efectuează prima?<br>" + e[0], e[1], e[2], e[3]);
+  }),
+  T("2.1", function () {
+    if (dif() === 1) return pick(G1.slice(0, 3))();
+    var a = R(2, dif() > 2 ? 5 : 3), m = R(2, 3), b = R(2, 9), c = R(2, 9), p = divPair(9, 9);
+    var A = Math.pow(a, m), v = A * b + p[2] - c;
+    if (v < 0) { c = 1; v = A * b + p[2] - 1; }
+    return mk(pw(a, m) + X + b + " + " + p[0] + DV + p[1] + " − " + c + " = ?", ns(v), [ns(Math.pow(a * b, m) + p[2] - c), ns(A * (b + p[0]) / p[1] - c | 0), ns(a * m * b + p[2] - c), ns(v + 2)],
+      steps(["Puterea: " + pw(a, m) + " = " + A + ".", "Înmulțirea și împărțirea: " + A + X + b + " = " + A * b + "; " + p[0] + DV + p[1] + " = " + p[2] + ".", "Adunarea și scăderea, de la stânga la dreapta: " + A * b + " + " + p[2] + " − " + c + " = " + v + "."]));
+  })
+];
+
+/* ---------- Nivelul 2: același ordin, puteri speciale, reguli ---------- */
+var G2 = [
+  T("2.1", function () {
+    var a = DD([20, 50], [40, 99], [80, 300], [200, 999]), b = DD([2, 15], [5, 30], [10, 60], [20, 150]), c = DD([2, 15], [5, 30], [10, 60], [20, 150]);
+    if (b > a) b = a - 1;
+    var v = a - b + c;
+    return mk(a + " − " + b + " + " + c + " = ?", ns(v), [ns(a - (b + c)), ns(a - b - c), ns(v + 10), ns(v - 1)],
+      steps([a + " − " + b + " = " + (a - b) + " (prima din stânga).", (a - b) + " + " + c + " = " + v + "."]) + "<br>Adunarea și scăderea se fac în ordinea în care apar, de la stânga la dreapta.");
+  }),
+  T("2.1", function () {
+    var b = R(2, dif() > 2 ? 9 : 6), c = R(2, dif() > 2 ? 9 : 5), q = R(2, 9), a = b * q;
+    var v = q * c;
+    return mk(a + DV + b + X + c + " = ?", ns(v), [ns(a % (b * c) === 0 ? a / (b * c) : v + c), ns(v + b), ns(a * c), ns(v - 1)],
+      steps([a + DV + b + " = " + q + " (prima din stânga).", q + X + c + " = " + v + "."]) + "<br>Înmulțirea și împărțirea se fac de la stânga la dreapta, NU întâi înmulțirea!");
+  }),
+  T("2.1", function () {
+    var a = R(2, 99), b = R(1, 50), n = R(2, 9), k = R(2, 9);
+    var v = 1 + 0 + k;
+    return mk(pw(a, 0) + " + " + pw(0, n) + " + " + pw(1, b) + X + k + " = ?", ns(v), [ns(a + k), ns(k), ns(2 + k), ns(1 + k * 2)],
+      steps([pw(a, 0) + " = 1, " + pw(0, n) + " = 0, " + pw(1, b) + " = 1.", "Înmulțirea: 1" + X + k + " = " + k + ".", "Adunarea: 1 + 0 + " + k + " = " + v + "."]));
+  }),
+  T("3.1", function () {
+    var a = pick([2, 3, 5]), m = R(2, 6), n = R(2, 6), p = R(1, m + n - 1), e = m + n - p;
+    if (dif() >= 3) {
+      var r = R(2, 4), e2 = (m + n - p) * r;
+      return mk("(" + pw(a, m) + X + pw(a, n) + DV + pw(a, p) + ")<sup>" + r + "</sup> = ?", pw(a, e2), [pw(a, e + r), pw(a, (m + n + p) * r), pw(a, e2 + 1), pw(a, e2 + r), pw(a * r, e)],
+        steps(["În paranteză: " + pw(a, m) + X + pw(a, n) + " = " + pw(a, m + n) + ", apoi " + pw(a, m + n) + DV + pw(a, p) + " = " + pw(a, e) + ".", "Puterea unei puteri: (" + pw(a, e) + ")<sup>" + r + "</sup> = " + pw(a, e2) + "."]));
+    }
+    return mk(pw(a, m) + X + pw(a, n) + DV + pw(a, p) + " = ?", pw(a, e), [pw(a, m * n - p > 0 ? m * n - p : m + n + p), pw(a, m + n + p), pw(a * a, e)],
+      steps([pw(a, m) + X + pw(a, n) + " = " + pw(a, m + n) + " (adunăm exponenții).", pw(a, m + n) + DV + pw(a, p) + " = " + pw(a, e) + " (scădem exponenții)."]));
+  }),
+  T("1.1", function () {
+    var a = R(1, 9), b = R(0, 9), c = R(1, 9), d = R(0, 9), v = a * 1000 + b * 100 + c * 10 + d;
+    return mk(a + X + pw(10, 3) + " + " + b + X + pw(10, 2) + " + " + c + X + "10 + " + d + " = ?", ns(v), [ns(a + b + c + d), ns(a * 30 + b * 20 + c * 10 + d), ns(d * 1000 + c * 100 + b * 10 + a)],
+      steps([pw(10, 3) + " = 1000, " + pw(10, 2) + " = 100.", "Înmulțirile: " + a * 1000 + ", " + b * 100 + ", " + c * 10 + ".", "Adunăm: " + v + "."]));
+  })
+];
+
+/* ---------- Nivelul 3: paranteze ---------- */
+var G3 = [
+  T("2.1", function () {
+    var a = DD([2, 9], [5, 20], [10, 40], [20, 90]), b = DD([2, 9], [3, 15], [5, 30], [10, 60]), c = DD([2, 5], [2, 9], [3, 12], [4, 15]);
+    var v = (a + b) * c;
+    return mk("(" + a + " + " + b + ")" + X + c + " = ?", ns(v), [ns(a + b * c), ns(a * c + b), ns(a + b + c), ns(v + c)],
+      steps(["Întâi paranteza: " + a + " + " + b + " = " + (a + b) + ".", "Apoi înmulțirea: " + (a + b) + X + c + " = " + v + "."]));
+  }),
+  T("5.1", function () {
+    var a = R(2, dif() > 2 ? 9 : 6), b = R(1, dif() > 2 ? 9 : 5), v = (a + b) * (a + b);
+    return mk("(" + a + " + " + b + ")<sup>2</sup> = ?", ns(v), [ns(a * a + b * b), ns(2 * (a + b)), ns(a * a + b), ns(v - 1)],
+      steps(["Întâi paranteza: " + a + " + " + b + " = " + (a + b) + ".", "Apoi puterea: " + pw(a + b, 2) + " = " + v + "."]) + "<br>Atenție: (" + a + " + " + b + ")<sup>2</sup> NU este " + pw(a, 2) + " + " + pw(b, 2) + " = " + (a * a + b * b) + ".");
+  }),
+  T("2.1", function () {
+    var c = R(2, 9), d = R(1, c - 1), b = R(2, 6), a = DD([2, 10], [5, 20], [10, 40], [20, 80]), k = R(2, 5);
+    var in1 = c - d, in2 = a + b * in1, v = k * in2;
+    return mk(k + X + "[" + a + " + " + b + X + "(" + c + " − " + d + ")] = ?", ns(v), [ns(k * (a + b) * in1), ns(k * a + b * in1), ns(k * (a + b * c) - d), ns(v + k)],
+      steps(["Paranteza rotundă: " + c + " − " + d + " = " + in1 + ".", "În paranteza pătrată: întâi " + b + X + in1 + " = " + b * in1 + ", apoi " + a + " + " + b * in1 + " = " + in2 + ".", "La final: " + k + X + in2 + " = " + v + "."]));
+  }),
+  T("2.1", function () {
+    if (dif() === 1) return pick(G3.slice(0, 3))();
+    var e = R(2, 9), d = R(2, 5), c = R(1, 9);
+    var A = R(2, 4), pB = R(1, 2), base = Math.pow(A, pB + 1);
+    var sq = base + c * d, r = R(1, 9), res = sq * e;
+    var v = sq + r;
+    return mk("{[" + pw(A, pB + 1) + " + " + c + X + d + "]" + X + e + "}" + DV + e + " + " + r + " = ?", ns(v), [ns(sq * e + r), ns((A * (pB + 1) + c * d) + r), ns(v + d), ns(v - 1)],
+      steps(["În paranteza pătrată: " + pw(A, pB + 1) + " = " + base + ", " + c + X + d + " = " + c * d + ", deci [" + base + " + " + c * d + "] = " + sq + ".", "În acoladă: " + sq + X + e + " = " + res + ".", "Împărțirea: " + res + DV + e + " = " + sq + ", apoi adunarea: " + sq + " + " + r + " = " + v + "."]) + "<br>Ordinea parantezelor: rotunde ( ), apoi pătrate [ ], apoi acolade { }.");
+  }),
+  T("5.1", function () {
+    var a = R(2, 9), b = R(2, 9), c = R(2, 9);
+    var wrong = a + b * c, right = (a + b) * c;
+    return mk("Unde punem paranteze ca să obținem " + right + "?<br>" + a + " + " + b + X + c + " = " + right, "(" + a + " + " + b + ")" + X + c, [a + " + (" + b + X + c + ")", "nu sunt necesare paranteze", "(" + a + X + c + ") + " + b],
+      "Fără paranteze, " + a + " + " + b + X + c + " = " + wrong + ". Cu paranteza (" + a + " + " + b + ")" + X + c + " = " + (a + b) + X + c + " = " + right + ".");
+  })
+];
+function gcdE(a, b) { while (b) { var t = b; b = a % b; a = t; } return a; }
+
+/* ---------- Probleme, verificare (nivelul 4) ---------- */
+var G4 = [
+  T("6.1", function () {
+    var n = R(3, 8), p = R(2, 9), s = n * p + R(5, 50);
+    return mk("Ana are " + s + " lei. Cumpără " + n + " caiete a câte " + p + " lei. Ce expresie arată câți lei îi rămân?", s + " − " + n + X + p + " = " + (s - n * p), ["(" + s + " − " + n + ")" + X + p + " = " + (s - n) * p, s + " − " + n + " − " + p + " = " + (s - n - p), s + " + " + n + X + p + " = " + (s + n * p)],
+      "Caietele costă " + n + X + p + " = " + n * p + " lei, deci rămân " + s + " − " + n * p + " = " + (s - n * p) + " lei. Nu e nevoie de paranteză: înmulțirea se face oricum prima.");
+  }),
+  T("4.1", function () {
+    var a = R(2, 9), b = R(2, 9), c = R(2, 9);
+    var e = pick([
+      ["suma dintre " + a + " și produsul numerelor " + b + " și " + c, a + " + " + b + X + c, ["(" + a + " + " + b + ")" + X + c, a + X + b + " + " + c, a + " + " + b + " + " + c]],
+      ["produsul dintre suma numerelor " + a + " și " + b + " și numărul " + c, "(" + a + " + " + b + ")" + X + c, [a + " + " + b + X + c, a + X + b + " + " + c, a + " + " + b + " + " + c]],
+      ["pătratul sumei numerelor " + a + " și " + b, "(" + a + " + " + b + ")<sup>2</sup>", [pw(a, 2) + " + " + pw(b, 2), a + " + " + pw(b, 2), "2" + X + "(" + a + " + " + b + ")"]],
+      ["suma pătratelor numerelor " + a + " și " + b, pw(a, 2) + " + " + pw(b, 2), ["(" + a + " + " + b + ")<sup>2</sup>", "2" + X + a + " + 2" + X + b, a + " + " + pw(b, 2)]]
+    ]);
+    return mk("Care expresie înseamnă: <i>" + e[0] + "</i>?", e[1], e[2], "Citim cu atenție: ultima operație numită dă forma expresiei. Corect: " + e[1] + ".");
+  }),
+  T("5.1", function () {
+    var a = R(10, 40), b = R(2, 9), c = R(2, 9);
+    var right = a - b * c, bad = (a - b) * c;
+    if (right < 0) { a = b * c + R(5, 20); right = a - b * c; bad = (a - b) * c; }
+    return mk("Mihai a calculat: " + a + " − " + b + X + c + " = " + bad + ". Are dreptate?", "Nu, rezultatul corect este " + right, ["Da, a calculat corect", "Nu, rezultatul corect este " + (a - b - c), "Nu, rezultatul corect este " + (bad + c)],
+      "Mihai a făcut întâi scăderea. Corect: întâi înmulțirea " + b + X + c + " = " + b * c + ", apoi " + a + " − " + b * c + " = " + right + ".");
+  }),
+  T("6.1", function () {
+    var r = R(3, 6), l = R(3, 7), m = R(2, 9);
+    var v = r * l + m;
+    return mk("Într-o sală sunt " + r + " rânduri a câte " + l + " scaune și încă " + m + " scaune pe margine. Câte scaune sunt?", r + X + l + " + " + m + " = " + v, ["(" + l + " + " + m + ")" + X + r + " = " + (l + m) * r, r + " + " + l + " + " + m + " = " + (r + l + m), r + X + "(" + l + " + " + m + ") = " + r * (l + m)],
+      steps([r + X + l + " = " + r * l + " scaune în rânduri.", r * l + " + " + m + " = " + v + " scaune în total."]));
+  })
+];
+
+/* ---------- Grupa de excelență ---------- */
+var GX = [
+  T("3.1", function () {
+    var n = R(5, 12), v = Math.pow(2, n + 1);
+    return mk(pw(2, n) + " + " + pw(2, n) + " = ?", pw(2, n + 1), [pw(2, 2 * n), pw(4, 2 * n), pw(2, n + 2)],
+      pw(2, n) + " + " + pw(2, n) + " = 2" + X + pw(2, n) + " = " + pw(2, n + 1) + ". (Doi termeni egali = de 2 ori termenul.)");
+  }),
+  T("3.1", function () {
+    var a = pick([2, 3, 5]), n = R(5, 12);
+    return mk(pw(a, n + 1) + " − " + pw(a, n) + " = ?", (a - 1 === 1 ? "" : (a - 1) + X) + pw(a, n), [pw(a, 1), pw(a, n - 1), (a - 1 === 1 ? "2" + X : a + X) + pw(a, n)],
+      "Dăm factor comun " + pw(a, n) + ": " + pw(a, n) + X + "(" + a + " − 1) = " + (a - 1 === 1 ? pw(a, n) : (a - 1) + X + pw(a, n)) + ".");
+  }),
+  T("3.1", function () {
+    var n = R(6, 15), j = R(n - 6, n - 3), val = Math.pow(2, n - 2 - j);
+    return mk("(" + pw(2, n) + " − " + pw(2, n - 1) + " − " + pw(2, n - 2) + ")" + DV + pw(2, j) + " = ?", ns(val), [ns(val * 2), ns(val * 4), "1", "0"],
+      steps(["Factor comun " + pw(2, n - 2) + ": " + pw(2, n - 2) + X + "(" + pw(2, 2) + " − 2 − 1) = " + pw(2, n - 2) + X + "1 = " + pw(2, n - 2) + ".", pw(2, n - 2) + DV + pw(2, j) + " = " + pw(2, n - 2 - j) + " = " + val + "."]));
+  }),
+  T("3.1", function () {
+    var k = R(3, 9), a = pick([3, 5]);
+    // a^(x+1) + a^x = (a+1)·a^k  =>  x = k
+    return mk("Aflați x din: " + pw(a, "x+1") + " + " + pw(a, "x") + " = " + (a + 1) + X + pw(a, k), "x = " + k, ["x = " + (k + 1), "x = " + (k - 1), "x = " + (2 * k)],
+      pw(a, "x+1") + " + " + pw(a, "x") + " = " + pw(a, "x") + X + "(" + a + " + 1) = " + (a + 1) + X + pw(a, "x") + ". Deci " + pw(a, "x") + " = " + pw(a, k) + ", adică x = " + k + ".");
+  }),
+  T("5.1", function () {
+    var n = R(10, 99), c = [6, 2, 4, 8][n % 4];
+    return mk("Care este ultima cifră a numărului " + pw(2, n) + "?", ns(c), ["2", "4", "6", "8"].filter(function (x) { return x !== ns(c); }),
+      "Ultimele cifre ale puterilor lui 2 se repetă din 4 în 4: 2, 4, 8, 6. " + n + " = 4" + X + Math.floor(n / 4) + " + " + n % 4 + ", deci ultima cifră este " + c + ".");
+  }),
+  T("2.1", function () {
+    var a = R(2, 4), b = R(2, 5), c = R(2, 6), d = R(1, 3);
+    var r1 = Math.pow(a, 2) + b * c, r2 = r1 * d, v = Math.pow(10, 2) - r2;
+    if (v < 0) { d = 1; r2 = r1; v = 100 - r1; }
+    if (v < 0) return GX[0]();
+    return mk(pw(10, 2) + " − " + d + X + "[" + pw(a, 2) + " + " + b + X + c + "] + " + pw(5, 0) + " = ?", ns(v + 1), [ns(v), ns(100 - d * (a * a + b) * c + 1), ns(v + 6), ns(v - 1)],
+      steps([pw(10, 2) + " = 100, " + pw(a, 2) + " = " + a * a + ", " + pw(5, 0) + " = 1.", "În paranteză: " + b + X + c + " = " + b * c + ", apoi " + a * a + " + " + b * c + " = " + r1 + ".", d + X + r1 + " = " + r2 + ".", "100 − " + r2 + " + 1 = " + (v + 1) + "."]));
+  })
+];
+
+var G = [G1, G2, G3, G4, GX];
+var TOPICS_BY = [[0], [1], [2], [0, 1, 2, 3]];
+function qFor(lvIndex) {
+  var t = TOPICS_BY[lvIndex];
+  if (dif() === 4 && Math.random() < 0.45) return pick(GX)();
+  if (dif() >= 3 && lvIndex < 3 && Math.random() < 0.25) return pick(G4)();
+  return pick(G[pick(t)])();
+}
+
+var HERO_TOP_ADA = ["..HHHH..", ".HHHHHH.", ".RRRRRR.", ".HSSSSH.", ".HSKSKH.", ".HSSSSH.", "..SMMS..", ".YYYYYY.", "SYYYYYYS", "SYYBBYYS", ".GGGGGG."];
+var HERO_TOP_RADU = ["..HHHH..", ".HHHHHH.", "HHHHHHHH", ".HSSSSH.", ".SSKSKS.", ".SSSSSS.", "..SMMS..", ".YYYYYY.", "SYYYYYYS", "SYYBBYYS", ".GGGGGG."];
+var LEGS = [[".GG..GG.", ".GG..GG.", ".OO..OO."], [".GG.GG..", "GG...GG.", "OO...OO."], ["GG....GG", "G......G", "O......O"]];
+var HEROES = [
+    { name: "Ada", tag: "exploratoarea", top: HERO_TOP_ADA, pal: { H: "#1d1a24", R: "#e8562a", S: "#e8b48b", K: "#2a2030", M: "#b8644a", Y: "#f2c230", B: "#6b3d1e", G: "#3f8f4a", O: "#5a3a22" } },
+    { name: "Radu", tag: "alchimistul", top: HERO_TOP_RADU, pal: { H: "#c8612b", R: "#c8612b", S: "#f0c39a", K: "#1e2a3a", M: "#a85a40", Y: "#7b4bc4", B: "#d9a441", G: "#55606e", O: "#2f2a26" } }
+];
+var FOES = {
+    blob: { name: "Pic\u0103tura de Lav\u0103", map: ["...PPPP...", "..PPPPPP..", ".PWKPPWKP.", ".PPPPPPPP.", "PPPPPPPPPP", "PPPLPPLPPP", "PPPPPPPPPP"], pal: { P: "#e8571e", W: "#fff3c4", K: "#3a0c04", L: "#ffb347" }, p: 4, fly: false, speed: 45 },
+    bat: { name: "Liliacul de Cenu\u0219\u0103", map: ["V..........V", "VV..DDDD..VV", "VVVDDDDDDVVV", ".VVDYDDYDVV.", "..V.DDDD.V..", ".....DD....."], pal: { V: "#6b6470", D: "#3a3438", Y: "#ff7a1a" }, p: 4, fly: true, speed: 60 },
+    golem: { name: "Golemul de Magm\u0103", map: ["..GGGGGG..", ".GGGGGGGG.", ".GOGGGGOG.", ".GGGGGGGG.", "GGGCGGCGGG", "GGGGGGGGGG", "GG.GGGG.GG", "GG.GCGG.GG", "GG.GGGG.GG", "...GG.GG..", "...GG.GG..", "..GGG.GGG."], pal: { G: "#4a3a36", O: "#ff8a1e", C: "#e8471e" }, p: 4, fly: false, speed: 35 }
+};
+var DRAGON = ["..................", "......DD..........", ".....DDDD....DD...", "....DDDDDD..DDDD..", "...RRRRRR.DDDDDDD.", "..RYRRRRRRRDDDDDD.", ".RRRRRRRRRRRRDDD..", "RWRWRRRRRRRRRRR...", "RRRRRRRRRRRRRRRRR.", "....RRRRRRRRRRRRRR", "....RRR..RRR...RRR", "....OO...OO.....RR"];
+var DRAGON_PAL = { R: "#c8402f", D: "#7d1f2b", Y: "#ffe066", W: "#ffffff", O: "#2b1a14" };
+function drawMap(g2, map, pal, x, y, p, flip) {
+    for (var j = 0; j < map.length; j++) {
+        var row = map[j];
+        for (var i = 0; i < row.length; i++) {
+            var c = pal[row[i]];
+            if (c) {
+                var ii = flip ? row.length - 1 - i : i;
+                g2.fillStyle = c;
+                g2.fillRect(Math.round(x + ii * p), Math.round(y + j * p), p, p);
+            }
+        }
+    }
+}
+var TS = 32, VW = 768, VH = 384;
+function L(cols) {
+    var t = Array.from({ length: 12 }, function () { return Array(cols).fill("."); });
+    var o = { t: t, cols: cols, ent: [] };
+    o.g = function (a, b, top, ch) {
+        if (ch === void 0) { ch = "#"; }
+        for (var x = a; x <= b; x++)
+            for (var y = top; y < 12; y++)
+                t[y][x] = ch;
+    };
+    o.p = function (x, y, len) {
+        for (var i = 0; i < len; i++)
+            t[y][x + i] = "=";
+    };
+    o.s = function (a, b, y) {
+        for (var x = a; x <= b; x++)
+            t[y][x] = "^";
+    };
+    o.ceil = function () {
+        for (var x = 0; x < cols; x++)
+            t[0][x] = "#";
+    };
+    o.e = function (type, x, y) { return o.ent.push({ type: type, tx: x, ty: y }); };
+    return o;
+}
+var MAPS = [
+    function () {
+        var o = L(90);
+        o.g(0, 14, 10);
+        o.g(17, 30, 10);
+        o.g(31, 40, 9);
+        o.g(44, 60, 10);
+        o.g(61, 64, 8);
+        o.g(65, 70, 6);
+        o.g(71, 78, 8);
+        o.g(79, 89, 10);
+        o.p(20, 7, 3);
+        o.p(47, 6, 4);
+        o.p(65, 3, 3);
+        o.s(48, 49, 9);
+        o.e("spawn", 2, 9);
+        [5, 6, 7].forEach(function (x) { return o.e("c", x, 9); });
+        [20, 21, 22].forEach(function (x) { return o.e("c", x, 6); });
+        o.e("c", 42, 6);
+        [47, 48, 49, 50].forEach(function (x) { return o.e("c", x, 5); });
+        [65, 66, 67].forEach(function (x) { return o.e("c", x, 2); });
+        [82, 83, 84].forEach(function (x) { return o.e("c", x, 9); });
+        o.e("foe", 10, 9);
+        o.e("door", 28, 8);
+        o.e("check", 32, 8);
+        o.e("foe", 36, 8);
+        o.e("foe", 53, 9);
+        o.e("chest", 56, 9);
+        o.e("door", 69, 4);
+        o.e("check", 72, 7);
+        o.e("foe", 75, 7);
+        o.e("flag", 86, 9);
+        return o;
+    },
+    function () {
+        var o = L(95);
+        o.ceil();
+        o.g(0, 12, 10);
+        o.g(17, 26, 10);
+        o.g(27, 34, 7);
+        o.g(40, 55, 10);
+        o.g(56, 65, 11);
+        o.g(66, 80, 5);
+        o.g(81, 94, 10);
+        o.p(19, 6, 3);
+        o.p(57, 8, 2);
+        o.p(60, 6, 2);
+        o.p(63, 4, 2);
+        o.s(44, 46, 9);
+        o.s(56, 65, 10);
+        o.e("spawn", 2, 9);
+        [4, 5, 6].forEach(function (x) { return o.e("c", x, 9); });
+        [19, 20, 21].forEach(function (x) { return o.e("c", x, 5); });
+        o.e("c", 36, 5);
+        o.e("c", 37, 4);
+        o.e("c", 38, 5);
+        [57, 58].forEach(function (x) { return o.e("c", x, 7); });
+        [60, 61].forEach(function (x) { return o.e("c", x, 5); });
+        [63, 64].forEach(function (x) { return o.e("c", x, 3); });
+        [84, 85, 86].forEach(function (x) { return o.e("c", x, 9); });
+        o.e("foe", 8, 9);
+        o.e("door", 25, 8);
+        o.e("check", 28, 6);
+        o.e("foe", 32, 6);
+        o.e("foe", 50, 9);
+        o.e("chest", 53, 9);
+        o.e("check", 67, 4);
+        o.e("foe", 72, 4);
+        o.e("door", 78, 3);
+        o.e("foe", 87, 9);
+        o.e("flag", 92, 9);
+        return o;
+    },
+    function () {
+        var o = L(100);
+        var I = "#";
+        o.g(0, 15, 10, I);
+        o.g(20, 32, 9, I);
+        o.g(38, 50, 10, I);
+        o.g(51, 56, 7, I);
+        o.g(57, 62, 4, I);
+        o.g(68, 80, 8, I);
+        o.g(81, 99, 10, I);
+        o.p(10, 7, 3);
+        o.p(40, 6, 3);
+        o.p(64, 6, 3);
+        o.s(42, 43, 9);
+        o.s(85, 86, 9);
+        o.e("spawn", 2, 9);
+        [10, 11, 12].forEach(function (x) { return o.e("c", x, 6); });
+        [17, 18].forEach(function (x) { return o.e("c", x, 7); });
+        o.e("c", 35, 6);
+        o.e("c", 36, 5);
+        [40, 41, 42].forEach(function (x) { return o.e("c", x, 5); });
+        [59, 60].forEach(function (x) { return o.e("c", x, 2); });
+        [64, 65, 66].forEach(function (x) { return o.e("c", x, 5); });
+        [92, 93, 94].forEach(function (x) { return o.e("c", x, 9); });
+        o.e("foe", 8, 9);
+        o.e("check", 21, 8);
+        o.e("foe", 25, 8);
+        o.e("door", 30, 7);
+        o.e("foe", 46, 9);
+        o.e("chest", 48, 9);
+        o.e("check", 58, 3);
+        o.e("foe", 71, 7);
+        o.e("foe", 76, 7);
+        o.e("door", 79, 6);
+        o.e("foe", 90, 9);
+        o.e("flag", 97, 9);
+        return o;
+    },
+    function () {
+        var o = L(24);
+        o.g(0, 23, 10);
+        o.p(3, 7, 4);
+        o.p(13, 6, 3);
+        o.e("spawn", 2, 9);
+        return o;
+    }
+];
+var LEVELS = [
+    {
+        name: "Poalele Vulcanului",
+        sky: ["#3b1d2a", "#c2562b"],
+        far: "#2a1620",
+        top: "#6e5a52",
+        body: "#3d2f2c",
+        plat: "#8a5a3a",
+        foe: "blob",
+        topics: [0],
+        rule: { title: "Ordinea efectuării operațiilor (fără paranteze)", formula: ["1) puterile", "2) · și :", "3) + și −"], extra: "Într-un exercițiu fără paranteze calculăm întâi <b>puterile</b>, apoi <b>înmulțirile și împărțirile</b> (operații de ordinul II), iar la final <b>adunările și scăderile</b> (operații de ordinul I). Ferește-te de lavă!", ex: "Exemplu: <b>5 + 2 · " + pw(3, 2) + " = 5 + 2 · 9 = 5 + 18 = 23</b>." },
+        power: { name: "Saltul de Foc", color: "#ff8a1e", text: "Acum poți sări de două ori: apasă SALT încă o dată în aer." }
+    },
+    {
+        name: "Râul de Lavă",
+        sky: ["#1d1420", "#4a2030"],
+        far: "#2e1a26",
+        top: "#5a4a50",
+        body: "#2e2630",
+        plat: "#7a5a3a",
+        foe: "bat",
+        topics: [1],
+        dark: true,
+        rule: { title: "Operații de același ordin. Puteri speciale", formula: ["stânga → dreapta", "a<sup>0</sup> = 1", "a<sup>1</sup> = a"], extra: "Când avem doar adunări și scăderi, sau doar înmulțiri și împărțiri, le facem <b>în ordinea în care apar, de la stânga la dreapta</b>. Amintește-ți: " + pw("a", 0) + " = 1 (a ≠ 0), " + pw(1, "n") + " = 1, " + pw(0, "n") + " = 0 (n ≠ 0), iar la puteri cu aceeași bază: " + pw("a", "m") + " · " + pw("a", "n") + " = " + pw("a", "m+n") + ", " + pw("a", "m") + " : " + pw("a", "n") + " = " + pw("a", "m−n") + ".", ex: "Exemplu: <b>24 : 4 · 2 = 6 · 2 = 12</b> (nu 24 : 8!) &nbsp; și &nbsp; <b>20 − 5 + 3 = 15 + 3 = 18</b>." },
+        power: { name: "Inima de Obsidian", color: "#f2605a", text: "Primești o inimă în plus pentru tot restul drumului." }
+    },
+    {
+        name: "Peștera de Magmă",
+        sky: ["#2a1218", "#7a2a1a"],
+        far: "#3a1a1a",
+        top: "#7a5a4a",
+        body: "#4a3430",
+        plat: "#8a5a3a",
+        foe: "golem",
+        topics: [2],
+        ice: false,
+        rule: { title: "Folosirea parantezelor", formula: ["( )", "[ ]", "{ }"], extra: "Parantezele schimbă ordinea: calculăm întâi ce e în <b>parantezele rotunde</b>, apoi în cele <b>pătrate</b>, apoi în <b>acolade</b>. În fiecare paranteză respectăm aceeași ordine: puteri, apoi · și :, apoi + și −.", ex: "Exemplu: <b>2 · [10 − (1 + 3) · 2] = 2 · [10 − 4 · 2] = 2 · [10 − 8] = 2 · 2 = 4</b>." },
+        power: { name: "Magnetul de Magmă", color: "#f5b841", text: "Cristalele din apropiere vin singure spre tine." }
+    },
+    {
+        name: "Craterul Dragonului",
+        sky: ["#1a0c10", "#5a1a14"],
+        far: "#3a1414",
+        top: "#6a5050",
+        body: "#3a2a2a",
+        plat: "#7a5a3a",
+        foe: null,
+        topics: [3],
+        boss: true,
+        dark: true,
+        rule: { title: "Lupta cu Dragonul de Foc", formula: ["( ) → [ ] → { }", "puteri → · : → + −"], extra: "Aici apar toate temele: ordinea operațiilor, paranteze, probleme și verificarea calculelor. Ferește-te de mingile de foc. Când dragonul obosește și coboară, atinge runa strălucitoare și răspunde corect ca să-l lovești. Are 5 vieți.", ex: "Sfat: înainte să calculezi, subliniază operația care se face prima." },
+        power: { name: "Coroana Vulcanului", color: "#ffb627", text: "Ai stăpânit ordinea efectuării operațiilor!" }
+    }
+];
+var cv = document.getElementById("cv"), g = cv.getContext("2d");
+g.setTransform(2, 0, 0, 2, 0, 0);
+g.imageSmoothingEnabled = false;
+var S = { diff: 1, mode: "start", name: "", hero: 0, lvl: 0, maxH: 3, hearts: 3, gems: 0, dj: false, magnet: false, log: [], t: 0, start: 0, end: 0, lv: null, q: null, ctx: null, answered: false, parts: [], shake: 0 };
+var P = { x: 0, y: 0, w: 22, h: 40, vx: 0, vy: 0, on: false, jumps: 0, face: 1, inv: 0, coyote: 0, rx: 0, ry: 0, ground: "" };
+var K = { l: false, r: false, j: false, jPrev: false };
+function loadLevel(i) {
+    var e_2, _b;
+    var L0 = LEVELS[i], M = MAPS[i]();
+    var lv = { i: i, def: L0, t: M.t, cols: M.cols, w: M.cols * TS, foes: [], gems: [], doors: [], chests: [], checks: [], flag: null, fire: [], boss: null, rune: null };
+    try {
+        for (var _c = __values(M.ent), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var e = _d.value;
+            var x = e.tx * TS, y = e.ty * TS;
+            if (e.type === "spawn") {
+                P.rx = x + 5;
+                P.ry = (e.ty + 1) * TS - P.h;
+            }
+            else if (e.type === "c")
+                lv.gems.push({ x: x + 16, y: y + 16, taken: false, ph: Math.random() * 6 });
+            else if (e.type === "foe") {
+                var F = FOES[L0.foe], w = F.map[0].length * F.p, h = F.map.length * F.p;
+                var fy = (e.ty + 1) * TS - h - (F.fly ? 10 : 0);
+                lv.foes.push({ kind: L0.foe, x: x + 16 - w / 2, y: fy, y0: fy, x0: x, w: w, h: h, vx: -F.speed, alive: true, ph: Math.random() * 6 });
+            }
+            else if (e.type === "door")
+                lv.doors.push({ tx: e.tx, ty: e.ty, open: false, cd: 0 });
+            else if (e.type === "chest")
+                lv.chests.push({ x: x + 2, y: y + 8, w: 28, h: 24, used: false });
+            else if (e.type === "check")
+                lv.checks.push({ x: x + 8, y: y, on: false });
+            else if (e.type === "flag")
+                lv.flag = { x: x + 8, y: y - 64 };
+        }
+    }
+    catch (e_2_1) { e_2 = { error: e_2_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_2) throw e_2.error; }
+    }
+    if (L0.boss) {
+        lv.boss = { x: 560, y: 90, w: 108, h: 72, hp: 5, state: "attack", tm: 5.5, cool: 1.2, flinch: 0, y0: 90 };
+        lv.rune = { x: 368, y: 288, w: 32, h: 32, on: false };
+    }
+    S.lv = lv;
+    P.x = P.rx;
+    P.y = P.ry;
+    P.vx = P.vy = 0;
+    P.inv = 0;
+    P.jumps = 0;
+    S.hearts = S.maxH;
+}
+function tileAt(tx, ty) {
+    var lv = S.lv;
+    if (tx < 0 || tx >= lv.cols)
+        return "#";
+    if (ty < 0 || ty >= 12)
+        return ".";
+    return lv.t[ty][tx];
+}
+function solid(tx, ty) {
+    var e_3, _b;
+    var c = tileAt(tx, ty);
+    if (c === "#" || c === "~")
+        return true;
+    try {
+        for (var _c = __values(S.lv.doors), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var d = _d.value;
+            if (!d.open && d.tx === tx && (ty === d.ty || ty === d.ty + 1))
+                return true;
+        }
+    }
+    catch (e_3_1) { e_3 = { error: e_3_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_3) throw e_3.error; }
+    }
+    return false;
+}
+function overlap(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+function update(dt) {
+    var e_4, _b, e_5, _c, e_6, _d, e_7, _e, e_8, _f;
+    var lv = S.lv;
+    S.t += dt;
+    if (S.shake > 0)
+        S.shake -= dt;
+    if (S.mode !== "play") {
+        updParts(dt);
+        return;
+    }
+    var dir = (K.r ? 1 : 0) - (K.l ? 1 : 0);
+    if (dir)
+        P.face = dir;
+    var onIce = P.on && P.ground === "~";
+    var acc = P.on ? onIce ? 2.2 : 18 : 9;
+    P.vx += (dir * 230 - P.vx) * Math.min(1, acc * dt);
+    if (P.on)
+        P.coyote = 0.09;
+    else
+        P.coyote -= dt;
+    if (K.j && !K.jPrev) {
+        if (P.coyote > 0) {
+            P.vy = -620;
+            P.jumps = 1;
+            P.coyote = 0;
+            dust();
+        }
+        else if (S.dj && P.jumps < 2) {
+            P.vy = -560;
+            P.jumps = 2;
+            burst(P.x + P.w / 2, P.y + P.h, "#6fe3ea", 10);
+        }
+    }
+    if (!K.j && P.vy < -260)
+        P.vy = -260;
+    K.jPrev = K.j;
+    P.vy = Math.min(P.vy + 1800 * dt, 900);
+    P.x += P.vx * dt;
+    var y0 = Math.floor(P.y / TS), y1 = Math.floor((P.y + P.h - 0.01) / TS);
+    if (P.vx > 0) {
+        var tx = Math.floor((P.x + P.w) / TS);
+        for (var ty = y0; ty <= y1; ty++)
+            if (solid(tx, ty)) {
+                P.x = tx * TS - P.w;
+                P.vx = 0;
+                break;
+            }
+    }
+    else if (P.vx < 0) {
+        var tx = Math.floor(P.x / TS);
+        for (var ty = y0; ty <= y1; ty++)
+            if (solid(tx, ty)) {
+                P.x = (tx + 1) * TS;
+                P.vx = 0;
+                break;
+            }
+    }
+    if (P.x < 0)
+        P.x = 0;
+    if (P.x + P.w > lv.w)
+        P.x = lv.w - P.w;
+    var prevB = P.y + P.h;
+    P.y += P.vy * dt;
+    P.on = false;
+    var x0 = Math.floor(P.x / TS), x1 = Math.floor((P.x + P.w - 0.01) / TS);
+    if (P.vy > 0) {
+        var ty = Math.floor((P.y + P.h) / TS);
+        for (var tx = x0; tx <= x1; tx++) {
+            var c = tileAt(tx, ty);
+            if (solid(tx, ty) || c === "=" && prevB <= ty * TS + 0.5) {
+                P.y = ty * TS - P.h;
+                P.vy = 0;
+                P.on = true;
+                P.ground = c;
+                P.jumps = 0;
+                break;
+            }
+        }
+    }
+    else if (P.vy < 0) {
+        var ty = Math.floor(P.y / TS);
+        for (var tx = x0; tx <= x1; tx++)
+            if (solid(tx, ty)) {
+                P.y = (ty + 1) * TS;
+                P.vy = 0;
+                break;
+            }
+    }
+    if (P.inv > 0)
+        P.inv -= dt;
+    var feet = { x: P.x + 5, y: P.y + P.h - 14, w: P.w - 10, h: 14 };
+    for (var tx = Math.floor(feet.x / TS); tx <= Math.floor((feet.x + feet.w) / TS); tx++)
+        for (var ty = Math.floor(feet.y / TS); ty <= Math.floor((feet.y + feet.h) / TS); ty++)
+            if (tileAt(tx, ty) === "^" && feet.y + feet.h > ty * TS + 12 && P.inv <= 0) {
+                return hurt("Ai atins lava!");
+            }
+    if (P.y > VH + 40)
+        return hurt("Ai c\u0103zut \xEEn lav\u0103!");
+    var near = { x: P.x - 4, y: P.y, w: P.w + 8, h: P.h };
+    try {
+        for (var _g = __values(lv.doors), _h = _g.next(); !_h.done; _h = _g.next()) {
+            var d = _h.value;
+            if (d.cd > 0)
+                d.cd -= dt;
+            if (!d.open && d.cd <= 0 && overlap(near, { x: d.tx * TS, y: d.ty * TS, w: TS, h: TS * 2 })) {
+                return ask("door", d);
+            }
+        }
+    }
+    catch (e_4_1) { e_4 = { error: e_4_1 }; }
+    finally {
+        try {
+            if (_h && !_h.done && (_b = _g.return)) _b.call(_g);
+        }
+        finally { if (e_4) throw e_4.error; }
+    }
+    try {
+        for (var _j = __values(lv.foes), _k = _j.next(); !_k.done; _k = _j.next()) {
+            var f = _k.value;
+            if (!f.alive)
+                continue;
+            var F = FOES[f.kind];
+            f.ph += dt;
+            if (F.fly) {
+                f.x += f.vx * dt;
+                if (Math.abs(f.x - f.x0) > 90)
+                    f.vx = -f.vx;
+                f.y = f.y0 + Math.sin(f.ph * 3) * 14;
+            }
+            else {
+                f.x += f.vx * dt;
+                var ahead = f.vx > 0 ? f.x + f.w + 2 : f.x - 2;
+                var ftx = Math.floor(ahead / TS), fty = Math.floor((f.y + f.h - 4) / TS), gty = Math.floor((f.y + f.h + 4) / TS);
+                if (solid(ftx, fty) || !solid(ftx, gty) && tileAt(ftx, gty) !== "=" || ahead < 0 || ahead > lv.w)
+                    f.vx = -f.vx;
+            }
+            if (P.inv <= 0 && overlap({ x: P.x + 3, y: P.y + 3, w: P.w - 6, h: P.h - 6 }, { x: f.x + 4, y: f.y + 4, w: f.w - 8, h: f.h - 8 }))
+                return ask("foe", f);
+        }
+    }
+    catch (e_5_1) { e_5 = { error: e_5_1 }; }
+    finally {
+        try {
+            if (_k && !_k.done && (_c = _j.return)) _c.call(_j);
+        }
+        finally { if (e_5) throw e_5.error; }
+    }
+    try {
+        for (var _l = __values(lv.gems), _m = _l.next(); !_m.done; _m = _l.next()) {
+            var c = _m.value;
+            if (c.taken)
+                continue;
+            c.ph += dt;
+            if (S.magnet) {
+                var dx = P.x + P.w / 2 - c.x, dy = P.y + P.h / 2 - c.y, dd = Math.hypot(dx, dy);
+                if (dd < 130) {
+                    c.x += dx / dd * 320 * dt;
+                    c.y += dy / dd * 320 * dt;
+                }
+            }
+            if (overlap({ x: P.x, y: P.y, w: P.w, h: P.h }, { x: c.x - 8, y: c.y - 8, w: 16, h: 16 })) {
+                c.taken = true;
+                S.gems++;
+                burst(c.x, c.y, "#6fe3ea", 8);
+            }
+        }
+    }
+    catch (e_6_1) { e_6 = { error: e_6_1 }; }
+    finally {
+        try {
+            if (_m && !_m.done && (_d = _l.return)) _d.call(_l);
+        }
+        finally { if (e_6) throw e_6.error; }
+    }
+    try {
+        for (var _o = __values(lv.chests), _p = _o.next(); !_p.done; _p = _o.next()) {
+            var c = _p.value;
+            if (!c.used && overlap(P, c))
+                return ask("chest", c);
+        }
+    }
+    catch (e_7_1) { e_7 = { error: e_7_1 }; }
+    finally {
+        try {
+            if (_p && !_p.done && (_e = _o.return)) _e.call(_o);
+        }
+        finally { if (e_7) throw e_7.error; }
+    }
+    try {
+        for (var _q = __values(lv.checks), _r = _q.next(); !_r.done; _r = _q.next()) {
+            var c = _r.value;
+            if (!c.on && overlap(P, { x: c.x, y: c.y, w: 16, h: 32 })) {
+                lv.checks.forEach(function (o) { return o.on = false; });
+                c.on = true;
+                P.rx = c.x;
+                P.ry = c.y + 32 - P.h;
+                burst(c.x + 8, c.y, "#f5b841", 12);
+            }
+        }
+    }
+    catch (e_8_1) { e_8 = { error: e_8_1 }; }
+    finally {
+        try {
+            if (_r && !_r.done && (_f = _q.return)) _f.call(_q);
+        }
+        finally { if (e_8) throw e_8.error; }
+    }
+    if (lv.flag && overlap(P, { x: lv.flag.x, y: lv.flag.y, w: 20, h: 96 }))
+        return levelWin();
+    if (lv.boss)
+        updBoss(dt);
+    updParts(dt);
+}
+function updBoss(dt) {
+    var e_9, _b;
+    var lv = S.lv, b = lv.boss;
+    b.tm -= dt;
+    if (b.flinch > 0)
+        b.flinch -= dt;
+    if (b.state === "attack") {
+        b.y = b.y0 + Math.sin(S.t * 1.6) * 50;
+        b.x = 560 + Math.sin(S.t * 0.7) * 30;
+        b.cool -= dt;
+        if (b.cool <= 0) {
+            var sx = b.x + 10, sy = b.y + 40;
+            var dx = P.x + P.w / 2 - sx, dy = P.y + P.h / 2 - sy, dd = Math.hypot(dx, dy) || 1;
+            var sp = 230 + (5 - b.hp) * 25;
+            lv.fire.push({ x: sx, y: sy, vx: dx / dd * sp, vy: dy / dd * sp, r: 9 });
+            b.cool = Math.max(0.55, 1.25 - (5 - b.hp) * 0.15);
+        }
+        if (b.tm <= 0) {
+            b.state = "tired";
+            b.tm = 5;
+            lv.rune.on = true;
+        }
+    }
+    else {
+        b.y += (VH - 64 - b.h - b.y) * Math.min(1, 3 * dt);
+        if (b.tm <= 0) {
+            b.state = "attack";
+            b.tm = 5.5;
+            lv.rune.on = false;
+        }
+    }
+    try {
+        for (var _c = __values(lv.fire), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var f = _d.value;
+            f.x += f.vx * dt;
+            f.y += f.vy * dt;
+            S.parts.push({ x: f.x, y: f.y, vx: 0, vy: -30, l: 0.25, c: Math.random() < 0.5 ? "#ffb03a" : "#ff5a2a" });
+            if (P.inv <= 0 && overlap({ x: P.x + 4, y: P.y + 4, w: P.w - 8, h: P.h - 8 }, { x: f.x - f.r, y: f.y - f.r, w: f.r * 2, h: f.r * 2 })) {
+                f.dead = true;
+                return hurt("Te-a atins o minge de foc!", true);
+            }
+            if (f.x < -40 || f.x > VW + 40 || f.y > VH || f.y < -40)
+                f.dead = true;
+        }
+    }
+    catch (e_9_1) { e_9 = { error: e_9_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_9) throw e_9.error; }
+    }
+    lv.fire = lv.fire.filter(function (f) { return !f.dead; });
+    if (b.state === "attack" && P.inv <= 0 && overlap(P, { x: b.x + 10, y: b.y + 10, w: b.w - 20, h: b.h - 20 }))
+        return hurt("Dragonul te-a lovit!", true);
+    if (lv.rune.on && overlap(P, lv.rune))
+        return ask("boss", b);
+}
+function hurt(msg, stay) {
+    S.hearts--;
+    P.inv = 1.6;
+    S.shake = 0.3;
+    burst(P.x + P.w / 2, P.y + P.h / 2, "#f2605a", 16);
+    if (S.hearts <= 0)
+        return fail(msg);
+    if (!stay) {
+        P.x = P.rx;
+        P.y = P.ry;
+        P.vx = P.vy = 0;
+    }
+    toast(msg + " \u22121 inim\u0103");
+}
+function updParts(dt) {
+    var e_10, _b;
+    try {
+        for (var _c = __values(S.parts), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var p = _d.value;
+            p.l -= dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += 500 * dt;
+        }
+    }
+    catch (e_10_1) { e_10 = { error: e_10_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_10) throw e_10.error; }
+    }
+    S.parts = S.parts.filter(function (p) { return p.l > 0; });
+}
+function burst(x, y, c, n) {
+    for (var i = 0; i < n; i++)
+        S.parts.push({ x: x, y: y, vx: (Math.random() - 0.5) * 280, vy: -Math.random() * 240, l: 0.5 + Math.random() * 0.4, c: c });
+}
+function dust() {
+    for (var i = 0; i < 5; i++)
+        S.parts.push({ x: P.x + P.w / 2, y: P.y + P.h, vx: (Math.random() - 0.5) * 120, vy: -Math.random() * 60, l: 0.3, c: "rgba(255,255,255,.6)" });
+}
+function hash(n) {
+    n = n ^ 61 ^ n >>> 16;
+    n = n + (n << 3);
+    n = n ^ n >>> 4;
+    n = Math.imul(n, 668265261);
+    n = n ^ n >>> 15;
+    return (n >>> 0) / 4294967295;
+}
+var toastMsg = "", toastT = 0;
+function toast(m) {
+    toastMsg = m;
+    toastT = 2;
+}
+function lavaTile(x, y, w, h, tx) {
+    var t = S.t || 0;
+    g.fillStyle = "#c2260f";
+    g.fillRect(x, y, w, h);
+    g.fillStyle = "#ff6a00";
+    g.fillRect(x, y + 3, w, Math.max(2, h - 8));
+    g.fillStyle = "#ffb627";
+    var o = Math.round(Math.sin(t * 3 + tx) * 3);
+    g.fillRect(x, y, w, 3 + o > 0 ? 3 + Math.max(0, o) : 3);
+    g.fillStyle = "#fff1a8";
+    var bx = x + ((tx * 13 + Math.floor(t * 20)) % w);
+    g.fillRect(bx, y + 1, 3, 2);
+    if (((tx * 7 + Math.floor(t * 2)) % 5) === 0) {
+        g.fillStyle = "rgba(255,200,80,.8)";
+        g.fillRect(x + 12, y - 4 - ((t * 30 + tx * 5) % 10), 3, 3);
+    }
+}
+function draw() {
+    var e_11, _b, e_12, _c, e_13, _d, e_14, _e, e_15, _f, e_16, _g, e_17, _h;
+    var lv = S.lv;
+    if (!lv) {
+        g.fillStyle = "#12111c";
+        g.fillRect(0, 0, VW, VH);
+        return;
+    }
+    var L0 = lv.def;
+    var cam = Math.max(0, Math.min(lv.w - VW, P.x + P.w / 2 - VW * 0.4));
+    var sx0 = S.shake > 0 ? (Math.random() - 0.5) * 8 : 0;
+    g.save();
+    g.translate(sx0, 0);
+    var gr = g.createLinearGradient(0, 0, 0, VH);
+    gr.addColorStop(0, L0.sky[0]);
+    gr.addColorStop(1, L0.sky[1]);
+    g.fillStyle = gr;
+    g.fillRect(-10, 0, VW + 20, VH);
+    if (L0.dark) {
+        g.fillStyle = "rgba(255,255,255,.55)";
+        for (var i = 0; i < 50; i++) {
+            g.fillRect(((hash(i * 13) * VW * 2 - cam * 0.15) % VW + VW) % VW, hash(i * 29) * VH * 0.6, 2, 2);
+        }
+    }
+    g.fillStyle = L0.far;
+    var pc = cam * 0.35;
+    for (var i = Math.floor(pc / 48) - 1; i < (pc + VW) / 48 + 1; i++) {
+        var h = 60 + hash(i * 7 + 3) * 120;
+        g.fillRect(i * 48 - pc, VH - h, 48, h);
+    }
+    if (L0.ice) {
+        g.fillStyle = "#ffffff";
+        for (var i = Math.floor(pc / 48) - 1; i < (pc + VW) / 48 + 1; i++) {
+            var h = 60 + hash(i * 7 + 3) * 120;
+            g.fillRect(i * 48 - pc, VH - h, 48, 10);
+        }
+    }
+    g.translate(-Math.round(cam), 0);
+    var c0 = Math.floor(cam / TS), c1 = Math.ceil((cam + VW) / TS);
+    for (var ty = 0; ty < 12; ty++)
+        for (var tx = c0; tx <= c1 && tx < lv.cols; tx++) {
+            var c = lv.t[ty][tx], x = tx * TS, y = ty * TS;
+            if (c === "#" || c === "~") {
+                var top = !(ty > 0 && (lv.t[ty - 1][tx] === "#" || lv.t[ty - 1][tx] === "~"));
+                g.fillStyle = L0.body;
+                g.fillRect(x, y, TS, TS);
+                g.fillStyle = "rgba(0,0,0,.18)";
+                for (var k = 0; k < 4; k++)
+                    g.fillRect(x + Math.floor(hash(tx * 31 + ty * 7 + k) * 28), y + Math.floor(hash(tx * 17 + ty * 13 + k) * 28), 4, 4);
+                g.fillStyle = "rgba(255,255,255,.07)";
+                g.fillRect(x, y, TS, 2);
+                g.fillStyle = "rgba(0,0,0,.25)";
+                g.fillRect(x + TS - 1, y, 1, TS);
+                if (top) {
+                    g.fillStyle = L0.top;
+                    g.fillRect(x, y, TS, 9);
+                    if (c === "~") {
+                        g.fillStyle = "rgba(255,255,255,.8)";
+                        g.fillRect(x + 4, y + 2, 10, 2);
+                    }
+                    else {
+                        g.fillStyle = "rgba(0,0,0,.15)";
+                        g.fillRect(x + Math.floor(hash(tx) * 24), y + 9, 6, 3);
+                    }
+                }
+            }
+            else if (c === "=") {
+                g.fillStyle = L0.plat;
+                g.fillRect(x, y, TS, 10);
+                g.fillStyle = "rgba(0,0,0,.3)";
+                g.fillRect(x, y + 8, TS, 2);
+                g.fillRect(x + 15, y, 2, 10);
+            }
+            else if (c === "^") {
+                lavaTile(x, y + 12, TS, TS - 12, tx);
+            }
+        }
+    for (var tx = c0; tx <= c1 && tx < lv.cols; tx++) {
+        if (lv.t[11][tx] === ".")
+            lavaTile(tx * TS, VH - 22, TS, 22, tx);
+    }
+    try {
+        for (var _j = __values(lv.doors), _k = _j.next(); !_k.done; _k = _j.next()) {
+            var d = _k.value;
+            var x = d.tx * TS, y = d.ty * TS;
+            if (d.open) {
+                g.fillStyle = "rgba(0,0,0,.25)";
+                g.fillRect(x, y, TS, TS * 2);
+                continue;
+            }
+            g.fillStyle = "#5a3418";
+            g.fillRect(x, y, TS, TS * 2);
+            g.fillStyle = "#7a4a24";
+            g.fillRect(x + 3, y + 3, TS - 6, TS * 2 - 6);
+            g.fillStyle = "#3a200c";
+            g.fillRect(x + 15, y + 3, 2, TS * 2 - 6);
+            g.fillStyle = "#f5b841";
+            g.font = '700 26px "Pixelify Sans", monospace';
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.fillText("?", x + 16, y + 26 + Math.sin(S.t * 4) * 2);
+            g.fillStyle = "#f5b841";
+            g.fillRect(x + 22, y + 40, 4, 4);
+        }
+    }
+    catch (e_11_1) { e_11 = { error: e_11_1 }; }
+    finally {
+        try {
+            if (_k && !_k.done && (_b = _j.return)) _b.call(_j);
+        }
+        finally { if (e_11) throw e_11.error; }
+    }
+    try {
+        for (var _l = __values(lv.checks), _m = _l.next(); !_m.done; _m = _l.next()) {
+            var c = _m.value;
+            g.fillStyle = "#5a3a22";
+            g.fillRect(c.x + 6, c.y + 16, 4, 16);
+            g.fillStyle = "#6b6b6b";
+            g.fillRect(c.x, c.y + 28, 16, 4);
+            if (c.on) {
+                g.fillStyle = Math.sin(S.t * 20) > 0 ? "#ffb03a" : "#ff6a2a";
+                g.fillRect(c.x + 3, c.y + 6, 10, 10);
+                g.fillStyle = "#ffe066";
+                g.fillRect(c.x + 6, c.y + 9, 4, 6);
+            }
+            else {
+                g.fillStyle = "#4a4a4a";
+                g.fillRect(c.x + 4, c.y + 12, 8, 4);
+            }
+        }
+    }
+    catch (e_12_1) { e_12 = { error: e_12_1 }; }
+    finally {
+        try {
+            if (_m && !_m.done && (_c = _l.return)) _c.call(_l);
+        }
+        finally { if (e_12) throw e_12.error; }
+    }
+    try {
+        for (var _o = __values(lv.chests), _p = _o.next(); !_p.done; _p = _o.next()) {
+            var c = _p.value;
+            if (c.used) {
+                g.fillStyle = "#4a2c14";
+                g.fillRect(c.x, c.y + 8, c.w, c.h - 8);
+                continue;
+            }
+            g.fillStyle = "#8a5a2b";
+            g.fillRect(c.x, c.y, c.w, c.h);
+            g.fillStyle = "#5a3418";
+            g.fillRect(c.x, c.y + 9, c.w, 3);
+            g.fillStyle = "#f5b841";
+            g.fillRect(c.x + 11, c.y + 7, 6, 8);
+        }
+    }
+    catch (e_13_1) { e_13 = { error: e_13_1 }; }
+    finally {
+        try {
+            if (_p && !_p.done && (_d = _o.return)) _d.call(_o);
+        }
+        finally { if (e_13) throw e_13.error; }
+    }
+    try {
+        for (var _q = __values(lv.gems), _r = _q.next(); !_r.done; _r = _q.next()) {
+            var c = _r.value;
+            if (c.taken)
+                continue;
+            var y = c.y + Math.sin(c.ph * 3) * 3;
+            g.fillStyle = "#6fe3ea";
+            g.beginPath();
+            g.moveTo(c.x, y - 9);
+            g.lineTo(c.x + 7, y - 2);
+            g.lineTo(c.x, y + 9);
+            g.lineTo(c.x - 7, y - 2);
+            g.fill();
+            g.fillStyle = "#ffffff";
+            g.fillRect(c.x - 2, y - 5, 3, 3);
+        }
+    }
+    catch (e_14_1) { e_14 = { error: e_14_1 }; }
+    finally {
+        try {
+            if (_r && !_r.done && (_e = _q.return)) _e.call(_q);
+        }
+        finally { if (e_14) throw e_14.error; }
+    }
+    if (lv.flag) {
+        var f = lv.flag;
+        g.fillStyle = "#d8d8d8";
+        g.fillRect(f.x, f.y, 4, 96);
+        var wv = Math.sin(S.t * 6) * 3;
+        g.fillStyle = "#f5b841";
+        g.beginPath();
+        g.moveTo(f.x + 4, f.y + 4);
+        g.lineTo(f.x + 40, f.y + 14 + wv);
+        g.lineTo(f.x + 4, f.y + 26);
+        g.fill();
+        g.fillStyle = "#1d1504";
+        g.font = '700 12px "Atkinson Hyperlegible", sans-serif';
+        g.textAlign = "left";
+        g.fillText("a\u207F", f.x + 10, f.y + 16);
+    }
+    try {
+        for (var _s = __values(lv.foes), _t = _s.next(); !_t.done; _t = _s.next()) {
+            var f = _t.value;
+            if (!f.alive)
+                continue;
+            var F = FOES[f.kind];
+            drawMap(g, F.map, F.pal, f.x, f.y + (F.fly ? 0 : -Math.abs(Math.sin(f.ph * 6)) * 2), F.p, f.vx > 0);
+        }
+    }
+    catch (e_15_1) { e_15 = { error: e_15_1 }; }
+    finally {
+        try {
+            if (_t && !_t.done && (_f = _s.return)) _f.call(_s);
+        }
+        finally { if (e_15) throw e_15.error; }
+    }
+    if (lv.boss) {
+        var b = lv.boss;
+        if (lv.rune.on) {
+            var r = lv.rune;
+            g.fillStyle = "rgba(196,155,255,".concat(0.5 + 0.4 * Math.sin(S.t * 8), ")");
+            g.fillRect(r.x, r.y, r.w, r.h);
+            g.fillStyle = "#fff";
+            g.font = '700 22px "Atkinson Hyperlegible", sans-serif';
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.fillText("\u207F", r.x + 16, r.y + 16);
+        }
+        if (b.flinch > 0)
+            g.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(S.t * 40));
+        drawMap(g, DRAGON, DRAGON_PAL, b.x, b.y, 6, false);
+        g.globalAlpha = 1;
+        if (b.state === "tired") {
+            g.fillStyle = "#fff";
+            g.font = '700 16px "Pixelify Sans", monospace';
+            g.textAlign = "center";
+            g.fillText("Z z z", b.x + 70, b.y - 8);
+        }
+        try {
+            for (var _u = __values(lv.fire), _v = _u.next(); !_v.done; _v = _u.next()) {
+                var f = _v.value;
+                g.fillStyle = "#ff5a2a";
+                g.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
+                g.fillStyle = "#ffe066";
+                g.fillRect(f.x - 4, f.y - 4, 8, 8);
+            }
+        }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        finally {
+            try {
+                if (_v && !_v.done && (_g = _u.return)) _g.call(_u);
+            }
+            finally { if (e_16) throw e_16.error; }
+        }
+    }
+    var H0 = HEROES[S.hero];
+    var fr = 0;
+    if (!P.on)
+        fr = 2;
+    else if (Math.abs(P.vx) > 30)
+        fr = Math.floor(S.t * 10) % 2;
+    if (S.dj || S.magnet) {
+        g.fillStyle = S.magnet ? "rgba(245,184,65,.25)" : "rgba(111,227,234,.2)";
+        g.fillRect(P.x - 6, P.y - 4, P.w + 12, P.h + 8);
+    }
+    if (!(P.inv > 0 && Math.floor(S.t * 16) % 2))
+        drawMap(g, H0.top.concat(LEGS[fr]), H0.pal, P.x - 1, P.y - 2, 3, P.face < 0);
+    try {
+        for (var _w = __values(S.parts), _x = _w.next(); !_x.done; _x = _w.next()) {
+            var p = _x.value;
+            g.fillStyle = p.c;
+            g.fillRect(p.x - 2, p.y - 2, 5, 5);
+        }
+    }
+    catch (e_17_1) { e_17 = { error: e_17_1 }; }
+    finally {
+        try {
+            if (_x && !_x.done && (_h = _w.return)) _h.call(_w);
+        }
+        finally { if (e_17) throw e_17.error; }
+    }
+    g.restore();
+    hudDraw();
+}
+function heart(x, y, full) {
+    g.fillStyle = full ? "#f2605a" : "#3d3346";
+    var m = [".XX.XX.", "XXXXXXX", "XXXXXXX", ".XXXXX.", "..XXX..", "...X..."];
+    m.forEach(function (r, j) {
+        for (var i = 0; i < 7; i++)
+            if (r[i] === "X")
+                g.fillRect(x + i * 3, y + j * 3, 3, 3);
+    });
+}
+function hudDraw() {
+    var lv = S.lv;
+    g.fillStyle = "rgba(0,0,0,.5)";
+    g.fillRect(8, 8, Math.max(250, S.maxH * 26 + 190), 30);
+    for (var i = 0; i < S.maxH; i++)
+        heart(16 + i * 26, 14, i < S.hearts);
+    var gx = 24 + S.maxH * 26;
+    g.fillStyle = "#6fe3ea";
+    g.beginPath();
+    g.moveTo(gx, 14);
+    g.lineTo(gx + 7, 21);
+    g.lineTo(gx, 32);
+    g.lineTo(gx - 7, 21);
+    g.fill();
+    g.fillStyle = "#f3f0e6";
+    g.font = '700 16px "Pixelify Sans", monospace';
+    g.textAlign = "left";
+    g.textBaseline = "middle";
+    g.fillText("".concat(S.gems), gx + 14, 24);
+    g.fillText("Nivel ".concat(lv.i + 1, ": ").concat(lv.def.name), gx + 60, 24);
+    if (lv.boss) {
+        var b = lv.boss;
+        g.fillStyle = "rgba(0,0,0,.5)";
+        g.fillRect(VW - 200, 8, 192, 30);
+        g.fillStyle = "#f3f0e6";
+        g.fillText("Dragonul", VW - 192, 24);
+        for (var i = 0; i < 5; i++) {
+            g.fillStyle = i < b.hp ? "#ff5a2a" : "#3d3346";
+            g.fillRect(VW - 110 + i * 20, 16, 16, 14);
+        }
+    }
+    if (toastT > 0) {
+        toastT -= 1 / 60;
+        g.font = '700 18px "Pixelify Sans", monospace';
+        var w = g.measureText(toastMsg).width + 30;
+        g.fillStyle = "rgba(0,0,0,.7)";
+        g.fillRect(VW / 2 - w / 2, VH - 56, w, 34);
+        g.fillStyle = "#ffd27a";
+        g.textAlign = "center";
+        g.fillText(toastMsg, VW / 2, VH - 39);
+    }
+}
+var last = performance.now();
+function loop(now) {
+    var dt = Math.min(0.033, (now - last) / 1e3);
+    last = now;
+    if (S.lv)
+        update(dt);
+    draw();
+    requestAnimationFrame(loop);
+}
+var PN = document.getElementById("panel"), CT = document.getElementById("controls");
+function setMode(m) {
+    S.mode = m;
+    CT.hidden = m !== "play";
+    if (m !== "play") {
+        K.l = K.r = K.j = false;
+    }
+}
+function playPanel() {
+    var _a;
+    var lv = S.lv;
+    setMode("play");
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(lv.i + 1, " din 4 \u00B7 ").concat(lv.def.name, "</p><div class=\"goal\">").concat(lv.def.boss ? "<span><b>\u021Ainta:</b> \xEEnvinge Dragonul de Foc</span><span>Fere\u0219te mingile de foc, apoi atinge runa \u207F c\xE2nd dragonul doarme.</span>" : "<span><b>\u021Ainta:</b> ajunge la steagul galben</span><span>U\u0219ile cu <b>?</b> se deschid cu r\u0103spunsul corect \u00B7 Atingerea unui paznic porne\u0219te un duel \u00B7 Cuf\u0103rul d\u0103 o inim\u0103</span>", "</div>");
+    (_a = cv.focus) == null ? void 0 : _a.call(cv);
+}
+function startPanel() {
+    setMode("start");
+    PN.innerHTML = "<p class=\"eyebrow\">Clasa a V-a \u00B7 Ordinea efectu\u0103rii opera\u021Biilor</p><h2>Urc\u0103 pe Vulcanul Opera\u021Biilor</h2>\n  <p>Treci prin patru niveluri, sari peste lav\u0103, rezolv\u0103 calculele care deschid drumul \u0219i \u00EEnvinge dragonul de foc. La final prime\u0219ti o fi\u0219\u0103 cu rezultatele tale pentru profesor.</p>\n  <label for=\"nm\">Numele t\u0103u (apare pe fi\u0219a de tem\u0103)<input type=\"text\" id=\"nm\" maxlength=\"40\" placeholder=\"Prenume \u0219i nume\" autocomplete=\"name\"></label>\n  <div class=\"heroes\">".concat(HEROES.map(function (h, i) { return "<button class=\"hero-btn\" type=\"button\" data-h=\"".concat(i, "\" aria-pressed=\"").concat(i === S.hero, "\"><canvas width=\"8\" height=\"14\"></canvas>").concat(h.name, "<small>").concat(h.tag, "</small></button>"); }).join(""), "</div><p class=\"eyebrow\">Nivel de dificultate</p><div class=\"heroes\">" + DIFFS.map(function (d, i) { return "<button class=\"dif-btn\" type=\"button\" data-d=\"" + (i + 1) + "\" aria-pressed=\"" + ((i + 1) === (S.diff || 1)) + "\">" + d.name + "<small>" + d.tag + "</small></button>"; }).join("") + "</div>\n  <div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">Porne\u0219te aventura</button></div>");
+    PN.querySelectorAll(".hero-btn").forEach(function (b) {
+        var h = HEROES[+b.dataset.h];
+        drawMap(b.querySelector("canvas").getContext("2d"), h.top.concat(LEGS[0]), h.pal, 0, 0, 1);
+        b.onclick = function () {
+            S.hero = +b.dataset.h;
+            PN.querySelectorAll(".hero-btn").forEach(function (x) { return x.setAttribute("aria-pressed", x === b); });
+        };
+    });
+    PN.querySelectorAll(".dif-btn").forEach(function (b) {
+        b.onclick = function () {
+            S.diff = +b.dataset.d;
+            PN.querySelectorAll(".dif-btn").forEach(function (x) { return x.setAttribute("aria-pressed", x === b); });
+        };
+    });
+    document.getElementById("go").onclick = function () {
+        S.name = document.getElementById("nm").value.trim() || "Elev";
+        S.gems = 0;
+        S.log = [];
+        S.maxH = 3;
+        S.dj = false;
+        S.magnet = false;
+        S.start = Date.now();
+        intro(0);
+    };
+}
+function intro(i) {
+    S.lvl = i;
+    loadLevel(i);
+    setMode("intro");
+    var L0 = LEVELS[i], r = L0.rule;
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(i + 1, " din 4 \u00B7 ").concat(L0.name, "</p><h2>").concat(r.title, "</h2><div class=\"formula\">").concat(r.formula.map(function (f) { return "<span>".concat(f, "</span>"); }).join(""), "</div><p>").concat(r.extra, "</p><p class=\"ex\">").concat(r.ex, "</p><div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">").concat(L0.boss ? "Intr\u0103 \xEEn cuib" : "\xCEncepe nivelul", "</button></div>");
+    var b = document.getElementById("go");
+    b.focus();
+    b.onclick = playPanel;
+}
+function ask(kind, obj) {
+    var _a;
+    setMode("question");
+    S.ctx = { kind: kind, obj: obj };
+    S.answered = false;
+    var lv = S.lv;
+    S.q = qFor(lv.i);
+    var q = S.q;
+    var head = { door: ["U\u0219a fermecat\u0103", "R\u0103spunde corect ca s\u0103 deschizi u\u0219a."], foe: ["Duel cu ".concat(((_a = FOES[lv.def.foe]) == null ? void 0 : _a.name) || ""), "R\u0103spunde corect ca s\u0103-l \xEEnvingi."], chest: ["Cuf\u0103rul de rubin", "R\u0103spuns corect: +1 inim\u0103 \u0219i 5 cristale. R\u0103spunsul gre\u0219it nu te cost\u0103 nimic."], boss: ["Runa Opera\u021Biilor", "R\u0103spuns corect: dragonul pierde o via\u021B\u0103."] }[kind];
+    PN.innerHTML = "<p class=\"eyebrow\">".concat(head[0], "</p><p>").concat(head[1], "</p><div class=\"q\">").concat(q.q, "</div><div class=\"opts\">").concat(q.opts.map(function (o, i) { return "<button class=\"opt\" type=\"button\" data-i=\"".concat(i, "\"><span class=\"k\">").concat(i + 1, "</span><span>").concat(o, "</span></button>"); }).join(""), "</div><div id=\"fb\"></div>");
+    PN.querySelectorAll(".opt").forEach(function (b) { return b.onclick = function () { return answer(+b.dataset.i); }; });
+    PN.querySelector(".opt").focus();
+}
+function answer(i) {
+    if (S.answered)
+        return;
+    S.answered = true;
+    var q = S.q, ok = i === q.ans, _b = S.ctx, kind = _b.kind, obj = _b.obj, lv = S.lv;
+    var btns = PN.querySelectorAll(".opt");
+    btns.forEach(function (b) { return b.disabled = true; });
+    btns[q.ans].classList.add("right");
+    if (!ok)
+        btns[i].classList.add("wrong");
+    S.log.push({ q: q.q, chosen: q.opts[i], correct: q.opts[q.ans], explain: q.explain, ok: ok, lvl: lv.i + 1, c: q.c || "2.1" });
+    var msg;
+    if (ok) {
+        S.gems += 2;
+        if (kind === "door") {
+            obj.open = true;
+            burst(obj.tx * TS + 16, obj.ty * TS + 32, "#f5b841", 20);
+            msg = "U\u0219a se deschide!";
+        }
+        else if (kind === "foe") {
+            obj.alive = false;
+            burst(obj.x + obj.w / 2, obj.y + obj.h / 2, "#c08ff0", 26);
+            msg = "Paznicul a fost \xEEnvins!";
+        }
+        else if (kind === "chest") {
+            obj.used = true;
+            S.hearts = Math.min(S.maxH, S.hearts + 1);
+            S.gems += 5;
+            msg = "Cuf\u0103rul se deschide: +1 inim\u0103 \u0219i 5 cristale!";
+        }
+        else {
+            obj.hp--;
+            obj.flinch = 0.8;
+            obj.state = "attack";
+            obj.tm = 5.5;
+            lv.rune.on = false;
+            lv.fire = [];
+            burst(obj.x + 50, obj.y + 36, "#ff5a2a", 40);
+            S.shake = 0.4;
+            msg = obj.hp > 0 ? "Lovitur\u0103! Dragonul mai are ".concat(obj.hp, " ").concat(obj.hp === 1 ? "via\u021B\u0103" : "vie\u021Bi", ".") : "Dragonul a fost \xEEnvins!";
+        }
+    }
+    else {
+        if (kind === "chest") {
+            obj.used = true;
+            msg = "Cuf\u0103rul s-a \xEEnchis pentru totdeauna, dar nu ai pierdut nimic.";
+        }
+        else {
+            S.hearts--;
+            P.inv = 1.6;
+            msg = "Ai pierdut o inim\u0103.";
+            if (kind === "foe") {
+                P.x = Math.max(0, P.x + (P.x < obj.x ? -70 : 70));
+                P.vx = 0;
+            }
+            if (kind === "door") {
+                obj.cd = 1;
+                P.x -= 24;
+            }
+            if (kind === "boss") {
+                obj.state = "attack";
+                obj.tm = 5.5;
+                lv.rune.on = false;
+                P.x = Math.max(0, P.x - 60);
+            }
+        }
+    }
+    document.getElementById("fb").innerHTML = "<div class=\"fb ".concat(ok ? "ok" : "no", "\"><strong>").concat(ok ? "Corect!" : "Gre\u0219it.", " ").concat(msg, "</strong><p>").concat(q.explain, "</p></div><div class=\"row\" style=\"margin-top:12px\"><button class=\"btn\" id=\"cont\" type=\"button\">Continu\u0103</button></div>");
+    var c = document.getElementById("cont");
+    c.focus();
+    c.onclick = function () {
+        if (S.hearts <= 0)
+            return fail("Ai r\u0103mas f\u0103r\u0103 inimi.");
+        if (kind === "boss" && obj.hp <= 0)
+            return levelWin();
+        playPanel();
+    };
+}
+function fail(msg) {
+    setMode("fail");
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(S.lv.i + 1, "</p><h2>").concat(msg, " Mai \u00EEncearc\u0103!</h2><p>Nivelul o ia de la \u00EEnceput, dar cristalele \u0219i r\u0103spunsurile tale r\u0103m\u00E2n salvate pe fi\u0219\u0103.</p><div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">Reia nivelul</button><button class=\"btn ghost\" id=\"rule\" type=\"button\">Recite\u0219te regula</button></div>");
+    document.getElementById("go").onclick = function () {
+        loadLevel(S.lv.i);
+        playPanel();
+    };
+    document.getElementById("rule").onclick = function () { return intro(S.lv.i); };
+    document.getElementById("go").focus();
+}
+function levelWin() {
+    var i = S.lv.i, pwr = LEVELS[i].power;
+    setMode("win");
+    if (i === 0)
+        S.dj = true;
+    if (i === 1)
+        S.maxH = 4;
+    if (i === 2)
+        S.magnet = true;
+    if (i === 3) {
+        S.end = Date.now();
+        return report();
+    }
+    PN.innerHTML = "<p class=\"eyebrow\">Nivelul ".concat(i + 1, " terminat</p><h2>Ai c\u00E2\u0219tigat o putere nou\u0103!</h2><div class=\"badge\"><i style=\"background:").concat(pwr.color, "\"></i>").concat(pwr.name, "</div><p>").concat(pwr.text, "</p><div class=\"row\"><button class=\"btn\" id=\"go\" type=\"button\">Mergi la nivelul ").concat(i + 2, "</button></div>");
+    var b = document.getElementById("go");
+    b.focus();
+    b.onclick = function () { return intro(i + 1); };
+}
+function report() {
+    setMode("report");
+    var tot = S.log.length, ok = S.log.filter(function (x) { return x.ok; }).length, pct = tot ? Math.round(ok / tot * 100) : 0, sec = Math.round((S.end - S.start) / 1e3);
+    var mist = S.log.filter(function (x) { return !x.ok; });
+    var date = ( /* @__PURE__ */new Date()).toLocaleDateString("ro-RO", { day: "numeric", month: "long", year: "numeric" });
+    PN.innerHTML = "<div class=\"rep\"><p class=\"eyebrow\">Fi\u0219\u0103 de tem\u0103 \u00B7 Clasa a V-a \u00B7 Ordinea opera\u021Biilor \u00B7 Nivel " + DIFFS[dif() - 1].name + " \u00B7 ".concat(date, "</p><h2>Felicit\u0103ri, ").concat(esc(S.name), "! Ai \u00EEnvins Dragonul de Foc.</h2>\n  <div class=\"badge\"><i style=\"background:#ffb627\"></i>Coroana Vulcanului</div>\n  <div class=\"stats\"><div class=\"stat\"><span>R\u0103spunsuri corecte</span><b>").concat(ok, " din ").concat(tot, "</b></div><div class=\"stat\"><span>Precizie</span><b>").concat(pct, "%</b></div><div class=\"stat\"><span>Cristale</span><b>").concat(S.gems, "</b></div><div class=\"stat\"><span>Timp</span><b>").concat(Math.floor(sec / 60), " min ").concat(sec % 60, " s</b></div></div>\n  ").concat(mist.length ? "<p><b>De recapitulat</b> (gre\u0219elile tale, cu rezolvarea corect\u0103):</p><ul class=\"mist\">".concat(mist.map(function (m) { return "<li><span class=\"mq\">".concat(m.q.replace("<br>", " "), "</span><span class=\"ma\">Competen\u021Ba ").concat(m.c, "</span><span class=\"ma\">Ai ales ").concat(m.chosen, ". Corect: <b>").concat(m.correct, "</b></span><span class=\"ma\">").concat(m.explain, "</span></li>"); }).join(""), "</ul>") : "<p><b>Niciun r\u0103spuns gre\u0219it.</b> Excelent!</p>", "\n  <p><b>Rezultate pe competen\u021Be specifice</b> (programa de Matematic\u0103, clasa a V-a):</p>").concat(compTable(), "\n  <p class=\"ex\">Profesor: <b>Prof. Zopota Larisa</b>. F\u0103 o captur\u0103 de ecran a acestei fi\u0219e \u0219i trimite-o profesorului ca dovad\u0103 a temei.</p>\n  <div class=\"row\"><button class=\"btn\" id=\"again\" type=\"button\">Joac\u0103 din nou</button></div></div>");
+    document.getElementById("again").onclick = startPanel;
+}
+function compTable() {
+    var e_18, _b;
+    var by = {};
+    try {
+        for (var _c = __values(S.log), _d = _c.next(); !_d.done; _d = _c.next()) {
+            var x = _d.value;
+            var k = x.c;
+            by[k] = by[k] || { ok: 0, t: 0 };
+            by[k].t++;
+            if (x.ok)
+                by[k].ok++;
+        }
+    }
+    catch (e_18_1) { e_18 = { error: e_18_1 }; }
+    finally {
+        try {
+            if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+        }
+        finally { if (e_18) throw e_18.error; }
+    }
+    var ks = Object.keys(by).sort();
+    if (!ks.length)
+        return "";
+    return "<ul class=\"mist\">".concat(ks.map(function (k) { return "<li style=\"border-left-color:".concat(by[k].ok === by[k].t ? "var(--good)" : "var(--torch)", "\"><span class=\"mq\">").concat(k, " \u00B7 ").concat(by[k].ok, " din ").concat(by[k].t, " corecte</span><span class=\"ma\">").concat(COMP[k], "</span></li>"); }).join(""), "</ul>");
+}
+function esc(s) {
+    return s.replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; });
+}
+var KEYS = { ArrowLeft: "l", KeyA: "l", ArrowRight: "r", KeyD: "r", ArrowUp: "j", KeyW: "j", Space: "j" };
+addEventListener("keydown", function (e) {
+    if (S.mode === "play" && KEYS[e.code]) {
+        K[KEYS[e.code]] = true;
+        e.preventDefault();
+    }
+    else if (S.mode === "question" && !S.answered) {
+        var n = "1234".indexOf(e.key);
+        if (n >= 0 && n < S.q.opts.length)
+            answer(n);
+    }
+});
+addEventListener("keyup", function (e) {
+    if (KEYS[e.code])
+        K[KEYS[e.code]] = false;
+});
+addEventListener("blur", function () {
+    K.l = K.r = K.j = false;
+});
+[["bl", "l"], ["br", "r"], ["bj", "j"]].forEach(function (_b) {
+    var _c = __read(_b, 2), id = _c[0], k = _c[1];
+    var b = document.getElementById(id);
+    var on = function (e) {
+        e.preventDefault();
+        K[k] = true;
+        b.classList.add("on");
+        try {
+            b.setPointerCapture(e.pointerId);
+        }
+        catch (_) {
+        }
+    };
+    var off = function () {
+        K[k] = false;
+        b.classList.remove("on");
+    };
+    if (window.PointerEvent) {
+        b.addEventListener("pointerdown", on);
+        b.addEventListener("pointerup", off);
+        b.addEventListener("pointercancel", off);
+        b.addEventListener("lostpointercapture", off);
+        b.addEventListener("pointerleave", off);
+    }
+    else {
+        b.addEventListener("touchstart", function (e) {
+            e.preventDefault();
+            K[k] = true;
+            b.classList.add("on");
+        }, { passive: false });
+        b.addEventListener("touchend", off);
+        b.addEventListener("touchcancel", off);
+        b.addEventListener("mousedown", function (e) {
+            e.preventDefault();
+            K[k] = true;
+            b.classList.add("on");
+        });
+        b.addEventListener("mouseup", off);
+        b.addEventListener("mouseleave", off);
+    }
+    b.addEventListener("contextmenu", function (e) { return e.preventDefault(); });
+});
+loadLevel(0);
+S.mode = "start";
+startPanel();
+requestAnimationFrame(loop);
+</script>
+
