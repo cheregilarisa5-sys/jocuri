@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Divizibilitatea în ℕ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: caiet de matematică cu pătrățele; o coloană centrală, bară de file lipicioasă sus */
+:root{
+  --paper:#f5f7fc; --grid:rgba(35,70,200,.075); --card:#ffffff; --line:#d8deec;
+  --ink:#16213a; --muted:#56627f; --pen:#2346c8; --pen-soft:rgba(35,70,200,.10);
+  --red:#c2352b; --red-soft:rgba(194,53,43,.10); --green:#1d855a; --green-soft:rgba(29,133,90,.12);
+  --amber:#a86d10; --amber-soft:rgba(168,109,16,.13);
+  --f-display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f1524; --grid:rgba(125,155,255,.06); --card:#161e31; --line:#2a3552;
+  --ink:#e7ecf8; --muted:#9ca8c4; --pen:#86a2ff; --pen-soft:rgba(134,162,255,.14);
+  --red:#ff8378; --red-soft:rgba(255,131,120,.13); --green:#53d39d; --green-soft:rgba(83,211,157,.13);
+  --amber:#f1b84f; --amber-soft:rgba(241,184,79,.14); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#0f1524; --grid:rgba(125,155,255,.06); --card:#161e31; --line:#2a3552;
+  --ink:#e7ecf8; --muted:#9ca8c4; --pen:#86a2ff; --pen-soft:rgba(134,162,255,.14);
+  --red:#ff8378; --red-soft:rgba(255,131,120,.13); --green:#53d39d; --green-soft:rgba(83,211,157,.13);
+  --amber:#f1b84f; --amber-soft:rgba(241,184,79,.14); color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16.5px;line-height:1.55;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;}
+.wrap{max-width:900px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{display:flex;align-items:center;gap:16px;padding-block:10px;flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:800;font-size:1.15rem;letter-spacing:-.01em;display:flex;align-items:baseline;gap:8px}
+.brand .n{font-family:var(--f-mono);color:var(--pen)}
+.brand small{font-family:var(--f-body);font-weight:400;color:var(--muted);font-size:.85rem}
+nav.tabs{display:flex;gap:4px;margin-left:auto;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+nav.tabs button{font:inherit;font-size:.92rem;border:0;background:transparent;color:var(--muted);padding:6px 14px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--pen);color:var(--card);font-weight:700}
+nav.tabs button:disabled{opacity:.45;cursor:not-allowed}
+main{padding-block:28px 64px}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(1.9rem,5vw,2.8rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.45rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.btn{font:inherit;font-weight:700;border:1.5px solid var(--pen);background:var(--pen);color:var(--card);padding:10px 18px;border-radius:10px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--pen)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,nav.tabs button:focus-visible,input:focus-visible,.opt:focus-within,a:focus-visible,summary:focus-visible{outline:3px solid var(--pen);outline-offset:2px}
+a{color:var(--pen)}
+input[type=text]{font:inherit;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);min-width:0;width:100%}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.ov{border-top:1.6px solid currentColor;padding-top:1px;font-family:var(--f-mono)}
+var{font-style:italic;font-family:Georgia,"Times New Roman",serif;font-weight:700}
+sup{font-size:.7em;line-height:0}
+
+/* start */
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:start}
+.hero > *{min-width:0}
+.lede{font-size:1.08rem;max-width:58ch;margin-top:12px}
+.facts{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px}
+.facts div{display:flex;flex-direction:column}
+.facts b{font-family:var(--f-mono);font-size:1.4rem;color:var(--pen)}
+.facts span{font-size:.82rem;color:var(--muted)}
+.map{display:grid;grid-template-columns:1fr;gap:6px;margin-top:6px}
+.map li{display:flex;gap:10px;align-items:baseline;list-style:none;padding:6px 0;border-bottom:1px dashed var(--line)}
+.map ol{margin:0;padding:0}
+.map .k{font-family:var(--f-mono);color:var(--pen);font-weight:700;min-width:2.2em}
+.levels{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.lv{font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+.lv1{color:var(--green);background:var(--green-soft);border-color:transparent}
+.lv2{color:var(--amber);background:var(--amber-soft);border-color:transparent}
+.lv3{color:var(--red);background:var(--red-soft);border-color:transparent}
+
+/* quiz */
+.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--pen);border-radius:99px;transition:width .25s}
+.qhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.qtext{font-size:1.18rem;line-height:1.6}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;background:var(--paper);min-width:0}
+.opt:hover{border-color:var(--pen)}
+.opt input{accent-color:var(--pen);width:18px;height:18px;flex:none}
+.opt.sel{border-color:var(--pen);background:var(--pen-soft)}
+.opt span{min-width:0;overflow-wrap:anywhere}
+.numin{max-width:220px;font-family:var(--f-mono);font-size:1.25rem}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dots button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--card);font:600 .72rem var(--f-mono);color:var(--muted);cursor:pointer;padding:0}
+.dots button.ans{background:var(--pen-soft);color:var(--pen);border-color:transparent}
+.dots button.cur{outline:2px solid var(--pen)}
+.notice{padding:12px 14px;border-radius:10px;background:var(--amber-soft);color:var(--ink);border:1px solid transparent}
+
+/* report */
+.rephead{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end}
+.rephead > *{min-width:0}
+.grade{text-align:right}
+.grade b{display:block;font-family:var(--f-display);font-weight:800;font-size:3.4rem;line-height:1;color:var(--pen)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card)}
+.kpi b{font-family:var(--f-mono);font-size:1.35rem;display:block}
+.kpi span{font-size:.8rem;color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(0,14rem) 1fr auto;gap:12px;align-items:center}
+.bar .t{font-size:.95rem;min-width:0}
+.track{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.track i{height:12px;border-radius:3px;background:var(--line)}
+.track i.ok{background:var(--green)}
+.track i.ko{background:var(--red-soft);box-shadow:inset 0 0 0 1.5px var(--red)}
+.pill{font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.p-ok{color:var(--green);background:var(--green-soft)}
+.p-mid{color:var(--amber);background:var(--amber-soft)}
+.p-ko{color:var(--red);background:var(--red-soft)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two > *{min-width:0}
+ul.clean{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+ul.clean li{padding-left:22px;position:relative}
+ul.clean li::before{position:absolute;left:0;top:0;font-family:var(--f-mono);font-weight:700}
+ul.yes li::before{content:"✓";color:var(--green)}
+ul.no li::before{content:"→";color:var(--red)}
+.badges{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.badge{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;background:var(--card)}
+.badge .ic{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:700 .95rem var(--f-mono);background:var(--pen);color:var(--card)}
+.badge.locked{opacity:.5}
+.badge.locked .ic{background:var(--line);color:var(--muted)}
+.badge b{font-size:.92rem;line-height:1.25}
+.badge span{font-size:.78rem;color:var(--muted);line-height:1.35}
+.swot{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.swot > div{padding:16px;min-width:0;background:var(--card)}
+.swot > div:nth-child(1){border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.swot > div:nth-child(2){border-bottom:1px solid var(--line)}
+.swot > div:nth-child(3){border-right:1px solid var(--line)}
+.swot h3{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.swot h3 .L{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-family:var(--f-mono);color:var(--card);font-size:1rem}
+.sS .L{background:var(--green)} .sW .L{background:var(--red)} .sO .L{background:var(--pen)} .sT .L{background:var(--amber)}
+.swot ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.95rem}
+ol.plan{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.review details{border-top:1px solid var(--line);padding:10px 0}
+.review summary{cursor:pointer;display:flex;gap:10px;align-items:center;list-style:none}
+.review summary::-webkit-details-marker{display:none}
+.review .body{padding:10px 0 4px 0;display:flex;flex-direction:column;gap:6px;font-size:.96rem}
+.ex{background:var(--paper);border-radius:10px;padding:10px 12px;border:1px dashed var(--line)}
+.sample{padding:10px 14px;border-radius:10px;background:var(--pen-soft);color:var(--pen);font-weight:700}
+
+/* theory */
+.toc{display:flex;gap:6px;flex-wrap:wrap}
+.toc a{text-decoration:none;font-size:.88rem;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink)}
+.toc a:hover{border-color:var(--pen);color:var(--pen)}
+.lesson{scroll-margin-top:80px}
+.lesson h2{display:flex;gap:12px;align-items:baseline}
+.lesson h2 .k{font-family:var(--f-mono);color:var(--pen);font-size:1rem}
+.def{border-left:4px solid var(--pen);padding:8px 14px;background:var(--pen-soft);border-radius:0 10px 10px 0}
+.warn{border-left:4px solid var(--red);padding:8px 14px;background:var(--red-soft);border-radius:0 10px 10px 0}
+.lesson ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.calc{font-family:var(--f-mono);font-size:.95rem;overflow-x:auto;white-space:pre;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;line-height:1.5}
+.primes{display:flex;flex-wrap:wrap;gap:6px}
+.primes span{font-family:var(--f-mono);font-size:.9rem;padding:3px 8px;border-radius:6px;background:var(--green-soft);color:var(--green);font-weight:700}
+
+@media (max-width:720px){
+  .hero,.two,.rephead{grid-template-columns:1fr}
+  .grade{text-align:left}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .badges{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .swot{grid-template-columns:1fr}
+  .swot > div{border-right:0!important;border-bottom:1px solid var(--line)}
+  .swot > div:last-child{border-bottom:0}
+  .bar{grid-template-columns:1fr auto;}
+  .bar .track{grid-column:1 / -1;grid-row:2}
+  .opts{grid-template-columns:1fr}
+  nav.tabs{margin-left:0;width:100%;justify-content:space-between}
+  nav.tabs button{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap topin">
+  <div class="brand"><span class="n">a | b</span> Divizibilitatea în ℕ <small>clasa a VI-a</small></div>
+  <nav class="tabs" role="tablist" aria-label="Secțiuni">
+    <button role="tab" id="tab-teorie" data-v="teorie">Teorie</button>
+    <button role="tab" id="tab-test" data-v="test">Evaluare</button>
+    <button role="tab" id="tab-raport" data-v="raport">Raport</button>
+  </nav>
+</div></header>
+
+<main class="wrap" id="app"></main>
+
+<script>
+// ===================== GEN-START (logică pură, fără DOM) =====================
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const lcm=(a,b)=>a/gcd(a,b)*b;
+const isPrime=n=>{if(n<2)return false;for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true;};
+const divisors=n=>{const r=[];for(let d=1;d<=n;d++)if(n%d===0)r.push(d);return r;};
+const factor=n=>{const f=[];for(let p=2;p*p<=n;p++){let e=0;while(n%p===0){n/=p;e++;}if(e)f.push([p,e]);}if(n>1)f.push([n,1]);return f;};
+const pw=(p,e)=>e===1?`${p}`:`${p}<sup>${e}</sup>`;
+const fmtF=f=>f.map(([p,e])=>pw(p,e)).join(' · ');
+const ov=s=>`<span class="ov">${s}</span>`;
+const X='<var>x</var>';
+const setStr=a=>'{'+a.join(', ')+'}';
+// împărțiri succesive pentru explicații
+const ladder=n=>{let s='',m=n;for(const [p,e] of factor(n)){for(let i=0;i<e;i++){s+=`${String(m).padStart(6)} | ${p}\n`;m/=p;}}s+=`${String(m).padStart(6)} |`;return s;};
+
+const COMPS=[
+ {id:'c1',k:'1',name:'Divizori și multipli',lesson:'t1'},
+ {id:'c2',k:'2',name:'Criteriile cu 2, 5 și 10ⁿ',lesson:'t2'},
+ {id:'c3',k:'3',name:'Criteriile cu 3 și 9',lesson:'t3'},
+ {id:'c4',k:'4',name:'Proprietățile divizibilității',lesson:'t4'},
+ {id:'c5',k:'5',name:'Numere prime și compuse',lesson:'t5'},
+ {id:'c6',k:'6',name:'Descompunerea în factori primi',lesson:'t6'},
+ {id:'c7',k:'7',name:'C.m.m.d.c. și numere prime între ele',lesson:'t7'},
+ {id:'c8',k:'8',name:'C.m.m.m.c. și probleme',lesson:'t8'},
+];
+const LEVELS={1:'Nivel 1 · Cunoaștere',2:'Nivel 2 · Aplicare',3:'Nivel 3 · Raționament'};
+
+const G={};
+// ---------- C1 ----------
+G.c1_1=()=>{const N=pick([24,36,48,60,72,84,90,96]);const ds=divisors(N).filter(d=>d>2&&d<N);const c=pick(ds);
+ const pool=shuffle(Array.from({length:N-4},(_,i)=>i+5).filter(x=>N%x!==0&&x<N));const wrong=pool.slice(0,3);
+ const opts=shuffle([c,...wrong]);
+ return {type:'mc',prompt:`Care dintre numerele de mai jos este <b>divizor</b> al lui <span class="num">${N}</span>?`,options:opts.map(String),correct:opts.indexOf(c),
+  explain:`${N} : ${c} = ${N/c}, cu restul 0, deci ${c} | ${N}. Pentru ${wrong.join(', ')} împărțirea are rest diferit de 0.`,
+  skill:'recunoști divizorii unui număr'};};
+G.c1_2=()=>{const N=pick([12,18,20,28,30,36,40,42,45,50]);const D=divisors(N);
+ return {type:'num',prompt:`Scrie în gând mulțimea divizorilor lui <span class="num">${N}</span>. Câte elemente are D<sub>${N}</sub>?`,correct:D.length,
+  explain:`D<sub>${N}</sub> = ${setStr(D)}, deci are ${D.length} elemente. Divizorii se găsesc în perechi: ${D.slice(0,Math.ceil(D.length/2)).map(d=>`${d}·${N/d}`).join(', ')}.`,
+  skill:'scrii mulțimea divizorilor unui număr'};};
+G.c1_3=()=>{const k=pick([7,12,13,15,17,19,23]);const a=Math.ceil(100/k)*k;
+ return {type:'num',prompt:`Care este cel mai mic multiplu <b>de trei cifre</b> al numărului <span class="num">${k}</span>?`,correct:a,
+  explain:`Multiplii lui ${k} sunt de forma ${k}·<var>n</var>. ${a-k} = ${k}·${a/k-1} are două cifre, iar ${a} = ${k}·${a/k} este primul cu trei cifre.`,
+  skill:'găsești multipli ai unui număr care respectă o condiție'};};
+// ---------- C2 ----------
+G.c2_1=()=>{const d=pick([2,5,10]);const okLast={2:[0,2,4,6,8],5:[0,5],10:[0]}[d];const koLast={2:[1,3,5,7,9],5:[1,2,3,4,6,7,8,9],10:[5,2,4,5,6,8]}[d];
+ const nOk=rnd(2,3),nums=new Set(),ok=new Set();
+ while(ok.size<nOk){const n=rnd(10,999)*10+pick(okLast);if(!nums.has(n)){nums.add(n);ok.add(n);}}
+ while(nums.size<5){const n=rnd(10,999)*10+pick(koLast);nums.add(n);}
+ const opts=shuffle([...nums]);
+ const crit={2:'ultima cifră este pară (0, 2, 4, 6, 8)',5:'ultima cifră este 0 sau 5',10:'ultima cifră este 0'}[d];
+ return {type:'multi',prompt:`Selectează <b>toate</b> numerele divizibile cu <span class="num">${d}</span>.`,options:opts.map(String),correct:opts.map((n,i)=>ok.has(n)?i:-1).filter(i=>i>=0),
+  explain:`Un număr se divide cu ${d} dacă ${crit}. Corecte: ${opts.filter(n=>ok.has(n)).join(', ')}.`,
+  skill:'aplici criteriile de divizibilitate cu 2, 5 și 10'};};
+G.c2_2=()=>{const a=rnd(1,9),b=rnd(0,9);const v=pick([
+  {c:'atât cu 2, cât și cu 5',ans:0,why:'Divizibil cu 2 și cu 5 înseamnă divizibil cu 10, deci ultima cifră este 0.'},
+  {c:'cu 5, dar <b>nu</b> cu 2',ans:5,why:'Cu 5: ultima cifră 0 sau 5. Cifra 0 ar face numărul par, deci rămâne 5.'},
+  {c:'cu 2, dar <b>nu</b> cu 5, iar '+X+' &gt; 6',ans:8,why:'Cifrele mai mari ca 6 sunt 7, 8, 9. Dintre ele, doar 8 este pară; 8 nu face numărul divizibil cu 5.'}]);
+ return {type:'num',prompt:`Determină cifra ${X} astfel încât numărul ${ov(`${a}${b}${X}`)} să fie divizibil ${v.c}.`,correct:v.ans,explain:v.why,
+  skill:'combini criteriile cu 2, 5 și 10'};};
+G.c2_3=()=>{const d=pick([2,5,10]);const dig=pick([2,3]);const lo=10**(dig-1),hi=10**dig-1;const f=Math.ceil(lo/d)*d,l=Math.floor(hi/d)*d;const c=(l-f)/d+1;
+ return {type:'num',prompt:`Câte numere naturale de <b>${dig===2?'două':'trei'} cifre</b> sunt divizibile cu <span class="num">${d}</span>?`,correct:c,
+  explain:`Primul este ${f}, ultimul este ${l}. Numărul lor: (${l} − ${f}) : ${d} + 1 = ${c}.`,
+  skill:'numeri multiplii unui număr dintr-un interval'};};
+// ---------- C3 ----------
+const dsum=n=>String(n).split('').reduce((s,c)=>s+ +c,0);
+G.c3_1=()=>{const d=pick([3,9]);let good;do{good=rnd(1000,9999);}while(good%d!==0);
+ const wrong=new Set();while(wrong.size<3){const n=rnd(1000,9999);const trap=d===9&&wrong.size===0;if(trap?(n%3===0&&n%9!==0):n%3!==0)wrong.add(n);}
+ const opts=shuffle([good,...wrong]);
+ return {type:'mc',prompt:`Care dintre numerele de mai jos este divizibil cu <span class="num">${d}</span>?`,options:opts.map(String),correct:opts.indexOf(good),
+  explain:`Se adună cifrele: ${opts.map(n=>`${n} → ${dsum(n)}`).join('; ')}. Doar ${good} are suma cifrelor (${dsum(good)}) divizibilă cu ${d}.${d===9?' Atenție: un număr divizibil cu 3 nu este neapărat divizibil cu 9.':''}`,
+  skill:'aplici criteriile de divizibilitate cu 3 și 9'};};
+G.c3_2=()=>{let a,b;do{a=rnd(1,9);b=rnd(0,9);}while((a+b)%9===0);const x=(9-(a+b)%9)%9;
+ return {type:'num',prompt:`Determină cifra ${X} astfel încât numărul ${ov(`${a}${X}${b}`)} să fie divizibil cu <span class="num">9</span>.`,correct:x,
+  explain:`Suma cifrelor este ${a} + ${X} + ${b} = ${a+b} + ${X}. Ea trebuie să fie multiplu de 9: ${a+b} + ${x} = ${a+b+x}. Deci ${X} = ${x}.`,
+  skill:'determini o cifră necunoscută folosind criteriul cu 9'};};
+G.c3_3=()=>{const a=rnd(1,9),b=rnd(1,9);
+ if(Math.random()<.5){const xs=[...Array(10).keys()].filter(x=>(a+x+b)%3===0);
+  return {type:'num',prompt:`Câte valori poate lua cifra ${X} astfel încât numărul ${ov(`${a}${X}${b}`)} să fie divizibil cu <span class="num">3</span>?`,correct:xs.length,
+   explain:`Suma cifrelor este ${a+b} + ${X} și trebuie să fie multiplu de 3. Verificând toate cifrele 0–9: ${X} ∈ ${setStr(xs)}, adică ${xs.length} valori.`,skill:'analizezi toate cazurile posibile'};}
+ const xs=[...Array(10).keys()].filter(x=>x%2===0&&(a+b+x)%3===0);
+ return {type:'num',prompt:`Câte valori poate lua cifra ${X} astfel încât numărul ${ov(`${a}${b}${X}`)} să fie divizibil cu <span class="num">6</span>?`,correct:xs.length,
+  explain:`Divizibil cu 6 înseamnă divizibil cu 2 și cu 3. Cu 2: ${X} par. Cu 3: ${a+b} + ${X} multiplu de 3. Ambele condiții: ${X} ∈ ${setStr(xs)}, adică ${xs.length} ${xs.length===1?'valoare':'valori'}.`,skill:'analizezi toate cazurile posibile'};};
+// ---------- C4 ----------
+G.c4_1=()=>{const k=pick([3,4,6,7,8,9,11]);const opts0=[`${k} | <var>a</var> + <var>b</var>`,`${k} | <var>a</var> + 1`,`${2*k} | <var>a</var> + <var>b</var>`,`<var>a</var> | <var>b</var>`];const opts=shuffle(opts0);
+ return {type:'mc',prompt:`Știm că ${k} | <var>a</var> și ${k} | <var>b</var>. Care afirmație este <b>sigur</b> adevărată?`,options:opts,correct:opts.indexOf(opts0[0]),
+  explain:`Dacă un număr divide doi termeni, divide și suma lor: <var>a</var> = ${k}·<var>m</var>, <var>b</var> = ${k}·<var>n</var>, deci <var>a</var> + <var>b</var> = ${k}·(<var>m</var> + <var>n</var>). Celelalte nu sunt sigure. De exemplu, pentru <var>a</var> = ${k} și <var>b</var> = ${2*k}: ${2*k} nu divide <var>a</var> + <var>b</var> = ${3*k}, iar <var>a</var> = ${2*k}, <var>b</var> = ${k} arată că nici <var>a</var> | <var>b</var> nu e sigur. Cât despre <var>a</var> + 1: dacă ${k} | <var>a</var>, atunci ${k} nu poate divide <var>a</var> + 1.`,
+  skill:'folosești proprietățile divizibilității'};};
+G.c4_2=()=>{const a=pick([2,3,4,5]),c=pick([1,2,3]),r=pick([3,5,7,11]);const b=a*c+r;
+ return {type:'num',prompt:`Numărul natural <var>d</var> divide atât ${a}<var>n</var> + ${b}, cât și <var>n</var> + ${c}. Atunci <var>d</var> divide sigur un număr fix (care nu depinde de <var>n</var>). Care este acest număr?`,correct:r,
+  explain:`Din <var>d</var> | <var>n</var> + ${c} rezultă <var>d</var> | ${a}(<var>n</var> + ${c}) = ${a}<var>n</var> + ${a*c}. Scădem: <var>d</var> | (${a}<var>n</var> + ${b}) − (${a}<var>n</var> + ${a*c}) = ${r}. Deci <var>d</var> ∈ D<sub>${r}</sub> = {1, ${r}}.`,
+  skill:'elimini necunoscuta folosind proprietățile divizibilității'};};
+G.c4_3=()=>{const [k,N]=pick([[4,36],[3,36],[5,60],[6,72],[4,48],[7,84],[9,54]]);const v=divisors(N).filter(d=>d%k===0);
+ return {type:'num',prompt:`Știm că ${k} | <var>a</var> și <var>a</var> | ${N}. Câte valori poate lua numărul natural <var>a</var>?`,correct:v.length,
+  explain:`<var>a</var> trebuie să fie divizor al lui ${N} și, în același timp, multiplu al lui ${k}. Divizorii lui ${N}: ${setStr(divisors(N))}. Dintre ei, multipli de ${k}: ${setStr(v)}, adică ${v.length} valori.`,
+  skill:'combini două condiții de divizibilitate'};};
+// ---------- C5 ----------
+G.c5_1=()=>{const P=[2,11,17,23,29,37,41,53,59,61,97],C=[9,15,21,27,33,39,49,51,57,87,91];const np=rnd(2,3);
+ const opts=shuffle([...shuffle(P).slice(0,np),...shuffle(C).slice(0,6-np)]);
+ return {type:'multi',prompt:`Selectează <b>toate</b> numerele prime.`,options:opts.map(String),correct:opts.map((n,i)=>isPrime(n)?i:-1).filter(i=>i>=0),
+  explain:`Prime: ${opts.filter(isPrime).join(', ')}. Compuse: ${opts.filter(n=>!isPrime(n)).map(n=>{const f=factor(n);return `${n} = ${f.map(([p,e])=>pw(p,e)).join('·')}`;}).join('; ')}.`,
+  skill:'recunoști numerele prime'};};
+G.c5_2=()=>{const T=['1 nu este nici număr prim, nici număr compus.','2 este singurul număr prim par.','Un număr prim are exact doi divizori.'];
+ const F=['Orice număr impar este prim.','0 este număr prim.','91 este număr prim.','Produsul a două numere prime este tot număr prim.','1 este cel mai mic număr prim.'];
+ const t=pick(T),opts=shuffle([t,...shuffle(F).slice(0,3)]);
+ return {type:'mc',prompt:`Care afirmație este <b>adevărată</b>?`,options:opts,correct:opts.indexOf(t),
+  explain:`Adevărat: „${t}” Contraexemple pentru celelalte: 9 este impar și compus; 0 și 1 nu sunt prime; 91 = 7·13; 2·3 = 6 este compus.`,
+  skill:'cunoști cazurile speciale (0, 1, 2)'};};
+G.c5_3=()=>{const [a,b]=pick([[10,30],[20,40],[40,60],[60,80],[80,100]]);const ps=[];for(let n=a;n<=b;n++)if(isPrime(n))ps.push(n);
+ return {type:'num',prompt:`Câte numere prime sunt cuprinse între <span class="num">${a}</span> și <span class="num">${b}</span>?`,correct:ps.length,
+  explain:`Numerele prime dintre ${a} și ${b} sunt: ${ps.join(', ')}, adică ${ps.length}. Un număr este prim dacă nu se împarte exact la 2, 3, 5 și 7 (pentru numere mai mici de 121).`,
+  skill:'identifici numerele prime dintr-un interval'};};
+// ---------- C6 ----------
+G.c6_1=()=>{let f,N;do{f=[[2,rnd(1,4)],[3,rnd(0,2)],[5,rnd(0,2)],[7,rnd(0,1)]].filter(([,e])=>e>0);N=f.reduce((s,[p,e])=>s*p**e,1);}while(f.length<2||N<40||N>1500);
+ const good=fmtF(f);const cand=new Set();
+ cand.add(fmtF(f.map(([p,e],i)=>i===0?[p,e+1]:[p,e])));
+ const e2=f[0][1],e3=(f.find(x=>x[0]===3)||[3,0])[1];
+ if(e2>=2){const rest=f.slice(1);cand.add(['4',...(e2>2?[pw(2,e2-2)]:[]),...rest.map(([p,e])=>pw(p,e))].join(' · '));}
+ else if(e3>=2){cand.add(f.map(([p,e])=>p===3?(e===2?'9':`9 · ${pw(3,e-2)}`):pw(p,e)).join(' · '));}
+ else {const others=f.filter(([p])=>p!==2&&p!==3);cand.add(['6',...others.map(([p,e])=>pw(p,e))].join(' · '));}
+ if(f.length>=2&&f[0][1]!==f[1][1])cand.add(fmtF(f.map(([p],i)=>[p,i===0?f[1][1]:i===1?f[0][1]:f[i][1]])));
+ let t=0;while(cand.size<3&&t<30){t++;const j=rnd(0,f.length-1);cand.add(fmtF(f.map(([p,e],i)=>i===j?[p,e+rnd(1,2)]:[p,e])));}
+ cand.delete(good);const opts=shuffle([good,...[...cand].slice(0,3)]);
+ return {type:'mc',prompt:`Care este descompunerea în factori primi a numărului <span class="num">${N}</span>?`,options:opts,correct:opts.indexOf(good),
+  explain:`Prin împărțiri succesive la numere prime:<div class="calc">${ladder(N)}</div>${N} = ${good}. Atenție: 4, 6 sau 9 nu sunt numere prime, deci nu pot apărea în descompunere.`,
+  skill:'descompui un număr în factori primi'};};
+G.c6_2=()=>{const set=pick([[2,3,13],[2,5,11],[2,2,3,7],[2,2,17],[3,3,19],[5,23],[2,3,3,11],[2,2,2,13]]);const N=set.reduce((a,b)=>a*b,1);const m=Math.max(...set);
+ return {type:'num',prompt:`Care este cel mai mare divizor <b>prim</b> al numărului <span class="num">${N}</span>?`,correct:m,
+  explain:`${N} = ${fmtF(factor(N))}. Factorii primi sunt ${factor(N).map(x=>x[0]).join(', ')}, iar cel mai mare este ${m}.`,
+  skill:'folosești descompunerea ca să găsești divizorii primi'};};
+G.c6_3=()=>{let a,b,N;do{a=rnd(1,4);b=rnd(1,3);N=2**a*3**b;}while(N>300);const c=(a+1)*(b+1);
+ return {type:'num',prompt:`Câți divizori naturali are numărul <span class="num">${N}</span>?`,correct:c,
+  explain:`${N} = ${pw(2,a)} · ${pw(3,b)}. Numărul divizorilor se obține adunând 1 la fiecare exponent și înmulțind: (${a} + 1)·(${b} + 1) = ${c}. Verificare: D<sub>${N}</sub> = ${setStr(divisors(N))}.`,
+  skill:'numeri divizorii folosind descompunerea în factori primi'};};
+// ---------- C7 ----------
+G.c7_1=()=>{let g,p,q;do{g=pick([4,6,8,9,12,14,15,18]);p=rnd(2,7);q=rnd(2,9);}while(p===q||gcd(p,q)!==1||g*p>200||g*q>200);const a=g*p,b=g*q;
+ return {type:'num',prompt:`Calculează (${a}, ${b}), adică c.m.m.d.c. al numerelor <span class="num">${a}</span> și <span class="num">${b}</span>.`,correct:g,
+  explain:`${a} = ${fmtF(factor(a))}; ${b} = ${fmtF(factor(b))}. Luăm factorii comuni la puterea cea mai mică: (${a}, ${b}) = ${fmtF(factor(g))}${factor(g).length>1||factor(g)[0][1]>1?' = '+g:''}.`,
+  skill:'calculezi c.m.m.d.c. a două numere'};};
+G.c7_2=()=>{const good=pick([[8,15],[9,28],[14,25],[16,21],[10,27],[12,35]]);const bad=shuffle([[12,18],[14,21],[15,25],[22,33],[26,39],[16,24],[20,45]]).slice(0,3);
+ const opts0=[good,...bad].map(([a,b])=>`${a} și ${b}`);const opts=shuffle(opts0);
+ return {type:'mc',prompt:`Care pereche este formată din numere <b>prime între ele</b>?`,options:opts,correct:opts.indexOf(opts0[0]),
+  explain:`Două numere sunt prime între ele dacă c.m.m.d.c. al lor este 1. (${good[0]}, ${good[1]}) = 1, deși niciunul nu este prim. Celelalte: ${bad.map(([a,b])=>`(${a}, ${b}) = ${gcd(a,b)}`).join('; ')}.`,
+  skill:'recunoști numerele prime între ele'};};
+G.c7_3=()=>{let g,p,q;do{g=pick([6,8,9,12,14,15]);p=rnd(2,7);q=rnd(2,7);}while(p===q||gcd(p,q)!==1);const a=g*p,b=g*q;
+ const s=pick([['mere','pere','pachete'],['creioane','caiete','pachete-cadou'],['lalele','narcise','buchete']]);
+ return {type:'num',prompt:`Avem <span class="num">${a}</span> ${s[0]} și <span class="num">${b}</span> ${s[1]}. Vrem să le împărțim în ${s[2]} identice, folosind toate obiectele. Care este numărul <b>maxim</b> de ${s[2]} care se pot face?`,correct:g,
+  explain:`Numărul de ${s[2]} trebuie să dividă și ${a}, și ${b}; fiind maxim, este (${a}, ${b}) = ${g}. Fiecare conține ${p} ${s[0]} și ${q} ${s[1]}.`,
+  skill:'rezolvi probleme cu c.m.m.d.c.'};};
+// ---------- C8 ----------
+G.c8_1=()=>{const [a,b]=pick([[4,6],[6,8],[9,12],[10,15],[12,18],[8,12],[6,10],[15,20],[12,16],[14,21]]);const m=lcm(a,b);
+ return {type:'num',prompt:`Calculează [${a}, ${b}], adică c.m.m.m.c. al numerelor <span class="num">${a}</span> și <span class="num">${b}</span>.`,correct:m,
+  explain:`${a} = ${fmtF(factor(a))}; ${b} = ${fmtF(factor(b))}. Luăm factorii comuni și necomuni la puterea cea mai mare: [${a}, ${b}] = ${fmtF(factor(m))} = ${m}.`,
+  skill:'calculezi c.m.m.m.c. a două numere'};};
+G.c8_2=()=>{const [a,b,c]=pick([[10,12,15],[6,8,12],[8,10,12],[9,12,18],[4,6,10]]);const m=lcm(lcm(a,b),c);
+ return {type:'num',prompt:`Trei autobuze pleacă din aceeași stație: primul la fiecare ${a} minute, al doilea la fiecare ${b} minute, al treilea la fiecare ${c} minute. Au plecat împreună la ora 8:00. După <b>câte minute</b> pleacă din nou toate trei împreună?`,correct:m,
+  explain:`Căutăm cel mai mic număr nenul divizibil cu ${a}, ${b} și ${c}: [${a}, ${b}, ${c}] = ${fmtF(factor(m))} = ${m} minute.`,
+  skill:'rezolvi probleme cu c.m.m.m.c.'};};
+G.c8_3=()=>{const [a,b,c,r]=pick([[4,6,9,3],[5,6,8,2],[6,8,9,5],[4,5,6,1],[3,4,10,2]]);const m=lcm(lcm(a,b),c);
+ return {type:'num',prompt:`Care este cel mai mic număr natural <b>mai mare decât 10</b> care, împărțit pe rând la ${a}, la ${b} și la ${c}, dă de fiecare dată restul ${r}?`,correct:m+r,
+  explain:`Dacă scădem restul, <var>n</var> − ${r} se divide cu ${a}, ${b} și ${c}, deci este multiplu al lui [${a}, ${b}, ${c}] = ${m}. Numerele posibile: ${r}, ${m+r}, ${2*m+r}, … Cel mai mic mai mare decât 10 este ${m+r}.`,
+  skill:'rezolvi probleme cu resturi (folosind c.m.m.m.c.)'};};
+
+function makeTest(){const qs=[];for(const c of COMPS)for(const l of [1,2,3]){const q=G[`${c.id}_${l}`]();q.comp=c.id;q.level=l;qs.push(q);}return qs;}
+function isCorrect(q,ans){if(ans==null||ans==='')return false;
+ if(q.type==='mc')return ans===q.correct;
+ if(q.type==='multi'){const a=[...ans].sort((x,y)=>x-y),c=[...q.correct].sort((x,y)=>x-y);return a.length===c.length&&a.every((v,i)=>v===c[i]);}
+ const v=Number(String(ans).replace(/\s/g,'').replace(',','.'));return Number.isFinite(v)&&v===q.correct;}
+
+function analyse(qs,answers,secs){
+ const res=qs.map((q,i)=>({q,ok:isCorrect(q,answers[i]),ans:answers[i]}));
+ const by={};for(const c of COMPS)by[c.id]={c,items:res.filter(r=>r.q.comp===c.id)};
+ for(const id in by){const o=by[id];o.score=o.items.filter(r=>r.ok).length;o.status=o.score===3?'ok':o.score===2?'mid':'ko';}
+ const total=res.filter(r=>r.ok).length;const lvl={1:0,2:0,3:0};res.forEach(r=>{if(r.ok)lvl[r.q.level]++;});
+ const grade=Math.round((1+9*total/res.length)*100)/100;
+ const s=id=>by[id].score;
+ const know=res.filter(r=>r.ok).map(r=>r.q.skill),learn=res.filter(r=>!r.ok).map(r=>({skill:r.q.skill,comp:r.q.comp}));
+ const uniq=a=>[...new Set(a)];
+ // realizări
+ const B=[
+  ['D|n','Vânătorul de divizori','Toate întrebările despre divizori și multipli',s('c1')===3],
+  ['÷10','Ochi de vultur','Criteriile cu 2, 5 și 10 aplicate perfect',s('c2')===3],
+  ['Σ','Suma magică','Criteriile cu 3 și 9 fără greșeală',s('c3')===3],
+  ['⇒','Logicianul','Proprietățile divizibilității stăpânite',s('c4')===3],
+  ['p','Detectivul numerelor prime','Recunoști perfect numerele prime',s('c5')===3],
+  ['2³','Arhitectul factorilor','Descompunerea în factori primi fără greșeală',s('c6')===3],
+  ['( )','Maestrul c.m.m.d.c.','Toate întrebările cu c.m.m.d.c.',s('c7')===3],
+  ['[ ]','Maestrul c.m.m.m.c.','Toate întrebările cu c.m.m.m.c.',s('c8')===3],
+  ['N1','Fundație solidă','Toate cele 8 întrebări de nivel 1 corecte',lvl[1]===8],
+  ['N3','Rezolvitor de probleme','Cel puțin 6 din 8 întrebări de nivel 3',lvl[3]>=6],
+  ['24','Scor perfect','24 de răspunsuri corecte din 24',total===res.length],
+  ['✓','Până la capăt','Ai terminat evaluarea',true]];
+ // SWOT
+ const name=id=>COMPS.find(c=>c.id===id).name;
+ const S=[],W=[],O=[],T=[];
+ COMPS.forEach(c=>{if(s(c.id)===3)S.push(`Stăpânești capitolul <b>${c.name}</b>.`);});
+ if(lvl[3]>=5)S.push('Gândești bine la problemele de nivel avansat (nivel 3).');
+ if(lvl[1]===8)S.push('Cunoști sigur definițiile și regulile de bază.');
+ if(!S.length){const mid=COMPS.filter(c=>s(c.id)===2);S.push(mid.length?`Ai baze bune în: ${mid.map(c=>c.name).join(', ')}.`:'Ai parcurs toată evaluarea și acum știi exact unde să lucrezi.');}
+ COMPS.forEach(c=>{if(s(c.id)<=1){const miss=by[c.id].items.filter(r=>!r.ok).map(r=>r.q.skill);W.push(`<b>${c.name}</b>: încă nu ${miss.join('; ')}.`);}});
+ if(lvl[1]<=5)W.push('Unele noțiuni de bază (definiții, criterii) nu sunt încă sigure.');
+ if(!W.length)W.push('Nu ai puncte slabe majore. Fii atent doar la greșelile izolate din lista de mai jos.');
+ COMPS.forEach(c=>{if(s(c.id)===2)O.push(`Cu o fișă de exerciții poți stăpâni complet <b>${c.name}</b>.`);});
+ if(s('c7')>=2)O.push('Vei învăța ușor <b>simplificarea fracțiilor</b>, care folosește c.m.m.d.c.');
+ if(s('c8')>=2)O.push('Ești pregătit pentru <b>aducerea fracțiilor la același numitor</b>, care folosește c.m.m.m.c.');
+ if(s('c6')===3)O.push('Poți calcula rapid c.m.m.d.c. și c.m.m.m.c. chiar și pentru numere mari.');
+ if(s('c2')+s('c3')>=5)O.push('Criteriile de divizibilitate te ajută la calcul mintal și la verificarea rezultatelor.');
+ if(total>=20)O.push('Poți încerca probleme de concurs sau olimpiadă din acest capitol.');
+ if(!O.length)O.push('Fiecare capitol recuperat te ajută la următorul: începe cu primul pas din planul de mai jos.');
+ if(s('c7')<=1)T.push('<b>Simplificarea fracțiilor</b> (capitolul următor) va fi dificilă fără c.m.m.d.c.');
+ if(s('c8')<=1)T.push('<b>Adunarea fracțiilor cu numitori diferiți</b> cere c.m.m.m.c.');
+ if(s('c6')<=1)T.push('Fără descompunerea în factori primi, c.m.m.d.c. și c.m.m.m.c. devin greu de calculat.');
+ if(s('c5')<=1)T.push('Confuzia dintre numere prime și compuse duce la descompuneri greșite.');
+ if(s('c2')+s('c3')<=3)T.push('Criteriile de divizibilitate nesigure încetinesc toate calculele.');
+ if(s('c4')<=1)T.push('Problemele de raționament cu necunoscute vor fi greu de abordat.');
+ if(secs&&secs/res.length<20&&total<16)T.push('<b>Graba</b>: ai răspuns foarte repede. Citește atent fiecare cerință.');
+ if(!T.length)T.push('Riscul principal este uitarea. Repetă capitolul periodic, mai ales înainte de teză.');
+ // plan: ordinea logică a capitolelor
+ const order=['c1','c2','c3','c5','c6','c7','c8','c4'];
+ const plan=order.filter(id=>s(id)<3).map(id=>({id,name:name(id),lesson:by[id].c.lesson,score:s(id),miss:by[id].items.filter(r=>!r.ok).map(r=>r.q.skill)}));
+ const band=total>=21?'Excelent':total>=15?'Bun':total>=9?'În progres':'Început de drum';
+ return {res,by,total,lvl,grade,know:uniq(know),learn,badges:B,swot:{S,W,O,T},plan,band,secs};
+}
+// ===================== GEN-END =====================
+
+// ===================== interfață =====================
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtNum=x=>String(x).replace('.',',');
+const fmtTime=s=>`${Math.floor(s/60)} min ${String(s%60).padStart(2,'0')} s`;
+const store={get(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+
+const st={view:'test',phase:'start',name:'',qs:[],answers:[],i:0,t0:0,report:null,sample:false,warn:false};
+const saved=store.get('div6-last');
+if(saved&&saved.qs){st.report=saved;st.name=saved.name||'';}
+
+function setView(v){st.view=v;document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));render();window.scrollTo(0,0);}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{if(b.disabled)return;setView(b.dataset.v);}));
+
+function render(){
+ $('#tab-raport').disabled=!st.report;
+ document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===st.view));
+ const app=$('#app');
+ if(st.view==='teorie')app.innerHTML=theoryHTML();
+ else if(st.view==='raport'&&st.report)app.innerHTML=reportHTML(st.report);
+ else if(st.phase==='quiz')app.innerHTML=quizHTML();
+ else app.innerHTML=startHTML();
+ bind();
+}
+
+function startHTML(){
+ return `<section class="hero">
+  <div>
+   <p class="eyebrow">Evaluare · Capitolul „Divizibilitatea în ℕ”</p>
+   <h1 style="margin-top:8px">Află exact ce știi și ce mai ai de învățat</h1>
+   <p class="lede muted">Testul are 24 de întrebări, câte 3 pentru fiecare temă a capitolului, pe trei niveluri de dificultate. La final primești un raport cu realizările tale, ce stăpânești, ce trebuie recapitulat și o analiză SWOT. Întrebările se schimbă la fiecare încercare.</p>
+   <div class="facts"><div><b>24</b><span>întrebări</span></div><div><b>8</b><span>teme</span></div><div><b>3</b><span>niveluri</span></div><div><b>~30</b><span>minute</span></div></div>
+   <div class="levels"><span class="lv lv1">Nivel 1 · Cunoaștere</span><span class="lv lv2">Nivel 2 · Aplicare</span><span class="lv lv3">Nivel 3 · Raționament</span></div>
+   <form id="startf" class="card stack" style="margin-top:22px">
+    <label for="sname"><b>Numele și prenumele elevului</b></label>
+    <input type="text" id="sname" autocomplete="name" placeholder="de exemplu: Popescu Ana" value="${esc(st.name)}">
+    <div class="row"><button class="btn" type="submit">Începe evaluarea</button><button class="btn ghost" type="button" id="demo">Vezi un raport exemplu</button></div>
+    ${st.warn?'<p class="notice">Scrie numele, ca să apară pe raport.</p>':''}
+   </form>
+  </div>
+  <aside class="card">
+   <p class="eyebrow">Ce se evaluează</p>
+   <div class="map"><ol>${COMPS.map(c=>`<li><span class="k">${c.k}.</span><span>${c.name}</span></li>`).join('')}</ol></div>
+   <p class="muted" style="margin-top:12px;font-size:.92rem">Nu ești sigur pe o temă? Citește întâi <a href="#teorie" data-go="teorie">teoria</a>.</p>
+  </aside>
+ </section>`;
+}
+
+function quizHTML(){
+ const q=st.qs[st.i],a=st.answers[st.i],c=COMPS.find(x=>x.id===q.comp),n=st.qs.length;
+ const answered=st.answers.filter(x=>x!=null&&x!==''&&!(Array.isArray(x)&&!x.length)).length;
+ let body='';
+ if(q.type==='mc')body=`<div class="opts" role="radiogroup">${q.options.map((o,j)=>`<label class="opt ${a===j?'sel':''}"><input type="radio" name="o" id="o${j}" value="${j}" ${a===j?'checked':''}><span>${o}</span></label>`).join('')}</div>`;
+ else if(q.type==='multi')body=`<p class="muted" style="font-size:.9rem">Pot fi mai multe răspunsuri corecte.</p><div class="opts">${q.options.map((o,j)=>{const on=Array.isArray(a)&&a.includes(j);return `<label class="opt ${on?'sel':''}"><input type="checkbox" id="o${j}" value="${j}" ${on?'checked':''}><span>${o}</span></label>`;}).join('')}</div>`;
+ else body=`<label for="numans" class="muted" style="font-size:.9rem">Scrie răspunsul (un număr):</label><input type="text" inputmode="numeric" id="numans" class="numin" autocomplete="off" value="${a!=null?esc(a):''}">`;
+ return `<section class="stack">
+  <div class="qhead"><p class="eyebrow">${esc(st.name)} · întrebarea ${st.i+1} din ${n}</p><p class="muted" style="font-size:.88rem">${answered} răspunsuri date</p></div>
+  <div class="progress" aria-hidden="true"><i style="width:${(st.i+1)/n*100}%"></i></div>
+  <div class="card stack" style="gap:18px">
+   <div class="row"><span class="pill p-mid" style="background:var(--pen-soft);color:var(--pen)">${c.k}. ${c.name}</span><span class="lv lv${q.level}">${LEVELS[q.level]}</span></div>
+   <p class="qtext">${q.prompt}</p>
+   ${body}
+  </div>
+  <div class="row" style="justify-content:space-between">
+   <button class="btn ghost" id="prev" ${st.i===0?'disabled':''}>Înapoi</button>
+   ${st.i<n-1?'<button class="btn" id="next">Următoarea</button>':'<button class="btn" id="finish">Finalizează și vezi raportul</button>'}
+  </div>
+  ${st.confirm?`<div class="notice stack" style="gap:10px"><p>Ai ${n-answered} întrebări fără răspuns. Ele vor fi considerate greșite.</p><div class="row"><button class="btn" id="finok">Finalizează oricum</button><button class="btn ghost" id="fincancel">Mă întorc la test</button></div></div>`:''}
+  <div class="card"><p class="eyebrow" style="margin-bottom:8px">Sari la întrebarea</p><div class="dots">${st.qs.map((_,j)=>{const x=st.answers[j];const on=x!=null&&x!==''&&!(Array.isArray(x)&&!x.length);return `<button class="${on?'ans':''} ${j===st.i?'cur':''}" data-j="${j}" aria-label="Întrebarea ${j+1}">${j+1}</button>`;}).join('')}</div></div>
+ </section>`;
+}
+
+function ansText(q,a){if(a==null||a===''||(Array.isArray(a)&&!a.length))return '<i class="muted">fără răspuns</i>';
+ if(q.type==='mc')return q.options[a];if(q.type==='multi')return a.map(j=>q.options[j]).join(', ');return `<span class="num">${esc(a)}</span>`;}
+function goodText(q){if(q.type==='mc')return q.options[q.correct];if(q.type==='multi')return q.correct.map(j=>q.options[j]).join(', ');return `<span class="num">${q.correct}</span>`;}
+
+function reportHTML(R){
+ const A=R.A;const date=new Date(R.date);
+ const ds=date.toLocaleDateString('ro-RO',{day:'numeric',month:'long',year:'numeric'});
+ const statusPill={ok:'<span class="pill p-ok">Stăpânit</span>',mid:'<span class="pill p-mid">În consolidare</span>',ko:'<span class="pill p-ko">De recuperat</span>'};
+ const got=A.badges.filter(b=>b[3]).length;
+ return `<section class="stack" style="gap:22px">
+  ${R.sample?'<p class="sample">Raport exemplu, generat automat cu răspunsuri simulate. Nu aparține unui elev real.</p>':''}
+  <div class="rephead">
+   <div><p class="eyebrow">Raport de evaluare · ${ds}</p><h1 style="margin-top:6px">${esc(R.name||'Elev')}</h1><p class="muted" style="margin-top:6px">Divizibilitatea în ℕ · clasa a VI-a · nivel general: <b style="color:var(--ink)">${A.band}</b></p></div>
+   <div class="grade"><span class="eyebrow">Notă orientativă</span><b class="num">${fmtNum(A.grade.toFixed(2))}</b></div>
+  </div>
+  <div class="kpis">
+   <div class="kpi"><b>${A.total}/24</b><span>răspunsuri corecte</span></div>
+   <div class="kpi"><b>${A.lvl[1]}/8</b><span>nivel 1 · cunoaștere</span></div>
+   <div class="kpi"><b>${A.lvl[2]}/8</b><span>nivel 2 · aplicare</span></div>
+   <div class="kpi"><b>${A.lvl[3]}/8</b><span>nivel 3 · raționament</span></div>
+  </div>
+
+  <div class="card stack">
+   <div class="row" style="justify-content:space-between"><h2>Rezultate pe teme</h2><span class="muted" style="font-size:.88rem">timp de lucru: ${fmtTime(A.secs||0)}</span></div>
+   <div class="bars">${COMPS.map(c=>{const o=A.by[c.id];return `<div class="bar"><span class="t">${c.k}. ${c.name}</span><span class="track" aria-label="${o.score} din 3">${o.items.map(r=>`<i class="${r.ok?'ok':'ko'}" title="${LEVELS[r.q.level]}"></i>`).join('')}</span>${statusPill[o.status]}</div>`;}).join('')}</div>
+   <p class="muted" style="font-size:.85rem">Fiecare pătrățel este o întrebare, în ordinea nivelurilor 1, 2, 3. Verde = corect, roșu = greșit.</p>
+  </div>
+
+  <div class="two">
+   <div class="card stack"><h2>Ce știi</h2>${A.know.length?`<ul class="clean yes">${A.know.map(s=>`<li>Știi să ${s}.</li>`).join('')}</ul>`:'<p class="muted">Încă nicio competență confirmată. Începe cu teoria și reia testul.</p>'}</div>
+   <div class="card stack"><h2>Ce mai ai de învățat</h2>${A.learn.length?`<ul class="clean no">${A.learn.map(l=>{const c=COMPS.find(x=>x.id===l.comp);return `<li>Să ${l.skill} · <a href="#${c.lesson}" data-lesson="${c.lesson}">teoria ${c.k}</a></li>`;}).join('')}</ul>`:'<p class="muted">Nimic! Ai răspuns corect la toate întrebările.</p>'}</div>
+  </div>
+
+  <div class="card stack">
+   <div class="row" style="justify-content:space-between"><h2>Realizări</h2><span class="pill p-ok">${got} din ${A.badges.length} deblocate</span></div>
+   <div class="badges">${A.badges.map(([ic,t,d,on])=>`<div class="badge ${on?'':'locked'}"><span class="ic">${ic}</span><b>${t}</b><span>${d}</span></div>`).join('')}</div>
+  </div>
+
+  <div class="stack">
+   <h2>Analiza SWOT</h2>
+   <div class="swot">
+    <div class="sS"><h3><span class="L">S</span>Puncte tari</h3><ul>${A.swot.S.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="sW"><h3><span class="L">W</span>Puncte slabe</h3><ul>${A.swot.W.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="sO"><h3><span class="L">O</span>Oportunități</h3><ul>${A.swot.O.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="sT"><h3><span class="L">T</span>Amenințări</h3><ul>${A.swot.T.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+   </div>
+  </div>
+
+  <div class="card stack"><h2>Planul tău de învățare</h2>
+   ${A.plan.length?`<ol class="plan">${A.plan.map(p=>`<li><b>${p.name}</b> (${p.score}/3) · recitește <a href="#${p.lesson}" data-lesson="${p.lesson}">teoria</a>, apoi exersează: ${p.miss.join('; ')}.</li>`).join('')}<li>Reia evaluarea. Vei primi întrebări noi.</li></ol>`:'<p>Ai stăpânit tot capitolul. Încearcă probleme de concurs sau ajută un coleg să recapituleze.</p>'}
+  </div>
+
+  <div class="card review"><h2 style="margin-bottom:6px">Răspunsurile tale</h2>
+   ${A.res.map((r,i)=>{const c=COMPS.find(x=>x.id===r.q.comp);return `<details ${r.ok?'':''}><summary><span class="pill ${r.ok?'p-ok':'p-ko'}">${r.ok?'Corect':'Greșit'}</span><span class="num muted">${i+1}.</span><span>${c.name} · nivel ${r.q.level}</span></summary>
+    <div class="body"><p>${r.q.prompt}</p><p>Răspunsul tău: ${ansText(r.q,r.ans)}</p>${r.ok?'':`<p>Răspuns corect: <b>${goodText(r.q)}</b></p>`}<div class="ex">${r.q.explain}</div></div></details>`;}).join('')}
+  </div>
+
+  <div class="row"><button class="btn" id="copy">Copiază raportul</button><button class="btn ghost" id="again">Reia evaluarea</button><button class="btn ghost" data-go="teorie">Deschide teoria</button></div>
+  <p id="copymsg" class="muted" role="status" aria-live="polite"></p>
+  <textarea id="copyfb" hidden readonly style="width:100%;min-height:200px;font-family:var(--f-mono);font-size:.85rem"></textarea>
+ </section>`;
+}
+
+function reportText(R){const A=R.A;const strip=s=>s.replace(/<sup>(\d+)<\/sup>/g,'^$1').replace(/<[^>]+>/g,'');
+ const L=[`RAPORT DE EVALUARE – DIVIZIBILITATEA ÎN N (clasa a VI-a)`,`Elev: ${R.name||'-'}`,`Data: ${new Date(R.date).toLocaleDateString('ro-RO')}`,`Punctaj: ${A.total}/24 · Notă orientativă: ${fmtNum(A.grade.toFixed(2))} · Nivel: ${A.band}`,`Niveluri: N1 ${A.lvl[1]}/8, N2 ${A.lvl[2]}/8, N3 ${A.lvl[3]}/8`,``,`REZULTATE PE TEME`,...COMPS.map(c=>`- ${c.name}: ${A.by[c.id].score}/3`),``,`REALIZĂRI: ${A.badges.filter(b=>b[3]).map(b=>b[1]).join(', ')}`,``,`ANALIZA SWOT`,`S – Puncte tari:`,...A.swot.S.map(x=>'  • '+strip(x)),`W – Puncte slabe:`,...A.swot.W.map(x=>'  • '+strip(x)),`O – Oportunități:`,...A.swot.O.map(x=>'  • '+strip(x)),`T – Amenințări:`,...A.swot.T.map(x=>'  • '+strip(x)),``,`DE RECAPITULAT`,...(A.plan.length?A.plan.map((p,i)=>`${i+1}. ${p.name} (${p.score}/3): ${p.miss.join('; ')}`):['Nimic – capitol stăpânit.'])];
+ return L.join('\n');}
+
+function theoryHTML(){
+ const P=[];for(let n=2;n<100;n++)if(isPrime(n))P.push(n);
+ const L=(id,k,title,inner)=>`<article class="card stack lesson" id="${id}"><h2><span class="k">${k}</span>${title}</h2>${inner}</article>`;
+ return `<section class="stack" style="gap:18px">
+ <div><p class="eyebrow">Teorie</p><h1 style="margin-top:6px">Divizibilitatea în ℕ</h1><p class="lede muted">Tot ce trebuie să știi pentru evaluare, în ordinea în care se învață. Fiecare temă are definiții, exemple rezolvate și greșelile frecvente.</p></div>
+ <nav class="toc" aria-label="Cuprins">${COMPS.map(c=>`<a href="#${c.lesson}" data-lesson="${c.lesson}">${c.k}. ${c.name}</a>`).join('')}</nav>
+ ${L('t1','1.','Divizori și multipli',`
+  <p class="def">Numărul natural <var>b</var> este <b>divizibil</b> cu numărul natural <var>a</var> dacă există un număr natural <var>c</var> astfel încât <var>b</var> = <var>a</var> · <var>c</var>. Atunci <var>a</var> este <b>divizor</b> al lui <var>b</var>, iar <var>b</var> este <b>multiplu</b> al lui <var>a</var>.</p>
+  <ul><li>Se notează <var>a</var> | <var>b</var> („<var>a</var> divide <var>b</var>”) sau <var>b</var> ⋮ <var>a</var> („<var>b</var> este divizibil cu <var>a</var>”).</li>
+  <li><b>D<sub>n</sub></b> este mulțimea divizorilor lui <var>n</var>. Exemplu: D<sub>12</sub> = {1, 2, 3, 4, 6, 12}.</li>
+  <li><b>M<sub>n</sub></b> este mulțimea multiplilor lui <var>n</var>: M<sub>n</sub> = {0, <var>n</var>, 2<var>n</var>, 3<var>n</var>, …}. Exemplu: M<sub>5</sub> = {0, 5, 10, 15, …}.</li>
+  <li>1 și <var>n</var> sunt <b>divizori improprii</b> ai lui <var>n</var>; ceilalți sunt <b>divizori proprii</b>.</li></ul>
+  <p><b>Cum găsești toți divizorii:</b> caută perechi de factori. 36 = 1·36 = 2·18 = 3·12 = 4·9 = 6·6, deci D<sub>36</sub> = {1, 2, 3, 4, 6, 9, 12, 18, 36}.</p>
+  <p class="warn"><b>Atenție!</b> 0 este multiplu al oricărui număr (0 = <var>n</var> · 0). 1 divide orice număr. Mulțimea divizorilor unui număr nenul este finită, iar mulțimea multiplilor este infinită.</p>`)}
+ ${L('t2','2.','Criteriile de divizibilitate cu 2, 5 și 10ⁿ',`
+  <ul><li><b>Cu 2:</b> un număr se divide cu 2 dacă ultima cifră este pară: 0, 2, 4, 6 sau 8. Exemplu: 3 574 ⋮ 2.</li>
+  <li><b>Cu 5:</b> ultima cifră este 0 sau 5. Exemplu: 1 235 ⋮ 5.</li>
+  <li><b>Cu 10:</b> ultima cifră este 0. Exemplu: 870 ⋮ 10.</li>
+  <li><b>Cu 10<sup><var>n</var></sup>:</b> ultimele <var>n</var> cifre sunt 0. Exemplu: 45 000 ⋮ 1 000.</li></ul>
+  <p class="def">Un număr divizibil și cu 2, și cu 5 este divizibil cu 10, deci are ultima cifră 0.</p>
+  <p><b>Câți multipli ai lui <var>d</var> sunt într-un interval?</b> Găsești primul și ultimul multiplu, apoi: (ultimul − primul) : <var>d</var> + 1. Exemplu: numerele de două cifre divizibile cu 5 sunt 10, 15, …, 95, adică (95 − 10) : 5 + 1 = 18.</p>`)}
+ ${L('t3','3.','Criteriile de divizibilitate cu 3 și 9',`
+  <ul><li><b>Cu 3:</b> suma cifrelor este divizibilă cu 3. Exemplu: 4 512 → 4 + 5 + 1 + 2 = 12, iar 12 ⋮ 3, deci 4 512 ⋮ 3.</li>
+  <li><b>Cu 9:</b> suma cifrelor este divizibilă cu 9. Exemplu: 7 263 → 18, iar 18 ⋮ 9, deci 7 263 ⋮ 9.</li></ul>
+  <p><b>Cifră necunoscută:</b> pentru ${ov(`5${X}4`)} ⋮ 9, suma 5 + ${X} + 4 = 9 + ${X} trebuie să fie 9 sau 18, deci ${X} = 0 sau ${X} = 9.</p>
+  <p class="warn"><b>Atenție!</b> Orice număr divizibil cu 9 este divizibil și cu 3, dar nu invers: 12 ⋮ 3, dar 12 nu se divide cu 9. Iar <b>cu 6</b> se verifică două criterii: cu 2 și cu 3.</p>`)}
+ ${L('t4','4.','Proprietățile divizibilității',`
+  <ul><li><var>a</var> | <var>a</var>, 1 | <var>a</var> și <var>a</var> | 0, pentru orice <var>a</var>.</li>
+  <li><b>Tranzitivitate:</b> dacă <var>a</var> | <var>b</var> și <var>b</var> | <var>c</var>, atunci <var>a</var> | <var>c</var>. Exemplu: 3 | 6 și 6 | 24, deci 3 | 24.</li>
+  <li>Dacă <var>a</var> | <var>b</var>, atunci <var>a</var> | <var>b</var> · <var>k</var>, pentru orice număr natural <var>k</var>.</li>
+  <li>Dacă <var>a</var> | <var>b</var> și <var>a</var> | <var>c</var>, atunci <var>a</var> | <var>b</var> + <var>c</var> și <var>a</var> | <var>b</var> − <var>c</var> (pentru <var>b</var> ≥ <var>c</var>).</li>
+  <li>Dacă <var>a</var> | <var>b</var>, dar <var>a</var> ∤ <var>c</var>, atunci <var>a</var> ∤ <var>b</var> + <var>c</var>.</li></ul>
+  <p><b>Exemplu rezolvat.</b> <var>d</var> | 3<var>n</var> + 11 și <var>d</var> | <var>n</var> + 2. Atunci <var>d</var> | 3(<var>n</var> + 2) = 3<var>n</var> + 6. Scădem: <var>d</var> | (3<var>n</var> + 11) − (3<var>n</var> + 6) = 5, deci <var>d</var> ∈ {1, 5}.</p>
+  <p class="warn"><b>Atenție!</b> Din 6 | <var>a</var> · <var>b</var> nu rezultă că 6 | <var>a</var> sau 6 | <var>b</var>: 6 | 2 · 3, dar 6 nu divide nici 2, nici 3.</p>`)}
+ ${L('t5','5.','Numere prime și numere compuse',`
+  <p class="def">Un număr natural este <b>prim</b> dacă are exact doi divizori: 1 și el însuși. Un număr natural mai mare decât 1 care are mai mult de doi divizori este <b>compus</b>.</p>
+  <ul><li>0 și 1 nu sunt nici prime, nici compuse.</li><li>2 este singurul număr prim par.</li><li>Ca să verifici dacă un număr este prim, îl împarți pe rând la 2, 3, 5, 7, 11, … până când pătratul împărțitorului depășește numărul. Exemplu: 97 nu se împarte la 2, 3, 5, 7, iar 11 · 11 = 121 &gt; 97, deci 97 este prim.</li></ul>
+  <p><b>Numerele prime mai mici decât 100</b> (le găsești cu ciurul lui Eratostene):</p>
+  <div class="primes">${P.map(p=>`<span>${p}</span>`).join('')}</div>
+  <p class="warn"><b>Capcane frecvente:</b> 51 = 3 · 17, 57 = 3 · 19, 87 = 3 · 29 și 91 = 7 · 13 par prime, dar sunt compuse.</p>`)}
+ ${L('t6','6.','Descompunerea în factori primi',`
+  <p class="def">Orice număr natural mai mare decât 1 se poate scrie ca produs de puteri de numere prime, într-un singur mod (dacă nu ținem cont de ordinea factorilor).</p>
+  <p><b>Metoda:</b> împarți numărul la cel mai mic număr prim care îl divide și continui cu câtul, până ajungi la 1.</p>
+  <div class="calc">${ladder(360)}</div>
+  <p>Deci 360 = 2<sup>3</sup> · 3<sup>2</sup> · 5.</p>
+  <p><b>Pentru curioși:</b> dacă <var>n</var> = <var>p</var><sup>a</sup> · <var>q</var><sup>b</sup>, atunci <var>n</var> are (<var>a</var> + 1)(<var>b</var> + 1) divizori. 360 are (3 + 1)(2 + 1)(1 + 1) = 24 de divizori.</p>
+  <p class="warn"><b>Atenție!</b> În descompunere apar doar numere prime: 4 · 3 · 5 nu este descompunerea lui 60, pentru că 4 nu este prim. Corect: 60 = 2<sup>2</sup> · 3 · 5.</p>`)}
+ ${L('t7','7.','C.m.m.d.c. și numere prime între ele',`
+  <p class="def"><b>Cel mai mare divizor comun</b> al numerelor <var>a</var> și <var>b</var> se notează (<var>a</var>, <var>b</var>). Se calculează luând <b>factorii comuni, la puterea cea mai mică</b>.</p>
+  <div class="calc">72  = 2³ · 3²
+120 = 2³ · 3 · 5
+(72, 120) = 2³ · 3 = 24</div>
+  <ul><li>Numerele <var>a</var> și <var>b</var> sunt <b>prime între ele</b> dacă (<var>a</var>, <var>b</var>) = 1. Exemplu: 8 și 15 sunt prime între ele, deși niciunul nu este prim.</li>
+  <li><b>Probleme:</b> când împarți obiecte în grupe identice, cât mai multe și fără rest, folosești c.m.m.d.c. Exemplu: 24 de mere și 36 de pere formează cel mult (24, 36) = 12 pachete, fiecare cu 2 mere și 3 pere.</li>
+  <li>C.m.m.d.c. se folosește la <b>simplificarea fracțiilor</b>.</li></ul>`)}
+ ${L('t8','8.','C.m.m.m.c. și probleme',`
+  <p class="def"><b>Cel mai mic multiplu comun</b> nenul al numerelor <var>a</var> și <var>b</var> se notează [<var>a</var>, <var>b</var>]. Se calculează luând <b>factorii comuni și necomuni, la puterea cea mai mare</b>.</p>
+  <div class="calc">72  = 2³ · 3²
+120 = 2³ · 3 · 5
+[72, 120] = 2³ · 3² · 5 = 360</div>
+  <ul><li>Legătura dintre ele: (<var>a</var>, <var>b</var>) · [<var>a</var>, <var>b</var>] = <var>a</var> · <var>b</var>. Verificare: 24 · 360 = 8 640 = 72 · 120.</li>
+  <li><b>Evenimente care se repetă:</b> două autobuze pleacă la fiecare 6, respectiv 8 minute. Pleacă din nou împreună după [6, 8] = 24 de minute.</li>
+  <li><b>Probleme cu resturi:</b> dacă <var>n</var> împărțit la 4 și la 6 dă restul 1, atunci <var>n</var> − 1 este multiplu al lui [4, 6] = 12, deci <var>n</var> ∈ {1, 13, 25, …}.</li>
+  <li>C.m.m.m.c. se folosește la <b>aducerea fracțiilor la același numitor</b>.</li></ul>`)}
+ <div class="row"><button class="btn" data-go="test">Mergi la evaluare</button></div>
+ </section>`;
+}
+
+function readAnswer(){const q=st.qs[st.i];
+ if(q.type==='mc'){const r=document.querySelector('input[name=o]:checked');st.answers[st.i]=r?+r.value:null;}
+ else if(q.type==='multi'){st.answers[st.i]=[...document.querySelectorAll('.opts input:checked')].map(x=>+x.value);}
+ else{const v=$('#numans');st.answers[st.i]=v?v.value.trim():'';}}
+
+function finish(){const secs=Math.round((Date.now()-st.t0)/1000);const A=analyse(st.qs,st.answers,secs);
+ st.report={name:st.name,date:Date.now(),qs:st.qs,answers:st.answers,A,sample:false};store.set('div6-last',st.report);
+ st.phase='start';st.confirm=false;setView('raport');}
+
+function demo(){const qs=makeTest();const prof={c1:.95,c2:.95,c3:.8,c4:.4,c5:.85,c6:.65,c7:.35,c8:.45};
+ const answers=qs.map(q=>{const ok=Math.random()<prof[q.comp]*(q.level===3?.8:1);
+  if(ok)return q.type==='multi'?q.correct.slice():q.correct;
+  if(q.type==='mc')return (q.correct+1)%q.options.length;if(q.type==='multi')return q.correct.slice(1);return q.correct+pick([1,2,-1,3]);});
+ const A=analyse(qs,answers,1260);st.report={name:'Elev exemplu',date:Date.now(),qs,answers,A,sample:true};setView('raport');}
+
+function bind(){
+ document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();setView(el.dataset.go);}));
+ document.querySelectorAll('[data-lesson]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();const id=el.dataset.lesson;if(st.view!=='teorie')setView('teorie');const t=document.getElementById(id);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+ const f=$('#startf');if(f)f.addEventListener('submit',e=>{e.preventDefault();const n=$('#sname').value.trim();if(!n){st.warn=true;render();$('#sname').focus();return;}
+  st.warn=false;st.name=n;st.qs=makeTest();st.answers=Array(st.qs.length).fill(null);st.i=0;st.t0=Date.now();st.phase='quiz';st.confirm=false;render();});
+ const d=$('#demo');if(d)d.addEventListener('click',demo);
+ document.querySelectorAll('.opts input').forEach(inp=>inp.addEventListener('change',()=>{readAnswer();document.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
+  document.querySelectorAll('.dots button')[st.i]?.classList.toggle('ans',(()=>{const x=st.answers[st.i];return x!=null&&x!==''&&!(Array.isArray(x)&&!x.length);})());}));
+ const ni=$('#numans');if(ni){ni.addEventListener('input',readAnswer);ni.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();($('#next')||$('#finish')).click();}});ni.focus();}
+ const go=j=>{readAnswer();st.i=j;st.confirm=false;render();window.scrollTo(0,0);};
+ $('#prev')?.addEventListener('click',()=>go(st.i-1));
+ $('#next')?.addEventListener('click',()=>go(st.i+1));
+ document.querySelectorAll('.dots button').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.j)));
+ $('#finish')?.addEventListener('click',()=>{readAnswer();const left=st.answers.filter(x=>x==null||x===''||(Array.isArray(x)&&!x.length)).length;if(left){st.confirm=true;render();}else finish();});
+ $('#finok')?.addEventListener('click',finish);
+ $('#fincancel')?.addEventListener('click',()=>{st.confirm=false;render();});
+ $('#again')?.addEventListener('click',()=>{st.phase='start';setView('test');});
+ $('#copy')?.addEventListener('click',()=>{const t=reportText(st.report);const msg=$('#copymsg');
+  const fb=()=>{const ta=$('#copyfb');ta.hidden=false;ta.value=t;ta.focus();ta.select();msg.textContent='Textul raportului este selectat mai jos. Copiază-l manual (Ctrl+C).';};
+  try{navigator.clipboard.writeText(t).then(()=>{msg.textContent='Raportul a fost copiat. Îl poți lipi într-un mesaj către profesor sau părinte.';},fb);}catch(e){fb();}});
+}
+
+const h=(location.hash||'').slice(1);
+if(h==='teorie')st.view='teorie';else if(h==='raport'&&st.report)st.view='raport';
+render();
+</script>
+</body>
+</html>
