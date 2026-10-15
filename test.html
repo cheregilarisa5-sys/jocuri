@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test tablă</title>
+<style>
+body{margin:0;background:#12111c;color:#f3f0e6;font:20px/1.5 Arial,sans-serif;padding:24px}
+h1{margin:0 0 16px;font-size:34px;color:#f5b841}
+.row{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #2c2940;padding:10px 0}
+.ok{color:#5bd08f;font-weight:bold}.no{color:#f2605a;font-weight:bold}
+.box{margin-top:20px;padding:18px;border:3px solid #f5b841;background:#1f1d2c}
+#tap{margin-top:20px;font-size:28px;padding:22px 40px;background:#f5b841;color:#1d1504;border:0;border-radius:12px}
+.small{font-size:15px;color:#aba6bf;word-break:break-all}
+</style>
+</head>
+<body>
+<h1>Test pentru tablă</h1>
+<noscript><p class="no">JavaScript este oprit sau pagina e deschisă ca previzualizare. Jocurile NU pot porni așa.</p></noscript>
+<div id="out">Se verifică…</div>
+<button id="tap" type="button">Atinge aici</button>
+<p id="tapres">Atingeri: 0</p>
+<p class="small">Fă o poză cu acest ecran și trimite-o.</p>
+<script>
+(function(){
+  var ua=navigator.userAgent,rows=[];
+  function add(name,ok,txt){rows.push('<div class="row"><span>'+name+'</span><span class="'+(ok?'ok':'no')+'">'+(txt||(ok?'DA':'NU'))+'</span></div>')}
+  var m=ua.match(/Chrome\/(\d+)/),chrome=m?+m[1]:0,a=ua.match(/Android (\d+(\.\d+)?)/);
+  add('Android',!!a,a?a[1]:'—');
+  add('Versiune Chrome/WebView',chrome>=80,chrome?String(chrome):'necunoscut');
+  var es6=false;try{es6=!!new Function('const f=(a)=>a;class X{};return `ok`')()}catch(e){}
+  add('JavaScript modern (ES6)',es6);
+  var gl=false;try{var c=document.createElement('canvas');gl=!!(c.getContext('webgl')||c.getContext('experimental-webgl'))}catch(e){}
+  add('Grafică 3D (WebGL)',gl);
+  add('Atingere (pointer events)',!!window.PointerEvent);
+  add('Ecran',true,screen.width+' × '+screen.height+' (zoom '+(window.devicePixelRatio||1)+')');
+  var v2d=true,v3d=es6&&gl;
+  rows.push('<div class="box"><b>Expediția Exponent</b> (2D): <span class="'+(v2d?'ok':'no')+'">'+(v2d?'ar trebui să meargă':'nu merge')+'</span><br><b>Jocurile 3D</b> (Cetatea, Scara, Turnul): <span class="'+(v3d?'ok':'no')+'">'+(v3d?'ar trebui să meargă':(es6?'merg fără lumea 3D':'browser prea vechi'))+'</span></div>');
+  rows.push('<p class="small">'+ua+'</p>');
+  document.getElementById('out').innerHTML=rows.join('');
+  var n=0,t=document.getElementById('tap'),r=document.getElementById('tapres');
+  function hit(){n++;r.innerHTML='Atingeri: '+n+' <span class="ok">(atingerea funcționează)</span>'}
+  t.onclick=hit;
+})();
+</script>
+</body>
+</html>
