@@ -1,0 +1,1638 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="prof. Zopota Larisa">
+<title>Piramida lui Gauss – clasa a V-a</title>
+<meta name="description" content="O mică exploratoare traversează deșertul spre Piramida lui Gauss. La fiecare din cele 12 popasuri rezolvi o sumă. Răspunsul corect o duce mai departe — la un răspuns greșit apare șacalul!">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: full-screen 3D storybook scene; cards float on top — start card on the left, question card at the bottom, HUD on top */
+:root{--ink:#2b2118;--ink2:#5a4a3a;--paper:#fffaf0;--paper2:#f7ecd6;--accent:#c2410c;--accent2:#b8862a;--ok:#2f9e44;--bad:#d9480f;--gold:#f2b705;
+  --f-d:"Fredoka","Trebuchet MS",sans-serif;--f-b:"Nunito","Segoe UI",Arial,sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:#f3dfb8;color:var(--ink);font-family:var(--f-b)}
+#scene{position:fixed;top:0;left:0;width:100%;height:100%;display:block}
+.screen{position:fixed;top:0;right:0;bottom:0;left:0;display:flex;padding:16px;pointer-events:none}
+.screen>*{pointer-events:auto}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:22px;box-shadow:0 8px 0 rgba(43,33,24,.85),0 18px 40px rgba(0,0,0,.25)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+/* start */
+#start{align-items:center}
+.startcard{width:min(460px,100%);max-height:100%;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.kicker{font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.logo{font-family:var(--f-d);font-weight:700;font-size:clamp(2rem,6vw,2.9rem);line-height:1;margin:0;color:var(--accent);text-shadow:0 3px 0 var(--ink2)}
+.logo small{display:block;font-size:.55em;color:var(--ink);text-shadow:none;margin-top:6px;font-weight:600}
+.by{display:inline-flex;gap:6px;align-items:center;align-self:flex-start;background:var(--paper2);border:2px solid var(--ink);border-radius:999px;padding:3px 12px;font-size:.88rem}
+.lead{margin:0;line-height:1.5}
+.label{font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.grp{display:flex;flex-direction:column;gap:6px}
+input[type=text]{font:inherit;font-size:1rem;padding:9px 12px;border:2px solid var(--ink);border-radius:12px;background:#fff}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+@media (max-width:420px){.seg{grid-template-columns:repeat(2,1fr)}}
+.seg button,.seg2 button{border:2px solid var(--ink);border-radius:12px;background:#fff;padding:7px 6px;text-align:left;line-height:1.15}
+.seg button b,.seg2 button b{display:block;font-family:var(--f-d);font-weight:600;font-size:.98rem}
+.seg button small,.seg2 button small{font-size:.72rem;color:var(--ink2)}
+.seg button[aria-pressed=true],.seg2 button[aria-pressed=true]{background:var(--paper2);box-shadow:inset 0 0 0 3px var(--accent)}
+.seg2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid var(--ink);border-radius:999px;background:#fff;padding:3px 10px 3px 4px;font-size:.84rem;font-weight:700;display:inline-flex;gap:6px;align-items:center}
+.chip i{font-style:normal;min-width:24px;height:22px;border-radius:999px;display:grid;place-items:center;background:var(--zc);color:#fff;font-size:.72rem;padding:0 5px}
+.chip[aria-pressed=false]{opacity:.45}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.big{font-family:var(--f-d);font-weight:600;font-size:1.25rem;border:3px solid var(--ink);border-radius:16px;padding:10px 22px;background:var(--accent);color:#fff;box-shadow:0 5px 0 var(--ink)}
+.big.alt{background:#fff;color:var(--ink)}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.prof{font-size:.85rem;color:var(--ink2)}
+.prof summary{cursor:pointer;font-weight:800;color:var(--ink)}
+.prof ul{padding-left:18px;margin:6px 0}
+/* hud */
+#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+#hud>*{pointer-events:auto}
+.pill{background:var(--paper);border:3px solid var(--ink);border-radius:999px;padding:5px 14px;font-weight:800;display:flex;gap:8px;align-items:center;box-shadow:0 4px 0 rgba(43,33,24,.85)}
+.prog{flex:1;max-width:380px;flex-direction:column;align-items:stretch;gap:4px;border-radius:16px}
+.bar{height:10px;border:2px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s}
+.hearts{letter-spacing:2px;color:#e03131}
+.iconbtn{width:44px;height:44px;border-radius:50%;background:var(--paper);border:3px solid var(--ink);font-size:1.2rem;box-shadow:0 4px 0 rgba(43,33,24,.85)}
+/* question */
+#qwrap{position:fixed;left:0;right:0;bottom:0;padding:12px;display:flex;justify-content:center;pointer-events:none}
+.qcard{pointer-events:auto;width:min(860px,100%);max-height:62vh;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.qhead{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.zone{display:inline-flex;gap:6px;align-items:center;font-weight:800;font-size:.85rem;color:#fff;background:var(--zc);border:2px solid var(--ink);border-radius:999px;padding:2px 12px 2px 4px}
+.zone i{font-style:normal;background:#fff;color:var(--ink);border-radius:999px;padding:0 6px;font-size:.75rem}
+.prompt{font-size:clamp(1.05rem,2.6vw,1.35rem);font-weight:700;line-height:1.45}
+.prompt p{margin:0 0 4px}
+.prompt sup,.explain sup,.opt sup{font-size:.7em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:560px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;border:3px solid var(--ink);border-radius:14px;padding:9px 12px;background:var(--c);font-weight:800;font-size:clamp(1rem,2.4vw,1.2rem);box-shadow:0 4px 0 var(--ink);color:var(--tc)}
+.opt .k{display:grid;place-items:center;min-width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.85);color:var(--ink);font-size:.85rem;border:2px solid var(--ink)}
+.opt:disabled{cursor:default}
+.opt.right{background:#b2f2bb;color:var(--ink)}.opt.wrong{background:#ffc9c9;color:var(--ink)}.opt.dim{opacity:.45}
+.fb{border:3px solid var(--ink);border-radius:14px;padding:10px 14px;background:#fff}
+.fb.ok{background:#ebfbee}.fb.bad{background:#fff4e6}
+.fb>b{font-family:var(--f-d);font-size:1.2rem}.fb.ok>b{color:var(--ok)}.fb.bad>b{color:var(--bad)}
+.explain{margin-top:4px;line-height:1.5}.explain p{margin:2px 0}
+.m{color:var(--accent)}
+/* theory */
+#theory{align-items:center;justify-content:center}
+.thcard{width:min(800px,100%);max-height:100%;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:12px}
+.thTitle{font-family:var(--f-d);font-weight:600;font-size:1.7rem;margin:0;border-left:8px solid var(--zc);padding-left:10px}
+.thText{line-height:1.6;font-size:1.04rem}.thText p{margin:0 0 6px}
+.box{border:3px solid var(--ink);border-radius:16px;padding:12px 14px;background:var(--paper2);display:flex;flex-direction:column;gap:8px}
+#thSteps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+.sm{font-family:var(--f-d);font-size:1rem;border:3px solid var(--ink);border-radius:12px;padding:6px 14px;background:var(--gold);box-shadow:0 3px 0 var(--ink);align-self:flex-start}
+.sm.alt{background:#fff}
+/* end */
+#end{align-items:center;justify-content:center}
+.endcard{width:min(720px,100%);max-height:100%;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:560px){.stats{grid-template-columns:1fr 1fr}}
+.stat{border:2px solid var(--ink);border-radius:12px;padding:8px 10px;background:var(--paper2)}.stat span{font-size:.72rem;font-weight:800;text-transform:uppercase;color:var(--ink2)}.stat b{display:block;font-family:var(--f-d);font-size:1.4rem}
+.list{display:flex;flex-direction:column;gap:6px;padding:0;margin:0;list-style:none}
+.list li{border:2px solid var(--ink);border-left:8px solid var(--zc,#adb5bd);border-radius:12px;padding:8px 12px;background:#fff}
+.hn{}@media (max-width:560px){#hud .hn{display:none}#hStage{font-size:.72rem!important}.pill{padding:4px 10px}.iconbtn{width:38px;height:38px}}
+.toast{position:fixed;left:50%;top:22%;transform:translate(-50%,0);font-family:var(--f-d);font-weight:700;font-size:clamp(1.6rem,5vw,2.6rem);color:#fff;text-shadow:0 3px 0 var(--ink),0 0 14px rgba(0,0,0,.4);pointer-events:none;opacity:0;transition:opacity .3s,transform .3s;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,-10px)}
+/* math typesetting */
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .15em;font-size:.9em;line-height:1.2}
+.fr>span:first-child{border-bottom:2px solid currentColor;padding:0 .25em 1px}
+.fr>span:last-child{padding:1px .25em 0}
+.lim{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;margin-right:.2em;font-weight:600}
+.lim small{font-size:.58em;font-weight:500}
+.sq{border-top:2px solid currentColor;padding:1px 2px 0}
+.mat{display:inline-block;vertical-align:middle;position:relative;padding:0 .45em;margin:3px .15em}
+.mat::before,.mat::after{content:"";position:absolute;top:1px;bottom:1px;width:.4em;border:2px solid currentColor}
+.mat::before{left:0;border-right:0;border-radius:.6em 0 0 .6em}
+.mat::after{right:0;border-left:0;border-radius:0 .6em .6em 0}
+.mat.det::before{width:0;border-width:0 0 0 2px;border-radius:0}
+.mat.det::after{width:0;border-width:0 2px 0 0;border-radius:0}
+.mat{white-space:nowrap}
+.mg{display:inline-table;vertical-align:middle;border-collapse:collapse}
+.mr{display:table-row}
+.mr>span{display:table-cell;padding:1px .45em;text-align:center;line-height:1.35}
+.mat.det{border-left:2px solid currentColor;border-right:2px solid currentColor;padding:0 .2em}
+.mat.det::before,.mat.det::after{display:none}
+.mrow{display:inline-block;white-space:nowrap;margin:0 .6em 4px 0}
+.mrow>.mat{margin-left:.3em}
+.fml{text-align:center;font-size:1.3em;margin:.3em 0}
+.ans .t .mat{font-size:.85em}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="nojs" style="position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#14213d;color:#fff;font:600 19px/1.5 -apple-system,system-ui,sans-serif;padding:28px;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:left"><div style="font-size:26px">Jocul nu poate porni aici</div><div>Ai deschis fișierul ca previzualizare (de exemplu din WhatsApp sau din aplicația Fișiere pe iPhone). Previzualizarea nu pornește jocul.</div><div>Deschide jocul din <b>linkul</b> primit de la profesor, în Safari sau Chrome.</div></div><script>(function () {
+    var n = document.getElementById("nojs");
+    if (n && n.parentNode)
+        n.parentNode.removeChild(n);
+})();
+</script>
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<section id="start" class="screen">
+  <div class="card startcard">
+    <span class="kicker">Clasa a V-a · Matematică</span>
+    <h1 class="logo">Piramida<small>lui Gauss</small></h1>
+    <span class="by">⭐ Joc creat de <b>prof. Zopota Larisa</b></span>
+    <p class="lead">O mică exploratoare traversează deșertul spre <b>Piramida lui Gauss</b>. La fiecare din cele <b>12 popasuri</b> rezolvi o sumă. Răspunsul corect o duce mai departe — la un răspuns greșit <b>apare șacalul</b>!</p>
+    <div class="grp"><span class="label">Numele tău</span><input type="text" id="nm" maxlength="40" placeholder="Prenume și nume" autocomplete="name"></div>
+    <div class="grp"><span class="label">Nivel de dificultate</span><div class="seg" id="diffSeg">
+      <button type="button" data-v="usor"><b>Începător</b><small>calcule scurte</small></button>
+      <button type="button" data-v="mediu"><b>Mediu</b><small>ca la clasă</small></button>
+      <button type="button" data-v="greu"><b>Avansat</b><small>calcule lungi</small></button>
+      <button type="button" data-v="exc"><b>Excelență</b><small>grupa de excelență</small></button></div></div>
+    <div class="grp"><span class="label">Mod de joc</span><div class="seg2" id="modeSeg">
+      <button type="button" data-v="poveste"><b>Poveste</b><small>3 inimi — atenție la șacal!</small></button>
+      <button type="button" data-v="antrenament"><b>Antrenament</b><small>fără inimi, doar exersezi</small></button></div></div>
+    <div class="grp"><span class="label">Capitole (apasă ca să alegi)</span><div class="chips" id="chapSel"></div></div>
+    <div class="btns"><button class="big" id="startBtn" type="button">Pornește la drum ▶</button><button class="big alt" id="theoryBtn" type="button">Teorie și exemple</button></div>
+    <details class="prof"><summary>Pentru profesori</summary><p>Conform programei școlare de matematică pentru clasa a V-a (OMEN 3393/2017).</p><ul><li>Suma primelor n numere naturale: 1 + 2 + … + n = n·(n+1):2</li><li>Sume de numere consecutive; sume cu pas constant</li><li>Probleme rezolvate cu suma lui Gauss</li></ul><p>4 niveluri: Începător, Mediu, Avansat, Excelență (grupa de excelență). La final: fișă cu rezultatele pe capitole și greșelile rezolvate.</p></details>
+  </div>
+</section>
+
+<section id="theory" class="screen" hidden>
+  <div class="card thcard">
+    <div class="qhead"><span class="kicker">Teorie, exemple rezolvate și exerciții</span><button class="sm alt" id="thBack" type="button">← Înapoi</button></div>
+    <div class="chips" id="thTabs"></div>
+    <div id="thBody"></div>
+  </div>
+</section>
+
+<div id="hud" hidden>
+  <div class="pill hn">👧 <span id="hName"></span></div>
+  <div class="pill prog"><span id="hStage" style="font-size:.85rem"></span><div class="bar"><i id="hBar"></i></div></div>
+  <div style="display:flex;gap:8px"><div class="pill"><span id="hScore">0</span> 🪙</div><div class="pill hearts" id="hHearts"></div><button class="iconbtn" id="muteBtn" type="button" aria-label="Sunet">🔊</button></div>
+</div>
+
+<div id="qwrap" hidden><div class="card qcard" id="qcard" aria-live="polite"></div></div>
+
+<section id="end" class="screen" hidden><div class="card endcard" id="endcard"></div></section>
+<div class="toast" id="toast"></div>
+
+<script>window.addEventListener("error", function (e) {
+    try {
+        var d = document.getElementById("jsErr");
+        if (!d) {
+            d = document.createElement("div");
+            d.id = "jsErr";
+            d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#fff3f3;color:#7a1010;border:3px solid #7a1010;border-radius:14px;padding:12px 14px;font:600 15px/1.4 -apple-system,system-ui,sans-serif";
+            document.body.appendChild(d);
+        }
+        d.textContent = "A ap\u0103rut o eroare. Trimite o captur\u0103 de ecran profesorului: " + (e.message || "eroare") + " (linia " + (e.lineno || "?") + ")";
+    }
+    catch (x) {
+    }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
+var rnd = function (a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; };
+var pick = function (a) { return a[Math.floor(Math.random() * a.length)]; };
+var chance = function (p) { return Math.random() < p; };
+var shuffle = function (a) {
+    var _a;
+    for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        _a = __read([a[j], a[i]], 2), a[i] = _a[0], a[j] = _a[1];
+    }
+    return a;
+};
+var gcd = function (a, b) {
+    var _a;
+    a = Math.abs(a);
+    b = Math.abs(b);
+    while (b) {
+        _a = __read([b, a % b], 2), a = _a[0], b = _a[1];
+    }
+    return a;
+};
+var SUPD = "\u2070\xB9\xB2\xB3\u2074\u2075\u2076\u2077\u2078\u2079", SUBD = "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089";
+var sup = function (n) { return String(n).split("").map(function (c) { return c === "-" || c === "\u2212" ? "\u207B" : SUPD[c]; }).join(""); };
+var sub = function (n) { return String(n).split("").map(function (c) { return SUBD[c]; }).join(""); };
+var sg = function (n) { return n < 0 ? "\u2212" + -n : String(n); };
+var Q = function (n, d) {
+    if (d === void 0) { d = 1; }
+    if (d < 0) {
+        n = -n;
+        d = -d;
+    }
+    var g = gcd(n, d) || 1;
+    return { n: n / g, d: d / g };
+};
+var fq = function (q) { return q.d === 1 ? sg(q.n) : (q.n < 0 ? "\u2212" : "") + Math.abs(q.n) + "/" + q.d; };
+var fqn = function (n, d) { return fq(Q(n, d)); };
+var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); };
+var supify = function (s) { return esc(s).replace(/[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, function (m) { return "<sup>" + m.split("").map(function (c) { return c === "\u207B" ? "\u2212" : SUPD.indexOf(c); }).join("") + "</sup>"; }); };
+var M = function (s) { return "<b class=\"m\">".concat(supify(s), "</b>"); };
+var fr = function (a, b) { return "<span class=\"fr\"><span>".concat(a, "</span><span>").concat(b, "</span></span>"); };
+var LIM = "<span class=\"lim\">lim<small>n\u2192\u221E</small></span>";
+var rad = function (x) { return "\u221A<span class=\"sq\">".concat(x, "</span>"); };
+var ex = function (b, e) { return "".concat(b, "<sup>").concat(e, "</sup>"); };
+var isMatTxt = function (s) { return /^\[\[/.test(s); };
+var matTxt = function (A) { return "[" + A.map(function (r) { return "[" + r.join(",") + "]"; }).join(",") + "]"; };
+var parseMat = function (s) { return JSON.parse(s.replace(/−/g, "-")); };
+function matCells(A) {
+    return A.map(function (r) { return "<span class=\"mr\">".concat(r.map(function (v) { return "<span>".concat(typeof v === "number" ? sg(v) : v, "</span>"); }).join(""), "</span>"); }).join("");
+}
+function matH(A, name) {
+    var t = "<span class=\"mat\"><span class=\"mg\">".concat(matCells(A), "</span></span>");
+    return name ? "<span class=\"mrow\">".concat(name, " = ").concat(t, "</span>") : t;
+}
+function detH(A) {
+    return "<span class=\"mat det\"><span class=\"mg\">".concat(matCells(A), "</span></span>");
+}
+function fmtOpt(s) {
+    if (isMatTxt(s))
+        return matH(parseMat(s));
+    return supify(s);
+}
+function mc(type, prompt, correct, wrongs, explain, viz) {
+    var e_1, _a, e_2, _b;
+    if (explain === void 0) { explain = ""; }
+    if (viz === void 0) { viz = null; }
+    var C = String(correct), pool = [];
+    try {
+        for (var wrongs_1 = __values(wrongs), wrongs_1_1 = wrongs_1.next(); !wrongs_1_1.done; wrongs_1_1 = wrongs_1.next()) {
+            var w = wrongs_1_1.value;
+            if (w === null || w === void 0)
+                continue;
+            var s = String(w);
+            if (s === C || pool.includes(s) || /NaN|undefined|Infinity/.test(s))
+                continue;
+            pool.push(s);
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (wrongs_1_1 && !wrongs_1_1.done && (_a = wrongs_1.return)) _a.call(wrongs_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    if (pool.length < 3 && /^−?\d+$/.test(C)) {
+        var c = +C.replace("\u2212", "-");
+        var k = 1;
+        while (pool.length < 3 && k < 40) {
+            try {
+                for (var _c = (e_2 = void 0, __values([c + k, c - k])), _d = _c.next(); !_d.done; _d = _c.next()) {
+                    var v = _d.value;
+                    var s = sg(v);
+                    if (pool.length < 3 && !pool.includes(s) && s !== C)
+                        pool.push(s);
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+            k++;
+        }
+    }
+    if (pool.length < 3)
+        return null;
+    var opts = shuffle(__spreadArray([C], __read(pool.slice(0, 3)), false));
+    return { type: type, prompt: prompt, options: opts, correct: opts.indexOf(C), answerText: C, explain: explain, viz: viz };
+}
+function poly(c, v) {
+    if (v === void 0) { v = "n"; }
+    var d = c.length - 1;
+    var s = "";
+    c.forEach(function (a, i) {
+        if (!a)
+            return;
+        var p = d - i, abs = Math.abs(a);
+        var t = (abs === 1 && p > 0 ? "" : abs) + (p > 0 ? v + (p > 1 ? sup(p) : "") : "");
+        s += !s ? (a < 0 ? "\u2212" : "") + t : (a < 0 ? " \u2212 " : " + ") + t;
+    });
+    return s || "0";
+}
+var evalPoly = function (c, x) { return c.reduce(function (a, k) { return a * x + k; }, 0); };
+var DNUM = { usor: 1, mediu: 2, greu: 3, exc: 4 };
+function optTxt(s) {
+    return String(s).replace(/<sup>([^<]*)<\/sup>/g, function (m, x) { return /^[0-9−-]+$/.test(x) ? sup(x.replace("\u2212", "-")) : "^" + x; }).replace(/<sub>\(2\)<\/sub>/g, "\u208D\u2082\u208E").replace(/<[^>]+>/g, "");
+}
+function fromGroup(lib, gi, type) {
+    return function (d) {
+        lib.setD(DNUM[d] || 2);
+        var q = pick(lib.groups[gi])();
+        if (!q || q.ans < 0)
+            return null;
+        var opts = q.opts.map(optTxt), C = opts[q.ans];
+        return mc(type, "<p>" + q.q + "</p>", C, opts.filter(function (o, i) { return i !== q.ans; }), "<p>" + q.explain + "</p>");
+    };
+}
+var GSL = (function () {
+    var S = { diff: 1 };
+    var R = rnd;
+    var pw = function (a, n) {
+        return a + "<sup>" + n + "</sup>";
+    };
+    function mk(q, correct, dis, explain) {
+        var set = [correct];
+        for (var i = 0; i < dis.length; i++) {
+            var d = dis[i];
+            if (set.indexOf(d) < 0 && set.length < 4)
+                set.push(d);
+        }
+        shuffle(set);
+        return { q: q, opts: set, ans: set.indexOf(correct), explain: explain };
+    }
+    function T(c, f) {
+        return function () {
+            var q = f();
+            q.c = c;
+            return q;
+        };
+    }
+    var DIFFS = [
+        { name: "\xCEncep\u0103tor", tag: "sume mici" },
+        { name: "Mediu", tag: "ca la clas\u0103" },
+        { name: "Avansat", tag: "sume cu pas" },
+        { name: "Excelen\u021B\u0103", tag: "grupa de excelen\u021B\u0103" }
+    ];
+    var dif = function () {
+        return S.diff || 1;
+    };
+    var X = " \xB7 ";
+    var ns = function (n) {
+        return String(n);
+    };
+    function DD(a, b, c, d) {
+        var x = [a, b, c, d][dif() - 1];
+        return R(x[0], x[1]);
+    }
+    function steps(a) {
+        return a.map(function (s, i) {
+            return i + 1 + ") " + s;
+        }).join("<br>");
+    }
+    function sumTxt(a, b, st) {
+        st = st || 1;
+        return a + " + " + (a + st) + " + " + (a + 2 * st) + " + \u2026 + " + b;
+    }
+    function gaussExpl(n) {
+        return "Scriem suma de dou\u0103 ori: o dat\u0103 cresc\u0103tor, o dat\u0103 descresc\u0103tor. Fiecare pereche (1 + " + n + "), (2 + " + (n - 1) + "), \u2026 d\u0103 " + (n + 1) + ". Sunt " + n + " perechi, deci dublul sumei este " + n + X + (n + 1) + " = " + n * (n + 1) + ", iar suma este " + n * (n + 1) + " : 2 = " + n * (n + 1) / 2 + ".";
+    }
+    var MCOMP = function (c, f) {
+        return T(c, f);
+    };
+    var GA = [
+        MCOMP("2.1", function () {
+            var n = DD([5, 20], [10, 60], [30, 150], [50, 300]), s = n * (n + 1) / 2;
+            return mk("1 + 2 + 3 + \u2026 + " + n + " = ?", ns(s), [ns(n * (n + 1)), ns(n * n / 2 | 0), ns(s + n), ns(n * (n - 1) / 2)], gaussExpl(n) + "<br>Formula: 1 + 2 + \u2026 + n = n" + X + "(n + 1) : 2.");
+        }),
+        MCOMP("4.1", function () {
+            var n = DD([5, 30], [10, 99], [20, 200], [50, 500]);
+            return mk("C\xE2\u021Bi termeni are suma 1 + 2 + 3 + \u2026 + " + n + "?", ns(n), [ns(n - 1), ns(n + 1), ns(n * 2)], "Numerele de la 1 la " + n + " sunt exact " + n + " numere, deci suma are " + n + " termeni.");
+        }),
+        MCOMP("4.1", function () {
+            var n = DD([5, 20], [10, 50], [20, 99], [30, 200]);
+            return mk("Care formul\u0103 d\u0103 suma 1 + 2 + \u2026 + " + n + "?", n + X + (n + 1) + " : 2", [n + X + (n - 1) + " : 2", n + X + n + " : 2", "(" + n + " + 1) : 2"], "Suma lui Gauss: 1 + 2 + \u2026 + n = n" + X + "(n + 1) : 2. Pentru n = " + n + ": " + n + X + (n + 1) + " : 2.");
+        }),
+        MCOMP("2.1", function () {
+            var n = DD([4, 10], [8, 20], [10, 40], [20, 60]);
+            return mk("Gauss a adunat 1 + 2 + \u2026 + " + 2 * n + " grup\xE2nd primul cu ultimul termen. C\xE2te perechi a format \u0219i c\xE2t d\u0103 fiecare pereche?", n + " perechi, fiecare = " + (2 * n + 1), [2 * n + " perechi, fiecare = " + (2 * n + 1), n + " perechi, fiecare = " + 2 * n, n + 1 + " perechi, fiecare = " + 2 * n], "Sunt " + 2 * n + " termeni, deci " + n + " perechi: (1 + " + 2 * n + "), (2 + " + (2 * n - 1) + "), \u2026, fiecare egal\u0103 cu " + (2 * n + 1) + ". Suma = " + n + X + (2 * n + 1) + " = " + n * (2 * n + 1) + ".");
+        })
+    ];
+    var GB = [
+        MCOMP("2.1", function () {
+            var a = DD([2, 15], [5, 40], [10, 80], [20, 150]), b = a + DD([4, 12], [8, 30], [15, 60], [20, 100]);
+            var k = b - a + 1, s = (a + b) * k / 2;
+            return mk(sumTxt(a, b) + " = ?", ns(s), [ns((a + b) * (b - a) / 2), ns(b * (b + 1) / 2), ns(s + a), ns((a + b) * k)], steps(["Num\u0103rul de termeni: " + b + " \u2212 " + a + " + 1 = " + k + ".", "Suma = (primul + ultimul)" + X + "nr. termeni : 2 = (" + a + " + " + b + ")" + X + k + " : 2 = " + s + "."]));
+        }),
+        MCOMP("4.1", function () {
+            var a = DD([3, 20], [10, 60], [20, 150], [50, 400]), b = a + DD([5, 15], [10, 40], [20, 80], [30, 200]);
+            return mk("C\xE2\u021Bi termeni are suma " + sumTxt(a, b) + "?", ns(b - a + 1), [ns(b - a), ns(b - a + 2), ns(b)], "Num\u0103rul de termeni = ultimul \u2212 primul + 1 = " + b + " \u2212 " + a + " + 1 = " + (b - a + 1) + ". (Nu uita \u201E+ 1\u201D!)");
+        }),
+        MCOMP("2.1", function () {
+            var n = DD([4, 10], [5, 25], [10, 50], [20, 100]);
+            return mk("2 + 4 + 6 + \u2026 + " + 2 * n + " = ?", ns(n * (n + 1)), [ns(n * (n + 1) / 2), ns(2 * n * (2 * n + 1) / 2), ns(n * n)], "D\u0103m factor comun 2: 2" + X + "(1 + 2 + \u2026 + " + n + ") = 2" + X + n + X + (n + 1) + " : 2 = " + n + X + (n + 1) + " = " + n * (n + 1) + ".");
+        }),
+        MCOMP("2.1", function () {
+            var n = DD([4, 10], [5, 25], [10, 50], [20, 100]), last = 2 * n - 1;
+            return mk("1 + 3 + 5 + \u2026 + " + last + " = ?", ns(n * n), [ns(n * (n + 1)), ns(last * (last + 1) / 2), ns(n * n + n)], steps(["Num\u0103rul de termeni: (" + last + " \u2212 1) : 2 + 1 = " + n + ".", "Suma = (1 + " + last + ")" + X + n + " : 2 = " + 2 * n + X + n + " : 2 = " + n * n + "."]) + "<br>Observa\u021Bie: suma primelor n numere impare este n" + X + "n.");
+        })
+    ];
+    var GC = [
+        MCOMP("2.1", function () {
+            var st = pick(dif() < 2 ? [2, 5, 10] : [3, 4, 5, 6, 7]), a = R(1, st + 4), k = DD([5, 10], [8, 20], [10, 30], [15, 40]), b = a + (k - 1) * st;
+            var s = (a + b) * k / 2;
+            return mk(sumTxt(a, b, st) + " = ?", ns(s), [ns((a + b) * (b - a) / 2), ns((a + b) * (k + 1) / 2 | 0), ns(s + st), ns(b * (b + 1) / 2)], steps(["Termenii cresc din " + st + " \xEEn " + st + ". Num\u0103rul de termeni: (" + b + " \u2212 " + a + ") : " + st + " + 1 = " + k + ".", "Suma = (" + a + " + " + b + ")" + X + k + " : 2 = " + s + "."]));
+        }),
+        MCOMP("4.1", function () {
+            var st = pick([2, 3, 4, 5, 7, 10]), a = R(1, 9), k = DD([5, 12], [8, 25], [10, 40], [20, 60]), b = a + (k - 1) * st;
+            return mk("C\xE2\u021Bi termeni are suma " + sumTxt(a, b, st) + "?", ns(k), [ns(k - 1), ns(b - a + 1), ns(k + 1)], "Nr. termeni = (ultimul \u2212 primul) : pas + 1 = (" + b + " \u2212 " + a + ") : " + st + " + 1 = " + k + ".");
+        }),
+        MCOMP("5.1", function () {
+            var n = DD([5, 12], [8, 25], [15, 40], [20, 60]), s = n * (n + 1) / 2;
+            return mk("1 + 2 + 3 + \u2026 + n = " + s + ". C\xE2t este n?", "n = " + n, ["n = " + (n + 1), "n = " + (n - 1), "n = " + 2 * n], "n" + X + "(n + 1) : 2 = " + s + ", deci n" + X + "(n + 1) = " + 2 * s + ". C\u0103ut\u0103m dou\u0103 numere consecutive cu produsul " + 2 * s + ": " + n + X + (n + 1) + " = " + 2 * s + ". Deci n = " + n + ".");
+        }),
+        MCOMP("2.1", function () {
+            var n = DD([6, 15], [10, 30], [20, 50], [30, 100]), k = R(2, 9), s = k * n * (n + 1) / 2;
+            return mk(k + " + " + 2 * k + " + " + 3 * k + " + \u2026 + " + n * k + " = ?", ns(s), [ns(n * (n + 1) / 2), ns(k * n * (n + 1)), ns(s + k)], "Factor comun " + k + ": " + k + X + "(1 + 2 + \u2026 + " + n + ") = " + k + X + n * (n + 1) / 2 + " = " + s + ".");
+        })
+    ];
+    var GD = [
+        MCOMP("6.1", function () {
+            var n = DD([4, 10], [6, 20], [10, 30], [15, 40]), s = n * (n - 1) / 2;
+            return mk("La o \xEEnt\xE2lnire sunt " + n + " copii. Fiecare d\u0103 m\xE2na o singur\u0103 dat\u0103 cu fiecare dintre ceilal\u021Bi. C\xE2te str\xE2ngeri de m\xE2n\u0103 au loc?", ns(s), [ns(n * (n - 1)), ns(n * (n + 1) / 2), ns(n * n)], "Primul d\u0103 m\xE2na cu " + (n - 1) + " copii, al doilea cu \xEEnc\u0103 " + (n - 2) + ", \u2026 ultimul cu 0. Total: " + (n - 1) + " + " + (n - 2) + " + \u2026 + 1 = " + (n - 1) + X + n + " : 2 = " + s + ".");
+        }),
+        MCOMP("6.1", function () {
+            var n = DD([5, 10], [8, 20], [10, 30], [20, 50]), s = n * (n + 1) / 2;
+            return mk("O piramid\u0103 de cuburi are " + n + " r\xE2nduri: sus 1 cub, apoi 2, 3, \u2026 , jos " + n + " cuburi. C\xE2te cuburi are \xEEn total?", ns(s), [ns(n * n), ns(n * (n + 1)), ns(s - n)], "Total = 1 + 2 + \u2026 + " + n + " = " + n + X + (n + 1) + " : 2 = " + s + " cuburi.");
+        }),
+        MCOMP("6.1", function () {
+            var d = DD([5, 10], [7, 20], [10, 30], [15, 31]), a = R(1, 5), st = R(1, 3), last = a + (d - 1) * st, s = (a + last) * d / 2;
+            return mk("Ana pune deoparte " + a + (a === 1 ? " leu" : " lei") + " \xEEn prima zi, iar \xEEn fiecare zi cu " + st + (st === 1 ? " leu" : " lei") + " mai mult dec\xE2t \xEEn ziua dinainte. C\xE2\u021Bi lei str\xE2nge \xEEn " + d + " zile?", ns(s), [ns(last * d), ns((a + last) * (d - 1) / 2), ns(s + last)], steps(["\xCEn ziua " + d + " pune " + a + " + " + (d - 1) + X + st + " = " + last + " lei.", "Total = (" + a + " + " + last + ")" + X + d + " : 2 = " + s + " lei."]));
+        }),
+        MCOMP("5.1", function () {
+            var n = DD([10, 30], [20, 60], [40, 99], [50, 150]), s = n * (n + 1) / 2, wrong = n * (n + 1);
+            return mk("Ionu\u021B a calculat 1 + 2 + \u2026 + " + n + " = " + n + X + (n + 1) + " = " + wrong + ". Unde a gre\u0219it?", "a uitat s\u0103 \xEEmpart\u0103 la 2; corect este " + s, ["nu a gre\u0219it", "trebuia " + n + X + (n - 1) + " = " + n * (n - 1), "trebuia " + n + X + n + " = " + n * n], "Produsul n" + X + "(n + 1) este suma luat\u0103 de DOU\u0102 ori. Corect: " + wrong + " : 2 = " + s + ".");
+        })
+    ];
+    var GX = [
+        MCOMP("5.1", function () {
+            var n = R(10, 40), a = R(3, 30), k = n, s = k * a + k * (k - 1) / 2;
+            return mk("Afla\u021Bi x din: x + (x + 1) + (x + 2) + \u2026 + (x + " + (k - 1) + ") = " + s + ".", "x = " + a, ["x = " + (a + 1), "x = " + (a - 1), "x = " + (s / k | 0)], steps(["Sunt " + k + " termeni, deci avem " + k + "x + (1 + 2 + \u2026 + " + (k - 1) + ") = " + k + "x + " + k * (k - 1) / 2 + ".", k + "x = " + s + " \u2212 " + k * (k - 1) / 2 + " = " + k * a + ", deci x = " + a + "."]));
+        }),
+        MCOMP("2.1", function () {
+            var n = R(20, 100), ev = n * (n + 1), od = n * n;
+            return mk("(2 + 4 + \u2026 + " + 2 * n + ") \u2212 (1 + 3 + \u2026 + " + (2 * n - 1) + ") = ?", ns(n), [ns(2 * n), "1", ns(n * n)], "Grup\u0103m: (2 \u2212 1) + (4 \u2212 3) + \u2026 + (" + 2 * n + " \u2212 " + (2 * n - 1) + ") = 1 + 1 + \u2026 + 1 (de " + n + " ori) = " + n + ".");
+        }),
+        MCOMP("5.1", function () {
+            var n = pick([20, 24, 27, 35, 39, 44, 48, 55, 63, 80, 99]), s = n * (n + 1) / 2, d = pick([2, 3, 5, 10]);
+            var r = s % d;
+            return mk("Ce rest d\u0103 suma 1 + 2 + \u2026 + " + n + " la \xEEmp\u0103r\u021Birea cu " + d + "?", ns(r), [0, 1, 2, 3, 4, 5].filter(function (x) {
+                return x !== r;
+            }).slice(0, 3).map(String), "Suma = " + n + X + (n + 1) + " : 2 = " + s + ". " + s + " = " + d + X + Math.floor(s / d) + " + " + r + ", deci restul este " + r + ".");
+        }),
+        MCOMP("2.1", function () {
+            var n = R(10, 50), k = R(2, n - 2), s = n * (n + 1) / 2 - k * (k + 1) / 2;
+            return mk("(1 + 2 + \u2026 + " + n + ") \u2212 (1 + 2 + \u2026 + " + k + ") = ?", ns(s), [ns((n - k) * (n - k + 1) / 2), ns(s + k), ns(s - n)], "R\u0103m\xE2n termenii de la " + (k + 1) + " la " + n + ": " + n * (n + 1) / 2 + " \u2212 " + k * (k + 1) / 2 + " = " + s + ".");
+        }),
+        MCOMP("6.1", function () {
+            var n = R(4, 9), s = 0, i;
+            for (i = 1; i <= n; i++)
+                s += i * (i + 1) / 2;
+            return mk("Pe raftul 1 este 1 carte, pe raftul 2 sunt 1 + 2 c\u0103r\u021Bi, pe raftul 3 sunt 1 + 2 + 3 c\u0103r\u021Bi \u0219i tot a\u0219a. C\xE2te c\u0103r\u021Bi sunt pe raftul " + n + "?", ns(n * (n + 1) / 2), [ns(s), ns(n * n), ns(n * (n - 1) / 2)], "Pe raftul " + n + " sunt 1 + 2 + \u2026 + " + n + " = " + n + X + (n + 1) + " : 2 = " + n * (n + 1) / 2 + " c\u0103r\u021Bi.");
+        })
+    ];
+    var G = [GA, GB, GC, GD, GX];
+    var TOPICS_BY = [[0], [1], [2], [0, 1, 2, 3]];
+    function qFor(lvIndex) {
+        if (dif() === 4 && Math.random() < 0.4)
+            return pick(GX)();
+        if (lvIndex === 3)
+            return pick(Math.random() < 0.6 ? GD : G[pick([0, 1, 2])])();
+        if (dif() >= 3 && Math.random() < 0.2)
+            return pick(GD)();
+        return pick(G[TOPICS_BY[lvIndex][0]])();
+    }
+    var COMP = {
+        "2.1": "Efectuarea de calcule cu numere naturale folosind opera\u021Biile aritmetice \u0219i propriet\u0103\u021Bile acestora",
+        "4.1": "Exprimarea \xEEn limbaj matematic a unor propriet\u0103\u021Bi referitoare la opera\u021Biile cu numere naturale",
+        "5.1": "Analizarea unor situa\u021Bii date \xEEn care intervin numere naturale pentru a estima sau verifica validitatea unor calcule",
+        "6.1": "Modelarea matematic\u0103, folosind numere naturale, a unei situa\u021Bii date"
+    };
+    return { groups: [GA, GB, GC, GD, GX], setD: function (d) {
+            S.diff = d;
+        } };
+})();
+var TYPES = {
+    g1: { name: "1 + 2 + \u2026 + n", zone: "Dunele lui Gauss", icon: "\u03A3", color: "#f59f00", base: 100, gen: fromGroup(GSL, 0, "g1") },
+    g2: { name: "Numere consecutive, pare, impare", zone: "Oaza Perechilor", icon: "2+4", color: "#2fc15a", base: 110, gen: fromGroup(GSL, 1, "g2") },
+    g3: { name: "Sume cu pas. Aflarea lui n", zone: "Templul Pa\u0219ilor", icon: "+k", color: "#3d8bff", base: 130, gen: fromGroup(GSL, 2, "g3") },
+    g4: { name: "Probleme", zone: "Ghicitorile Sfinxului", icon: "?", color: "#ff8a00", base: 140, gen: fromGroup(GSL, 3, "g4") },
+    g5: { name: "Excelen\u021B\u0103", zone: "Camera Faraonului", icon: "\u2605", color: "#8b5cf6", base: 170, gen: fromGroup(GSL, 4, "g5") }
+};
+function genQ(type, d) {
+    for (var t = 0; t < 40; t++) {
+        var q = null;
+        try {
+            q = TYPES[type].gen(d);
+        }
+        catch (e) {
+            q = null;
+        }
+        if (q) {
+            q.type = type;
+            return q;
+        }
+    }
+    return null;
+}
+var THEORY = {
+    g1: {
+        title: "Suma lui Gauss: 1 + 2 + \u2026 + n",
+        body: "<p><b>1 + 2 + \u2026 + n = n \u00B7 (n + 1) : 2</b></p><p>Micul Gauss a scris suma de dou\u0103 ori, o dat\u0103 cresc\u0103tor \u0219i o dat\u0103 descresc\u0103tor. Fiecare pereche (primul + ultimul) d\u0103 n + 1, iar perechile sunt n. Deci dublul sumei este n \u00B7 (n + 1).</p>",
+        steps: ["Calcul\u0103m 1 + 2 + \u2026 + 100.", "Perechile: 1 + 100 = 101, 2 + 99 = 101, \u2026", "Dublul sumei: 100 \xB7 101 = 10 100.", "Suma: 10 100 : 2 = 5050."]
+    },
+    g2: {
+        title: "Sume de numere consecutive, pare \u0219i impare",
+        body: "<p><b>Num\u0103rul de termeni</b> = ultimul \u2212 primul + 1.</p><p><b>Suma</b> = (primul + ultimul) \u00B7 nr. termeni : 2.</p><p>2 + 4 + \u2026 + 2n = n \u00B7 (n + 1); &nbsp; 1 + 3 + \u2026 + (2n \u2212 1) = n \u00B7 n.</p>",
+        steps: ["Calcul\u0103m 10 + 11 + \u2026 + 30.", "Nr. termeni: 30 \u2212 10 + 1 = 21.", "Suma = (10 + 30) \xB7 21 : 2.", "= 40 \xB7 21 : 2 = 420."]
+    },
+    g3: {
+        title: "Sume cu pas. Aflarea lui n",
+        body: "<p>Dac\u0103 termenii cresc din k \u00EEn k: <b>nr. termeni = (ultimul \u2212 primul) : k + 1</b>, apoi suma = (primul + ultimul) \u00B7 nr. termeni : 2.</p><p>Dac\u0103 \u0219tim 1 + 2 + \u2026 + n = S, c\u0103ut\u0103m dou\u0103 numere consecutive cu produsul 2 \u00B7 S.</p>",
+        steps: ["Calcul\u0103m 4 + 7 + 10 + \u2026 + 31.", "Pasul este 3: (31 \u2212 4) : 3 + 1 = 10 termeni.", "Suma = (4 + 31) \xB7 10 : 2.", "= 35 \xB7 5 = 175."]
+    },
+    g4: {
+        title: "Probleme cu suma lui Gauss",
+        body: "<p><b>Str\u00E2ngeri de m\u00E2n\u0103:</b> n persoane dau m\u00E2na fiecare cu fiecare: 1 + 2 + \u2026 + (n \u2212 1) = (n \u2212 1) \u00B7 n : 2.</p><p><b>Piramide de cuburi, economii care cresc zilnic</b>: adun\u0103m termeni care cresc cu acela\u0219i pas.</p>",
+        steps: ["10 copii dau m\xE2na fiecare cu fiecare.", "Primul d\u0103 m\xE2na cu 9, al doilea cu \xEEnc\u0103 8, \u2026", "Total: 9 + 8 + \u2026 + 1 = 9 \xB7 10 : 2.", "= 45 de str\xE2ngeri de m\xE2n\u0103."]
+    },
+    g5: {
+        title: "Exerci\u021Bii pentru grupa de excelen\u021B\u0103",
+        body: "<p>x + (x + 1) + \u2026 + (x + k) = (k + 1) \u00B7 x + (1 + 2 + \u2026 + k).</p><p>(2 + 4 + \u2026 + 2n) \u2212 (1 + 3 + \u2026 + (2n \u2212 1)) = n (perechi care dau c\u00E2te 1).</p>",
+        steps: ["Afl\u0103m x: x + (x+1) + \u2026 + (x+9) = 145.", "Sunt 10 termeni: 10x + (1 + 2 + \u2026 + 9) = 10x + 45.", "10x + 45 = 145, deci 10x = 100.", "x = 10."]
+    }
+};
+var SUBJECT = {
+    key: "gs",
+    title1: "Piramida",
+    title2: "lui Gauss",
+    kicker: "Matematic\u0103 \xB7 clasa a V-a \xB7 Suma lui Gauss \xB7 prof. Zopota Larisa",
+    lead: "Urc\u0103 treptele piramidei din de\u0219ert. La fiecare treapt\u0103 te a\u0219teapt\u0103 <b>4 pietre</b>, dar doar una te \u021Bine: cea cu <b>r\u0103spunsul corect</b>. Suma lui Gauss, sume cu pas \u0219i ghicitorile Sfinxului.",
+    filmSub: "Matematic\u0103 \xB7 clasa a V-a",
+    filmLine: "Suma lui Gauss \xB7 sume cu pas \xB7 probleme",
+    filmSeq: ["g1", "g2", "g1", "g3", "g2", "g4", "g3", "g1", "g5", "g4", "g3", "g5"]
+};
+var THEME = { "kind": "desert", "hemiI": 0.5, "fog": "#f0d9ac", "skyTop": "#4f8fd0", "skyBot": "#f6dfb2", "hemiSky": "#fff3dc", "hemiGround": "#b8864b", "sun": "#fff0cc", "ground": ["#d9b06a", "#dfb975", "#d2a65e", "#e2bd7e"], "pathCol": "#c9a065", "pebble": "#a88a5c", "ring": "#ffc928", "cape": "#e8590c", "dress": "#a17a4a", "hair": "#3b2414", "hood": false, "foe": "#b8864b", "foeLight": "#ead2a8", "scoreIcon": "\uD83E\uDE99", "scoreName": "Monede de aur", "intro": "Exploratoarea porne\u0219te spre piramid\u0103!", "wolfMsg": "\uD83D\uDC3A \u0218acalul! Ai pierdut o inim\u0103", "caught": "\uD83D\uDC3A \u0218acalul te-a prins!", "winMsg": "\uD83D\uDD3A Ai ajuns la piramid\u0103!", "finalBtn": "Intr\u0103 \u00EEn piramid\u0103 \uD83D\uDD3A", "winTitle": "Comoara piramidei e a ta! \uD83D\uDD3A", "loseTitle": "\u0218acalul a c\u00E2\u0219tigat de data asta \uD83D\uDC3A" };
+var $ = function (id) { return document.getElementById(id); };
+var store = { get: function (k) {
+        try {
+            return localStorage.getItem(k);
+        }
+        catch (e) {
+            return null;
+        }
+    }, set: function (k, v) {
+        try {
+            localStorage.setItem(k, v);
+        }
+        catch (e) {
+        }
+    } };
+var DN = { usor: "\xCEncep\u0103tor", mediu: "Mediu", greu: "Avansat", exc: "Excelen\u021B\u0103" };
+var DM = { usor: 1, mediu: 1.5, greu: 2, exc: 3 };
+var NSTOP = 12;
+var GS = {
+    diff: store.get(SUBJECT.key + "-d") || "mediu",
+    mode: store.get(SUBJECT.key + "-m") || "poveste",
+    sel: null,
+    name: store.get(SUBJECT.key + "-n") || "",
+    seq: [],
+    i: 0,
+    score: 0,
+    lives: 3,
+    log: [],
+    busy: false,
+    start: 0
+};
+var BTN = [["#ff8787", "#fff"], ["#74c0fc", "#2b2118"], ["#8ce99a", "#2b2118"], ["#ffd43b", "#2b2118"]];
+var AC = null, muted = store.get("story-mute") === "1";
+function snd(kind) {
+    if (muted)
+        return;
+    try {
+        AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+        var t_1 = AC.currentTime;
+        var tone_1 = function (f, d, type, v, at) {
+            var o = AC.createOscillator(), g = AC.createGain();
+            o.type = type || "sine";
+            o.frequency.setValueAtTime(f, t_1 + (at || 0));
+            g.gain.setValueAtTime(v || 0.15, t_1 + (at || 0));
+            g.gain.exponentialRampToValueAtTime(1e-3, t_1 + (at || 0) + d);
+            o.connect(g);
+            g.connect(AC.destination);
+            o.start(t_1 + (at || 0));
+            o.stop(t_1 + (at || 0) + d);
+        };
+        if (kind === "ok") {
+            tone_1(660, 0.15, "triangle", 0.18);
+            tone_1(880, 0.2, "triangle", 0.18, 0.1);
+            tone_1(1320, 0.25, "triangle", 0.12, 0.2);
+        }
+        else if (kind === "bad") {
+            var o = AC.createOscillator(), g = AC.createGain();
+            o.type = "sawtooth";
+            o.frequency.setValueAtTime(140, t_1);
+            o.frequency.exponentialRampToValueAtTime(70, t_1 + 0.7);
+            g.gain.setValueAtTime(0.18, t_1);
+            g.gain.exponentialRampToValueAtTime(1e-3, t_1 + 0.8);
+            o.connect(g);
+            g.connect(AC.destination);
+            o.start(t_1);
+            o.stop(t_1 + 0.8);
+        }
+        else if (kind === "win") {
+            [523, 659, 784, 1047].forEach(function (f, i) { return tone_1(f, 0.3, "triangle", 0.16, i * 0.14); });
+        }
+        else if (kind === "tap")
+            tone_1(520, 0.06, "square", 0.05);
+        else if (kind === "step")
+            tone_1(180 + Math.random() * 40, 0.05, "triangle", 0.03);
+    }
+    catch (e) {
+    }
+}
+function setMute() {
+    $("muteBtn").textContent = muted ? "\uD83D\uDD07" : "\uD83D\uDD0A";
+}
+var W3 = (function () {
+    var api = { ok: false, walkTo: function () {
+        }, wolf: function () {
+        }, catch: function () {
+        }, win: function () {
+        }, idle: function () {
+        }, update: function () {
+        }, stopPos: function () {
+            return 0;
+        } };
+    if (!window.THREE)
+        return api;
+    var T = THREE, cv = $("scene");
+    var R;
+    try {
+        R = new T.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: "high-performance" });
+    }
+    catch (e) {
+        return api;
+    }
+    if (!R || !R.getContext())
+        return api;
+    var lowEnd = (navigator.hardwareConcurrency || 4) <= 4;
+    R.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd ? 1.25 : 1.6));
+    R.shadowMap.enabled = true;
+    R.shadowMap.type = T.PCFSoftShadowMap;
+    var S = new T.Scene();
+    S.fog = new T.Fog(THEME.fog, 40, 150);
+    var cam = new T.PerspectiveCamera(48, 1, 0.1, 500);
+    var lam = function (c, o) { return new T.MeshLambertMaterial(Object.assign({ color: c }, o || {})); };
+    var stdm = function (c, o) { return new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0 }, o || {})); };
+    var rand = function (a, b) { return a + Math.random() * (b - a); };
+    S.add(new T.Mesh(new T.SphereGeometry(300, 24, 12), new T.ShaderMaterial({
+        side: T.BackSide,
+        depthWrite: false,
+        fog: false,
+        uniforms: { top: { value: new T.Color(THEME.skyTop) }, bot: { value: new T.Color(THEME.skyBot) } },
+        vertexShader: "varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+        fragmentShader: "uniform vec3 top;uniform vec3 bot;varying vec3 vP;void main(){float h=clamp(vP.y*1.6+0.1,0.0,1.0);gl_FragColor=vec4(mix(bot,top,h),1.0);}"
+    })));
+    S.add(new T.HemisphereLight(THEME.hemiSky, THEME.hemiGround, THEME.hemiI || 0.75));
+    var sun = new T.DirectionalLight(THEME.sun, 0.95);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(lowEnd ? 1024 : 2048, lowEnd ? 1024 : 2048);
+    Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 120 });
+    sun.shadow.bias = -8e-4;
+    S.add(sun);
+    S.add(sun.target);
+    var fill = new T.DirectionalLight(16774374, 0.4);
+    S.add(fill);
+    S.add(fill.target);
+    var pts = [];
+    for (var i = 0; i <= 16; i++) {
+        pts.push(new T.Vector3(Math.sin(i * 0.9) * 9 + Math.sin(i * 0.37) * 6, 0, -i * 16));
+    }
+    var path = new T.CatmullRomCurve3(pts);
+    var PL = path.getLength();
+    var SAMP = 400, PP = [];
+    for (var i = 0; i <= SAMP; i++)
+        PP.push(path.getPointAt(i / SAMP));
+    var distToPath = function (x, z) {
+        var m = 1e9;
+        for (var i = 0; i <= SAMP; i += 2) {
+            var p = PP[i], d = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z);
+            if (d < m)
+                m = d;
+        }
+        return Math.sqrt(m);
+    };
+    var gg = new T.PlaneGeometry(420, 420, 90, 90);
+    gg.rotateX(-Math.PI / 2);
+    {
+        var pos = gg.attributes.position, col = [], c = new T.Color();
+        for (var i = 0; i < pos.count; i++) {
+            var x = pos.getX(i), z = pos.getZ(i);
+            var dp = distToPath(x, z);
+            var y = (Math.sin(x * 0.07) + Math.cos(z * 0.06)) * 0.6 + (Math.random() - 0.5) * 0.25;
+            if (dp < 4)
+                y *= dp / 4;
+            pos.setY(i, y - 0.05);
+            c.set(THEME.ground[Math.random() * THEME.ground.length | 0]);
+            if (dp < 2.6)
+                c.set(THEME.pathCol);
+            else if (dp < 3.4)
+                c.lerp(new T.Color(THEME.pathCol), 0.45);
+            col.push(c.r, c.g, c.b);
+        }
+        gg.setAttribute("color", new T.Float32BufferAttribute(col, 3));
+        gg.computeVertexNormals();
+    }
+    var ground = new T.Mesh(gg, lam(16777215, { vertexColors: true }));
+    ground.receiveShadow = true;
+    S.add(ground);
+    {
+        var g = new T.DodecahedronGeometry(0.18, 0), m = new T.InstancedMesh(g, lam(THEME.pebble), 260), d = new T.Object3D();
+        for (var i = 0; i < 260; i++) {
+            var t = Math.random(), p = path.getPointAt(t), tg = path.getTangentAt(t), sd = new T.Vector3(-tg.z, 0, tg.x);
+            d.position.copy(p).addScaledVector(sd, rand(-2.4, 2.4));
+            d.position.y = 0.02;
+            d.rotation.set(rand(0, 3), rand(0, 3), 0);
+            var s = rand(0.5, 1.4);
+            d.scale.set(s, s * 0.5, s);
+            d.updateMatrix();
+            m.setMatrixAt(i, d.matrix);
+        }
+        m.receiveShadow = true;
+        S.add(m);
+    }
+    var tgE = path.getTangentAt(1), HP = path.getPointAt(1).clone().addScaledVector(tgE, THEME.kind === "forest" ? 6 : 16), HR = THEME.kind === "forest" ? 10 : 20;
+    var free = function (x, z, r) { return distToPath(x, z) > r && Math.hypot(x - HP.x, z - HP.z) > HR; };
+    var placeN = function (n, r, minR, maxR) {
+        var out = [];
+        var k = 0;
+        while (out.length < n && k < n * 20) {
+            k++;
+            var t = Math.random(), p = path.getPointAt(Math.min(1, t * 1.15)), a = Math.random() * Math.PI * 2, rr = rand(minR, maxR);
+            var x = p.x + Math.cos(a) * rr, z = p.z + Math.sin(a) * rr;
+            if (free(x, z, r))
+                out.push([x, z]);
+        }
+        return out;
+    };
+    var dummy = new T.Object3D(), colTmp = new T.Color();
+    function instanced(geo, mat, list, fn) {
+        var m = new T.InstancedMesh(geo, mat, list.length);
+        list.forEach(function (p, i) {
+            fn(dummy, p, i);
+            dummy.updateMatrix();
+            m.setMatrixAt(i, dummy.matrix);
+            if (m.setColorAt && dummy.userData.c !== void 0) {
+                colTmp.set(dummy.userData.c);
+                m.setColorAt(i, colTmp);
+            }
+        });
+        m.castShadow = true;
+        m.receiveShadow = true;
+        S.add(m);
+        return m;
+    }
+    if (THEME.kind === "forest") {
+        var trees = placeN(lowEnd ? 170 : 260, 5, 4, 60);
+        var sc_1 = trees.map(function () { return rand(0.8, 1.6); }), tp_1 = trees.map(function () { return Math.random() < 0.6 ? "pine" : "round"; });
+        instanced(new T.CylinderGeometry(0.22, 0.32, 2.4, 7), lam(7031339), trees, function (d, p, i) {
+            d.position.set(p[0], 1.2 * sc_1[i], p[1]);
+            d.scale.set(sc_1[i], sc_1[i], sc_1[i]);
+            d.rotation.set(0, 0, 0);
+            d.userData.c = void 0;
+        });
+        var pines_1 = trees.map(function (p, i) { return [p, i]; }).filter(function (x) { return tp_1[x[1]] === "pine"; }), rounds = trees.map(function (p, i) { return [p, i]; }).filter(function (x) { return tp_1[x[1]] === "round"; });
+        var PG_1 = ["#2f6b3a", "#3c7d44", "#2a5e35", "#467f3e"], RG_1 = ["#4f8f3a", "#5fa04a", "#6aa84f", "#3f7f34"];
+        [0, 1, 2].forEach(function (L) { return instanced(new T.ConeGeometry(1.7 - L * 0.42, 2.1, 8), lam(16777215), pines_1, function (d, x, i) {
+            var s = sc_1[x[1]];
+            d.position.set(x[0][0], (2.2 + L * 1.15) * s, x[0][1]);
+            d.scale.set(s, s, s);
+            d.rotation.set(0, i, 0);
+            d.userData.c = PG_1[(i + L) % 4];
+        }); });
+        instanced(new T.IcosahedronGeometry(1.6, 1), lam(16777215, { flatShading: true }), rounds, function (d, x, i) {
+            var s = sc_1[x[1]];
+            d.position.set(x[0][0], 3.1 * s, x[0][1]);
+            d.scale.set(s * 1.05, s * 0.95, s * 1.05);
+            d.rotation.set(i, i * 2, 0);
+            d.userData.c = RG_1[i % 4];
+        });
+        instanced(new T.IcosahedronGeometry(0.8, 1), lam(16777215, { flatShading: true }), placeN(140, 3.2, 3, 30), function (d, p, i) {
+            var s = rand(0.6, 1.3);
+            d.position.set(p[0], 0.4 * s, p[1]);
+            d.scale.set(s * 1.3, s * 0.8, s * 1.1);
+            d.rotation.set(0, i, 0);
+            d.userData.c = RG_1[(i + 1) % 4];
+        });
+        instanced(new T.SphereGeometry(0.12, 6, 4), lam(16777215), placeN(500, 2.8, 2.8, 22), function (d, p, i) {
+            d.position.set(p[0], 0.18, p[1]);
+            d.scale.set(1, 1, 1);
+            d.userData.c = ["#ff6b6b", "#ffd43b", "#ffffff", "#b197fc", "#ff8cc6"][i % 5];
+        });
+        var mush = placeN(40, 3, 3, 14);
+        instanced(new T.CylinderGeometry(0.08, 0.1, 0.35, 6), lam(15853520), mush, function (d, p) {
+            d.position.set(p[0], 0.17, p[1]);
+            d.userData.c = void 0;
+        });
+        instanced(new T.SphereGeometry(0.28, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2), lam(16777215), mush, function (d, p) {
+            d.position.set(p[0], 0.32, p[1]);
+            d.userData.c = "#e03131";
+        });
+        instanced(new T.DodecahedronGeometry(0.7, 0), lam(9276813, { flatShading: true }), placeN(30, 3.5, 3.5, 25), function (d, p, i) {
+            var s = rand(0.5, 1.4);
+            d.position.set(p[0], 0.25 * s, p[1]);
+            d.scale.set(s, s * 0.7, s);
+            d.rotation.set(i, i, 0);
+            d.userData.c = void 0;
+        });
+    }
+    else {
+        var cac = placeN(90, 4, 4, 50), palms = placeN(30, 6, 6, 40);
+        var cs_1 = cac.map(function () { return rand(0.7, 1.5); });
+        instanced(new T.CylinderGeometry(0.35, 0.4, 3, 8), lam(5020234, { flatShading: true }), cac, function (d, p, i) {
+            d.position.set(p[0], 1.5 * cs_1[i], p[1]);
+            d.scale.set(cs_1[i], cs_1[i], cs_1[i]);
+            d.userData.c = void 0;
+        });
+        instanced(new T.CylinderGeometry(0.22, 0.25, 1.2, 8), lam(5020234, { flatShading: true }), cac, function (d, p, i) {
+            d.position.set(p[0] + 0.6 * cs_1[i], 1.9 * cs_1[i], p[1]);
+            d.scale.set(cs_1[i], cs_1[i], cs_1[i]);
+            d.userData.c = void 0;
+        });
+        instanced(new T.CylinderGeometry(0.18, 0.3, 6, 7), lam(10121286), palms, function (d, p) {
+            d.position.set(p[0], 3, p[1]);
+            d.rotation.set(0, 0, 0.08);
+            d.userData.c = void 0;
+        });
+        var _loop_1 = function (L) {
+            instanced(new T.ConeGeometry(0.6, 3.2, 4), lam(4165954, { flatShading: true }), palms, function (d, p) {
+                d.position.set(p[0] + Math.cos(L * 1.26) * 1.3, 5.9, p[1] + Math.sin(L * 1.26) * 1.3);
+                d.rotation.set(Math.PI / 2.4, 0, 0);
+                d.rotation.y = -L * 1.26 + Math.PI / 2;
+                d.rotation.order = "YXZ";
+                d.userData.c = void 0;
+            });
+        };
+        for (var L = 0; L < 5; L++) {
+            _loop_1(L);
+        }
+        instanced(new T.DodecahedronGeometry(0.8, 0), lam(13214826, { flatShading: true }), placeN(60, 3.5, 3.5, 30), function (d, p, i) {
+            var s = rand(0.5, 1.6);
+            d.position.set(p[0], 0.3 * s, p[1]);
+            d.scale.set(s, s * 0.6, s);
+            d.rotation.set(i, i, 0);
+            d.userData.c = void 0;
+        });
+        for (var k = 0; k < 7; k++) {
+            var p = path.getPointAt(rand(0.1, 1)), a = rand(0, 6.28), r = rand(45, 110), w = rand(14, 30);
+            var py = new T.Mesh(new T.ConeGeometry(w, w * 0.85, 4), lam(13213792, { flatShading: true }));
+            py.position.set(p.x + Math.cos(a) * r, w * 0.42, p.z + Math.sin(a) * r);
+            py.rotation.y = Math.PI / 4;
+            S.add(py);
+        }
+    }
+    var stops = [];
+    var STOP_T = function (i) { return 0.05 + i * (0.86 / (NSTOP - 1)); };
+    var signTex = function (n) {
+        var c = document.createElement("canvas");
+        c.width = 128;
+        c.height = 96;
+        var g = c.getContext("2d");
+        g.fillStyle = "#c8955a";
+        g.fillRect(0, 0, 128, 96);
+        g.strokeStyle = "#6b4a2b";
+        g.lineWidth = 8;
+        g.strokeRect(4, 4, 120, 88);
+        g.fillStyle = "#2b2118";
+        g.font = "700 56px Fredoka,Arial";
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillText(n, 64, 52);
+        return new T.CanvasTexture(c);
+    };
+    for (var i = 0; i < NSTOP; i++) {
+        var t = STOP_T(i), p = path.getPointAt(t), tg = path.getTangentAt(t), sd = new T.Vector3(-tg.z, 0, tg.x);
+        var g = new T.Group();
+        var post = new T.Mesh(new T.CylinderGeometry(0.08, 0.1, 1.8, 6), lam(7031339));
+        post.position.y = 0.9;
+        g.add(post);
+        var sign = new T.Mesh(new T.BoxGeometry(1, 0.75, 0.08), [lam(11039807), lam(11039807), lam(11039807), lam(11039807), lam(16777215, { map: signTex(String(i + 1)) }), lam(11039807)]);
+        sign.position.y = 1.65;
+        g.add(sign);
+        g.position.copy(p).addScaledVector(sd, 3.2);
+        g.rotation.y = Math.atan2(-tg.x, -tg.z);
+        g.traverse(function (o) {
+            o.castShadow = true;
+        });
+        S.add(g);
+        var ring = new T.Mesh(new T.RingGeometry(0.9, 1.15, 28), new T.MeshBasicMaterial({ color: THEME.ring, transparent: true, opacity: 0.75 }));
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.copy(p);
+        ring.position.y = 0.05;
+        S.add(ring);
+        stops.push({ t: t, sign: sign, ring: ring });
+    }
+    var endT = 0.985, endP = path.getPointAt(1);
+    var door = new T.Group();
+    if (THEME.kind === "forest") {
+        var h_1 = new T.Group();
+        var wall = lam(15983555), wood_1 = lam(9067058);
+        var b = new T.Mesh(new T.BoxGeometry(6, 3.4, 5), wall);
+        b.position.y = 1.7;
+        h_1.add(b);
+        var roofG = new T.CylinderGeometry(0.01, 4.4, 2.8, 4, 1);
+        var roof = new T.Mesh(roofG, lam(11879727, { flatShading: true }));
+        roof.position.y = 4.8;
+        roof.rotation.y = Math.PI / 4;
+        roof.scale.set(1, 1, 0.85);
+        h_1.add(roof);
+        var ch = new T.Mesh(new T.BoxGeometry(0.7, 1.8, 0.7), lam(10115658));
+        ch.position.set(1.5, 5.2, 0.6);
+        h_1.add(ch);
+        var dm = new T.Mesh(new T.BoxGeometry(1.3, 2.2, 0.12), wood_1);
+        dm.position.set(0.65, 0, 0);
+        door.add(dm);
+        door.position.set(-0.65, 1.1, 2.53);
+        h_1.add(door);
+        [[-1.9, 2], [1.9, 2]].forEach(function (w) {
+            var win = new T.Mesh(new T.BoxGeometry(1, 1, 0.1), new T.MeshBasicMaterial({ color: 16769162 }));
+            win.position.set(w[0], w[1], 2.52);
+            h_1.add(win);
+            var fr2 = new T.Mesh(new T.BoxGeometry(1.2, 0.12, 0.14), wood_1);
+            fr2.position.set(w[0], w[1], 2.55);
+            h_1.add(fr2);
+        });
+        for (var k = -5; k <= 5; k++) {
+            if (Math.abs(k) < 2)
+                continue;
+            var f = new T.Mesh(new T.BoxGeometry(0.15, 1, 0.15), wood_1);
+            f.position.set(k * 0.7, 0.5, 4.5);
+            h_1.add(f);
+        }
+        var rail = new T.Mesh(new T.BoxGeometry(7.4, 0.12, 0.1), wood_1);
+        rail.position.set(0, 0.8, 4.5);
+        h_1.add(rail);
+        h_1.traverse(function (o) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+        });
+        var tg = path.getTangentAt(1);
+        h_1.position.copy(endP).addScaledVector(tg, 6);
+        h_1.rotation.y = Math.atan2(-tg.x, -tg.z);
+        S.add(h_1);
+    }
+    else {
+        var py = new T.Mesh(new T.ConeGeometry(14, 12, 4), lam(13212238, { flatShading: true }));
+        py.rotation.y = Math.PI / 4;
+        py.position.y = 6;
+        var h = new T.Group();
+        h.add(py);
+        var cap = new T.Mesh(new T.ConeGeometry(1.6, 1.4, 4), stdm(16763176, { metalness: 0.7, roughness: 0.3, emissive: 5583616 }));
+        cap.rotation.y = Math.PI / 4;
+        cap.position.y = 11.6;
+        h.add(cap);
+        var dm = new T.Mesh(new T.BoxGeometry(2, 3, 0.3), lam(3811866));
+        dm.position.set(1, 0, 0);
+        door.add(dm);
+        door.position.set(-1, 1.5, 8.75);
+        h.add(door);
+        h.traverse(function (o) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+        });
+        var tg = path.getTangentAt(1);
+        h.position.copy(endP).addScaledVector(tg, 16);
+        h.rotation.y = Math.atan2(-tg.x, -tg.z);
+        S.add(h);
+    }
+    var girl = new T.Group(), G2 = {};
+    {
+        var skin_1 = stdm(16766901), cape = stdm(THEME.cape, { side: T.DoubleSide }), dress = stdm(THEME.dress), apron_1 = stdm(16777215), hair_1 = stdm(THEME.hair), dark_1 = stdm(2826520), shoe_1 = stdm(5913114), sock_1 = stdm(16316922);
+        var add_1 = function (geo, mat, x, y, z, par) {
+            var m = new T.Mesh(geo, mat);
+            m.position.set(x, y, z);
+            m.castShadow = true;
+            (par || girl).add(m);
+            return m;
+        };
+        var leg = function (x) {
+            var g = new T.Group();
+            g.position.set(x, 0.62, 0);
+            girl.add(g);
+            add_1(new T.CylinderGeometry(0.07, 0.065, 0.55, 8), sock_1, 0, -0.27, 0, g);
+            add_1(new T.SphereGeometry(0.09, 8, 6), shoe_1, 0, -0.56, 0.04, g).scale.set(1, 0.7, 1.5);
+            return g;
+        };
+        G2.lL = leg(-0.1);
+        G2.lR = leg(0.1);
+        add_1(new T.CylinderGeometry(0.2, 0.46, 0.62, 16), dress, 0, 0.86, 0);
+        add_1(new T.CylinderGeometry(0.225, 0.445, 0.5, 16, 1, true, -0.8, 1.6), apron_1, 0, 0.9, 0);
+        add_1(new T.CylinderGeometry(0.17, 0.2, 0.36, 12), dress, 0, 1.33, 0);
+        add_1(new T.BoxGeometry(0.3, 0.06, 0.02), stdm(2826520), 0, 1.18, 0.2);
+        var arm = function (x, s) {
+            var g = new T.Group();
+            g.position.set(x, 1.46, 0);
+            girl.add(g);
+            add_1(new T.SphereGeometry(0.085, 8, 6), apron_1, 0, 0, 0, g);
+            add_1(new T.CylinderGeometry(0.05, 0.045, 0.42, 8), skin_1, 0, -0.25, 0, g);
+            add_1(new T.SphereGeometry(0.055, 8, 6), skin_1, 0, -0.48, 0, g);
+            g.rotation.z = s * 0.12;
+            return g;
+        };
+        G2.aL = arm(-0.24, -1);
+        G2.aR = arm(0.24, 1);
+        var bask = new T.Group();
+        bask.position.set(0, -0.55, 0.08);
+        G2.aR.add(bask);
+        add_1(new T.CylinderGeometry(0.16, 0.12, 0.17, 10), stdm(11565626), 0, -0.06, 0, bask);
+        add_1(new T.TorusGeometry(0.13, 0.015, 6, 14, Math.PI), stdm(9067050), 0, 0.02, 0, bask);
+        add_1(new T.SphereGeometry(0.11, 8, 6), stdm(16117990), 0, 0.02, 0, bask).scale.set(1.2, 0.4, 1.2);
+        var head_1 = new T.Group();
+        head_1.position.set(0, 1.78, 0);
+        girl.add(head_1);
+        G2.head = head_1;
+        add_1(new T.CylinderGeometry(0.05, 0.06, 0.12, 8), skin_1, 0, -0.24, 0, head_1);
+        add_1(new T.SphereGeometry(0.27, 20, 16), skin_1, 0, 0, 0, head_1);
+        add_1(new T.SphereGeometry(0.285, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.55), hair_1, 0, 0.02, -0.02, head_1).rotation.x = -0.35;
+        [-1, 1].forEach(function (s) {
+            add_1(new T.SphereGeometry(0.045, 8, 6), dark_1, s * 0.1, 0.02, 0.245, head_1);
+            add_1(new T.SphereGeometry(0.015, 6, 4), stdm(16777215), s * 0.1 + 0.015, 0.035, 0.285, head_1);
+            var ch = add_1(new T.CircleGeometry(0.05, 10), stdm(16751266, { transparent: true, opacity: 0.7 }), s * 0.17, -0.07, 0.235, head_1);
+            ch.rotation.y = s * 0.5;
+            var br = add_1(new T.CylinderGeometry(0.045, 0.03, 0.4, 6), hair_1, s * 0.24, -0.25, -0.06, head_1);
+            br.rotation.z = s * 0.18;
+            add_1(new T.SphereGeometry(0.05, 6, 4), stdm(14692657), s * 0.27, -0.44, -0.06, head_1);
+        });
+        add_1(new T.TorusGeometry(0.06, 0.012, 6, 10, Math.PI), dark_1, 0, -0.11, 0.245, head_1).rotation.z = Math.PI;
+        if (THEME.hood) {
+            add_1(new T.SphereGeometry(0.335, 22, 14, Math.PI * 0.8, Math.PI * 1.4, 0, Math.PI * 0.64), cape, 0, 0.03, -0.02, head_1);
+            add_1(new T.CylinderGeometry(0.21, 0.58, 1.2, 22, 1, true, Math.PI * 0.3, Math.PI * 1.4), cape, 0, 1.06, -0.03);
+            add_1(new T.SphereGeometry(0.05, 8, 6), stdm(16766011), 0, 1.52, 0.2);
+        }
+        else {
+            var hat = add_1(new T.CylinderGeometry(0.2, 0.26, 0.22, 14), stdm(14267258), 0, 0.27, 0, head_1);
+            add_1(new T.CylinderGeometry(0.5, 0.5, 0.04, 20), stdm(14267258), 0, 0.17, 0, head_1);
+            add_1(new T.CylinderGeometry(0.205, 0.205, 0.06, 14), stdm(12597547), 0, 0.21, 0, head_1);
+            add_1(new T.CylinderGeometry(0.21, 0.42, 0.75, 20, 1, true, Math.PI * 0.35, Math.PI * 1.3), cape, 0, 1.25, -0.03);
+        }
+        girl.traverse(function (o) {
+            if (o.isMesh)
+                o.castShadow = true;
+        });
+        S.add(girl);
+    }
+    var wolf = new T.Group(), WG = {};
+    {
+        var fur_1 = stdm(THEME.foe), light = stdm(THEME.foeLight), dark_2 = stdm(1710618), eye_1 = new T.MeshBasicMaterial({ color: 16766011 });
+        var add_2 = function (geo, mat, x, y, z, par) {
+            var m = new T.Mesh(geo, mat);
+            m.position.set(x, y, z);
+            m.castShadow = true;
+            (par || wolf).add(m);
+            return m;
+        };
+        add_2(new T.SphereGeometry(0.5, 14, 10), fur_1, 0, 0.95, 0).scale.set(0.9, 0.85, 1.7);
+        add_2(new T.SphereGeometry(0.4, 12, 10), light, 0, 0.9, 0.55).scale.set(0.85, 0.9, 0.8);
+        var head_2 = new T.Group();
+        head_2.position.set(0, 1.35, 0.95);
+        wolf.add(head_2);
+        WG.head = head_2;
+        add_2(new T.SphereGeometry(0.32, 14, 10), fur_1, 0, 0, 0, head_2).scale.set(1, 0.9, 1.05);
+        add_2(new T.ConeGeometry(0.17, 0.5, 10), light, 0, -0.08, 0.4, head_2).rotation.x = Math.PI / 2;
+        add_2(new T.SphereGeometry(0.06, 8, 6), dark_2, 0, -0.06, 0.66, head_2);
+        [-1, 1].forEach(function (s) {
+            add_2(new T.ConeGeometry(0.1, 0.28, 6), fur_1, s * 0.17, 0.3, -0.02, head_2).rotation.z = -s * 0.25;
+            add_2(new T.SphereGeometry(0.045, 8, 6), eye_1, s * 0.13, 0.08, 0.26, head_2);
+        });
+        WG.legs = [[-0.22, 0.55], [0.22, 0.55], [-0.22, -0.55], [0.22, -0.55]].map(function (p) {
+            var g = new T.Group();
+            g.position.set(p[0], 0.75, p[1]);
+            wolf.add(g);
+            add_2(new T.CylinderGeometry(0.09, 0.07, 0.75, 8), fur_1, 0, -0.37, 0, g);
+            add_2(new T.SphereGeometry(0.09, 8, 6), dark_2, 0, -0.74, 0.04, g);
+            return g;
+        });
+        var tail = add_2(new T.ConeGeometry(0.16, 0.9, 10), fur_1, 0, 1.05, -1.05);
+        tail.rotation.x = -2.3;
+        WG.tail = tail;
+        wolf.scale.setScalar(1.15);
+        wolf.traverse(function (o) {
+            if (o.isMesh)
+                o.castShadow = true;
+        });
+        wolf.visible = false;
+        S.add(wolf);
+    }
+    var st = { t: 0, target: 0, walking: false, cb: null, wolf: null, phase: 0, cel: 0, won: false, idle: true, orbit: 0, doorOpen: 0 };
+    var posAt = function (t) { return path.getPointAt(Math.min(Math.max(t, 0), 1)); };
+    var dirAt = function (t) { return path.getTangentAt(Math.min(Math.max(t, 0), 1)); };
+    function placeGirl() {
+        var p = posAt(st.t), d = dirAt(st.t);
+        girl.position.set(p.x, 0, p.z);
+        girl.rotation.y = Math.atan2(d.x, d.z);
+    }
+    placeGirl();
+    function resize() {
+        var w = innerWidth, h = innerHeight;
+        R.setSize(w, h, false);
+        cam.aspect = w / h;
+        cam.fov = w / h < 0.8 ? 62 : 48;
+        cam.updateProjectionMatrix();
+    }
+    addEventListener("resize", resize);
+    resize();
+    var camPos = new T.Vector3(), camLook = new T.Vector3(), tmp = new T.Vector3();
+    var first = true, last = performance.now(), stepAcc = 0;
+    function frame(now) {
+        requestAnimationFrame(frame);
+        var dt = Math.min(0.05, (now - last) / 1e3);
+        last = now;
+        if (!window.__fq)
+            window.__fq = { n: 0, t: 0 };
+        {
+            var q = window.__fq;
+            q.n++;
+            if (q.n === 60)
+                q.t = 0;
+            else
+                q.t += dt;
+            if (q.n === 150 && !window.__lowQ && q.t / 90 > 0.04) {
+                window.__lowQ = 1;
+                R.setPixelRatio(0.8);
+                R.shadowMap.enabled = false;
+                sun.castShadow = false;
+                S.traverse(function (o) {
+                    if (o.material)
+                        o.material.needsUpdate = true;
+                });
+                resize();
+            }
+        }
+        var speed = 7.5 / PL * (window.__SP || 1);
+        if (st.walking) {
+            var dir = Math.sign(st.target - st.t);
+            st.t += dir * speed * dt;
+            if (dir > 0 && st.t >= st.target || dir < 0 && st.t <= st.target) {
+                st.t = st.target;
+                st.walking = false;
+                var c = st.cb;
+                st.cb = null;
+                if (c)
+                    c();
+            }
+            st.phase += dt * 9;
+            stepAcc += dt;
+            if (stepAcc > 0.32) {
+                stepAcc = 0;
+                snd("step");
+            }
+        }
+        else
+            st.phase *= 0.85;
+        placeGirl();
+        var sw = Math.sin(st.phase) * (st.walking ? 0.55 : 0);
+        G2.lL.rotation.x = sw;
+        G2.lR.rotation.x = -sw;
+        G2.aL.rotation.x = -sw * 0.7;
+        G2.aR.rotation.x = sw * 0.25;
+        girl.position.y = st.walking ? Math.abs(Math.cos(st.phase)) * 0.06 : 0;
+        G2.head.rotation.y = Math.sin(now * 8e-4) * 0.15;
+        if (st.cel > 0) {
+            st.cel -= dt;
+            girl.position.y += Math.abs(Math.sin(st.cel * 10)) * 0.35;
+        }
+        var W = st.wolf;
+        if (W) {
+            W.k += dt;
+            var gp2 = girl.position;
+            if (W.state === "in") {
+                var f = Math.min(1, W.k / 1.1);
+                wolf.position.lerpVectors(W.from, W.to, f * (2 - f));
+                W.ph += dt * 14;
+            }
+            else if (W.state === "stay") {
+                W.ph += dt * 2;
+            }
+            else if (W.state === "out") {
+                var f = Math.min(1, W.k / 1.3);
+                wolf.position.lerpVectors(W.to, W.from, f * f);
+                W.ph += dt * 14;
+                if (f >= 1) {
+                    wolf.visible = false;
+                    st.wolf = null;
+                }
+            }
+            if (W.state === "in" && W.k > 1.1) {
+                W.state = "stay";
+                W.k = 0;
+            }
+            if (W.state === "stay" && W.k > (W.hold || 1.6) && !W.caught) {
+                W.state = "out";
+                W.k = 0;
+            }
+            tmp.copy(gp2).sub(wolf.position);
+            if (W.state !== "out")
+                wolf.rotation.y = Math.atan2(tmp.x, tmp.z);
+            else {
+                tmp.copy(W.from).sub(wolf.position);
+                wolf.rotation.y = Math.atan2(tmp.x, tmp.z);
+            }
+            var ls_1 = Math.sin(W.ph) * (W.state === "stay" ? 0 : 0.6);
+            WG.legs.forEach(function (l, i) { return l.rotation.x = i % 2 ? ls_1 : -ls_1; });
+            WG.tail.rotation.z = Math.sin(now * 0.01) * 0.3;
+            WG.head.rotation.x = W.state === "stay" ? Math.sin(now * 0.012) * 0.12 : 0;
+        }
+        if (st.doorOpen > 0 && st.doorOpen < 1) {
+            st.doorOpen = Math.min(1, st.doorOpen + dt * 0.8);
+            door.rotation.y = -st.doorOpen * 1.6;
+        }
+        stops.forEach(function (s, i) {
+            s.ring.material.opacity = 0.45 + Math.sin(now * 4e-3 + i) * 0.25;
+        });
+        var gp = girl.position, d = dirAt(st.t);
+        if (st.idle) {
+            st.orbit += dt * 0.12;
+            var a = girl.rotation.y + Math.sin(st.orbit) * 0.9 - 0.35;
+            var rr = innerWidth > 900 ? 4.6 : 5.6;
+            camPos.set(gp.x + Math.sin(a) * rr, 1.9, gp.z + Math.cos(a) * rr);
+            camLook.set(gp.x + (innerWidth > 900 ? -Math.cos(a) * 1.4 : 0), 1.25, gp.z + (innerWidth > 900 ? Math.sin(a) * 1.4 : 0));
+        }
+        else if (st.focus) {
+            var por = innerWidth / innerHeight < 0.8, far = (st.wolf ? 8.5 : 7) * (por ? 1.15 : 1);
+            camPos.set(gp.x + d.x * far * 0.8 + d.z * far * 0.6, 2.8 + (st.wolf ? 0.8 : 0), gp.z + d.z * far * 0.8 - d.x * far * 0.6);
+            camLook.set(gp.x + d.x * (st.wolf ? 1.2 : 0), por ? -1.3 : 0.1, gp.z + d.z * (st.wolf ? 1.2 : 0));
+        }
+        else {
+            var back = st.wolf ? 7.5 : 6.2, side = st.wolf ? 3 : 1.6;
+            camPos.set(gp.x - d.x * back - d.z * side, 3.3 + (st.wolf ? 1 : 0), gp.z - d.z * back + d.x * side);
+            camLook.set(gp.x + d.x * 3, 1.1, gp.z + d.z * 3);
+        }
+        if (first) {
+            cam.position.copy(camPos);
+            first = false;
+        }
+        else
+            cam.position.lerp(camPos, 1 - Math.pow(0.02, dt));
+        cam.lookAt(camLook);
+        fill.position.copy(cam.position);
+        fill.position.y += 2;
+        fill.target.position.set(gp.x, 1, gp.z);
+        sun.position.set(gp.x + 20, 40, gp.z + 12);
+        sun.target.position.set(gp.x, 0, gp.z);
+        R.render(S, cam);
+    }
+    requestAnimationFrame(frame);
+    Object.assign(api, {
+        ok: true,
+        focus: function (on) {
+            st.focus = on;
+        },
+        idle: function (on) {
+            st.idle = on;
+            if (on) {
+                st.t = 0;
+                st.walking = false;
+                placeGirl();
+            }
+        },
+        reset: function () {
+            st.t = 0;
+            st.walking = false;
+            st.wolf = null;
+            wolf.visible = false;
+            st.doorOpen = 0;
+            door.rotation.y = 0;
+            placeGirl();
+        },
+        walkTo: function (i, cb) {
+            st.target = i >= NSTOP ? endT : STOP_T(i) - 4e-3;
+            st.walking = true;
+            st.cb = cb;
+            st.idle = false;
+        },
+        cheer: function () {
+            st.cel = 0.9;
+        },
+        wolf: function (caught) {
+            var p = girl.position, d = dirAt(st.t), sd = new T.Vector3(-d.z, 0, d.x);
+            var from = p.clone().addScaledVector(sd, 12).addScaledVector(d, 10);
+            var to = p.clone().addScaledVector(sd, 1.5).addScaledVector(d, 2.4);
+            from.y = to.y = 0;
+            wolf.position.copy(from);
+            wolf.visible = true;
+            st.wolf = { state: "in", k: 0, ph: 0, from: from, to: to, caught: caught, hold: caught ? 99 : 1.8 };
+        },
+        win: function () {
+            st.doorOpen = 0.01;
+            st.cel = 2;
+        },
+        stopPos: function (i) {
+            return STOP_T(i);
+        }
+    });
+    return api;
+})();
+function show(id) {
+    ["start", "theory", "end"].forEach(function (s) { return $(s).hidden = s !== id; });
+    $("hud").hidden = id !== "play";
+    $("qwrap").hidden = true;
+}
+function toast(t) {
+    var e = $("toast");
+    e.innerHTML = t;
+    e.classList.add("on");
+    clearTimeout(toast.h);
+    toast.h = setTimeout(function () { return e.classList.remove("on"); }, 1400);
+}
+function seg(id, key) {
+    var box = $(id);
+    var upd = function () { return box.querySelectorAll("button").forEach(function (b) { return b.setAttribute("aria-pressed", String(b.dataset.v === GS[key])); }); };
+    box.addEventListener("click", function (e) {
+        var b = e.target.closest("button");
+        if (!b)
+            return;
+        GS[key] = b.dataset.v;
+        store.set(SUBJECT.key + (key === "diff" ? "-d" : "-m"), GS[key]);
+        upd();
+        snd("tap");
+    });
+    upd();
+}
+function initChapters() {
+    var keys = Object.keys(TYPES);
+    var saved = null;
+    try {
+        saved = JSON.parse(store.get(SUBJECT.key + "-sel") || "null");
+    }
+    catch (e) {
+    }
+    GS.sel = Array.isArray(saved) && saved.length && saved.every(function (k) { return TYPES[k]; }) ? saved : keys.slice();
+    var html = keys.map(function (k) { return "<button type=\"button\" class=\"chip\" data-k=\"".concat(k, "\" style=\"--zc:").concat(TYPES[k].color, "\"><i>").concat(esc(TYPES[k].icon), "</i>").concat(esc(TYPES[k].name), "</button>"); }).join("");
+    $("chapSel").innerHTML = html;
+    $("thTabs").innerHTML = html;
+    var upd = function () { return $("chapSel").querySelectorAll(".chip").forEach(function (b) { return b.setAttribute("aria-pressed", String(GS.sel.indexOf(b.dataset.k) >= 0)); }); };
+    $("chapSel").addEventListener("click", function (e) {
+        var b = e.target.closest(".chip");
+        if (!b)
+            return;
+        var k = b.dataset.k, i = GS.sel.indexOf(k);
+        if (i >= 0) {
+            if (GS.sel.length > 1)
+                GS.sel.splice(i, 1);
+        }
+        else
+            GS.sel.push(k);
+        store.set(SUBJECT.key + "-sel", JSON.stringify(GS.sel));
+        upd();
+        snd("tap");
+    });
+    upd();
+    $("thTabs").addEventListener("click", function (e) {
+        var b = e.target.closest(".chip");
+        if (b) {
+            snd("tap");
+            openTheory(b.dataset.k);
+        }
+    });
+}
+function openTheory(k) {
+    var T0 = THEORY[k], Z = TYPES[k];
+    $("thTabs").querySelectorAll(".chip").forEach(function (b) { return b.setAttribute("aria-pressed", String(b.dataset.k === k)); });
+    $("thBody").innerHTML = "<h2 class=\"thTitle\" style=\"--zc:".concat(Z.color, "\">").concat(esc(T0.title), "</h2><div class=\"thText\">").concat(T0.body, "</div>\n   <div class=\"box\"><span class=\"label\">Exemplu rezolvat, pas cu pas</span><ol id=\"thSteps\">").concat(T0.steps.map(function (s, i) { return "<li".concat(i ? " hidden" : "", ">").concat(supify(s), "</li>"); }).join(""), "</ol><button class=\"sm\" id=\"thNext\" type=\"button\">Pasul urm\u0103tor \u25B8</button></div>\n   <div class=\"box\" style=\"background:#fffbea\"><span class=\"label\">Exerci\u021Biu interactiv</span><div id=\"thQ\"></div><div class=\"btns\"><button class=\"sm alt\" id=\"thNew\" type=\"button\">Alt exerci\u021Biu</button><button class=\"sm\" id=\"thPlay\" type=\"button\">Exerseaz\u0103 pe drum \u25B6</button></div></div>");
+    $("thNext").onclick = function () {
+        var h = $("thSteps").querySelector("li[hidden]");
+        if (h) {
+            h.hidden = false;
+            snd("tap");
+        }
+        if (!$("thSteps").querySelector("li[hidden]"))
+            $("thNext").hidden = true;
+    };
+    $("thNew").onclick = function () {
+        snd("tap");
+        theoryQ(k);
+    };
+    $("thPlay").onclick = function () {
+        GS.sel = [k];
+        startGame();
+    };
+    theoryQ(k);
+}
+function optsHTML(q) {
+    return q.options.map(function (o, i) { return "<button type=\"button\" class=\"opt\" data-i=\"".concat(i, "\" style=\"--c:").concat(BTN[i][0], ";--tc:").concat(BTN[i][1], "\"><span class=\"k\">").concat(i + 1, "</span><span>").concat(fmtOpt(o), "</span></button>"); }).join("");
+}
+function theoryQ(k) {
+    var q = genQ(k, GS.diff);
+    if (!q)
+        return;
+    var box = $("thQ");
+    var done = false;
+    box.innerHTML = "<div class=\"prompt\">".concat(q.prompt, "</div><div class=\"opts\">").concat(optsHTML(q), "</div><div id=\"thFb\"></div>");
+    box.querySelectorAll(".opt").forEach(function (b) { return b.onclick = function () {
+        if (done)
+            return;
+        done = true;
+        var i = +b.dataset.i, ok = i === q.correct;
+        box.querySelectorAll(".opt").forEach(function (x, j) {
+            x.disabled = true;
+            x.classList.add(j === q.correct ? "right" : j === i ? "wrong" : "dim");
+        });
+        snd(ok ? "ok" : "bad");
+        $("thFb").innerHTML = "<div class=\"fb ".concat(ok ? "ok" : "bad", "\"><b>").concat(ok ? "Corect!" : "Nu chiar.", "</b> ").concat(ok ? "" : 'R\u0103spunsul corect: <b class="m">' + fmtOpt(q.answerText) + "</b>", "<div class=\"explain\">").concat(q.explain, "</div></div>");
+    }; });
+}
+function makeSeq() {
+    var pool = GS.sel && GS.sel.length ? GS.sel : Object.keys(TYPES);
+    var base = [];
+    while (base.length < NSTOP)
+        base = base.concat(shuffle(pool.slice()));
+    base = base.slice(0, NSTOP);
+    var s = shuffle(base.slice());
+    for (var t = 0; t < 200 && pool.length > 1 && s.some(function (x, i) { return i && x === s[i - 1]; }); t++)
+        s = shuffle(base.slice());
+    return s;
+}
+function hud() {
+    $("hName").textContent = GS.name || "Juc\u0103tor";
+    $("hStage").textContent = "Popasul ".concat(Math.min(GS.i + 1, NSTOP), " din ").concat(NSTOP, " \u00B7 ").concat(DN[GS.diff]);
+    $("hBar").style.width = GS.i / NSTOP * 100 + "%";
+    $("hScore").textContent = GS.score;
+    $("hHearts").textContent = GS.mode === "antrenament" ? "\u221E" : "\u2665".repeat(GS.lives) + "\u2661".repeat(3 - GS.lives);
+}
+function startGame() {
+    GS.name = $("nm").value.trim();
+    store.set(SUBJECT.key + "-n", GS.name);
+    Object.assign(GS, { seq: makeSeq(), i: 0, score: 0, lives: 3, log: [], busy: false, start: Date.now() });
+    show("play");
+    hud();
+    W3.reset();
+    W3.idle(false);
+    snd("tap");
+    setTimeout(function () { return toast(THEME.intro); }, 200);
+    walkNext();
+}
+function walkNext() {
+    $("qwrap").hidden = true;
+    W3.focus && W3.focus(false);
+    if (W3.ok)
+        W3.walkTo(GS.i, ask);
+    else
+        setTimeout(ask, 300);
+}
+function ask() {
+    var type = GS.seq[GS.i];
+    var q = genQ(type, GS.diff);
+    GS.q = q;
+    GS.busy = false;
+    var Z = TYPES[type];
+    $("qcard").innerHTML = "<div class=\"qhead\"><span class=\"zone\" style=\"--zc:".concat(Z.color, "\"><i>").concat(esc(Z.icon), "</i>").concat(esc(Z.zone), "</span><span style=\"font-weight:800;color:var(--ink2)\">Popasul ").concat(GS.i + 1, "</span></div><div class=\"prompt\">").concat(q.prompt, "</div><div class=\"opts\">").concat(optsHTML(q), "</div><div id=\"fb\"></div>");
+    $("qwrap").hidden = false;
+    $("qcard").scrollTop = 0;
+    W3.focus && W3.focus(true);
+    $("qcard").querySelectorAll(".opt").forEach(function (b) { return b.onclick = function () { return answer(+b.dataset.i); }; });
+}
+function answer(i) {
+    if (GS.busy)
+        return;
+    GS.busy = true;
+    var q = GS.q, ok = i === q.correct, type = GS.seq[GS.i];
+    $("qcard").querySelectorAll(".opt").forEach(function (x, j) {
+        x.disabled = true;
+        x.classList.add(j === q.correct ? "right" : j === i ? "wrong" : "dim");
+    });
+    GS.log.push({ type: type, ok: ok, prompt: q.prompt, chosen: q.options[i], correct: q.answerText, explain: q.explain });
+    var dead = false;
+    if (ok) {
+        var pts = Math.round(TYPES[type].base * DM[GS.diff]);
+        GS.score += pts;
+        snd("ok");
+        toast("Corect! +" + pts + " " + THEME.scoreIcon);
+        W3.cheer();
+    }
+    else {
+        snd("bad");
+        if (GS.mode !== "antrenament") {
+            GS.lives--;
+            dead = GS.lives <= 0;
+        }
+        W3.wolf(dead);
+        toast(dead ? THEME.caught : THEME.wolfMsg);
+    }
+    hud();
+    $("fb").innerHTML = "<div class=\"fb ".concat(ok ? "ok" : "bad", "\"><b>").concat(ok ? "Corect!" : "Gre\u0219it!", "</b> ").concat(ok ? "" : 'R\u0103spunsul corect: <b class="m">' + fmtOpt(q.answerText) + "</b>", "<div class=\"explain\">").concat(q.explain, "</div><div class=\"btns\" style=\"margin-top:8px\"><button class=\"sm\" id=\"goOn\" type=\"button\">").concat(dead ? "Vezi rezultatele" : GS.i + 1 >= NSTOP ? THEME.finalBtn : "Mergi mai departe \u25B6", "</button></div></div>");
+    var go = $("goOn");
+    go.focus();
+    go.onclick = function () {
+        snd("tap");
+        if (dead)
+            return finish(false);
+        GS.i++;
+        hud();
+        if (GS.i >= NSTOP) {
+            $("qwrap").hidden = true;
+            W3.focus(false);
+            if (W3.ok)
+                W3.walkTo(NSTOP, function () {
+                    W3.win();
+                    snd("win");
+                    toast(THEME.winMsg);
+                    setTimeout(function () { return finish(true); }, 2200);
+                });
+            else
+                finish(true);
+        }
+        else
+            walkNext();
+    };
+}
+function finish(won) {
+    var tot = GS.log.length, ok = GS.log.filter(function (x) { return x.ok; }).length, pct = tot ? Math.round(ok / tot * 100) : 0, sec = Math.round((Date.now() - GS.start) / 1e3);
+    var date = ( /* @__PURE__ */new Date()).toLocaleDateString("ro-RO", { day: "numeric", month: "long", year: "numeric" });
+    var by = {};
+    GS.log.forEach(function (x) {
+        by[x.type] = by[x.type] || { t: 0, ok: 0 };
+        by[x.type].t++;
+        if (x.ok)
+            by[x.type].ok++;
+    });
+    var mist = GS.log.filter(function (x) { return !x.ok; });
+    $("endcard").innerHTML = "<span class=\"kicker\">Fi\u0219\u0103 \u00B7 ".concat(esc(SUBJECT.kicker), " \u00B7 nivel ").concat(DN[GS.diff], " \u00B7 ").concat(date, "</span>\n   <h2 class=\"logo\" style=\"font-size:2rem\">").concat(won ? THEME.winTitle : THEME.loseTitle, "</h2><p class=\"lead\"><b>").concat(esc(GS.name || "Juc\u0103tor"), "</b>, ").concat(won ? "ai ajuns la cap\u0103tul drumului!" : "mai \xEEncearc\u0103 \u2014 de data asta vei reu\u0219i!", "</p>\n   <div class=\"stats\"><div class=\"stat\"><span>Corecte</span><b>").concat(ok, " din ").concat(tot, "</b></div><div class=\"stat\"><span>Precizie</span><b>").concat(pct, "%</b></div><div class=\"stat\"><span>").concat(THEME.scoreName, "</span><b>").concat(GS.score, "</b></div><div class=\"stat\"><span>Timp</span><b>").concat(Math.floor(sec / 60), " min ").concat(sec % 60, " s</b></div></div>\n   <span class=\"label\">Rezultate pe capitole</span><ul class=\"list\">").concat(Object.keys(by).map(function (k) { return "<li style=\"--zc:".concat(TYPES[k].color, "\"><b>").concat(esc(TYPES[k].name), "</b> \u00B7 ").concat(by[k].ok, " din ").concat(by[k].t, " corecte</li>"); }).join(""), "</ul>\n   ").concat(mist.length ? "<span class=\"label\">De recapitulat (gre\u0219elile, cu rezolvarea)</span><ul class=\"list\">".concat(mist.map(function (m) { return "<li style=\"--zc:".concat(TYPES[m.type].color, "\"><div class=\"prompt\" style=\"font-size:1rem\">").concat(m.prompt, "</div><div>Ai ales <b>").concat(fmtOpt(m.chosen), "</b>. Corect: <b class=\"m\">").concat(fmtOpt(m.correct), "</b></div><div class=\"explain\">").concat(m.explain, "</div></li>"); }).join(""), "</ul>") : "<p><b>Niciun r\u0103spuns gre\u0219it. Excelent!</b></p>", "\n   <p class=\"prof\">Joc creat de <b>prof. Zopota Larisa</b>. F\u0103 o captur\u0103 de ecran a acestei fi\u0219e \u0219i trimite-o profesoarei.</p>\n   <div class=\"btns\"><button class=\"big\" id=\"again\" type=\"button\">Joac\u0103 din nou</button><button class=\"big alt\" id=\"home\" type=\"button\">Meniu</button></div>");
+    show("end");
+    $("again").onclick = startGame;
+    $("home").onclick = function () {
+        show("start");
+        W3.reset();
+        W3.idle(true);
+    };
+}
+$("nm").value = GS.name;
+seg("diffSeg", "diff");
+seg("modeSeg", "mode");
+initChapters();
+setMute();
+$("startBtn").onclick = startGame;
+$("theoryBtn").onclick = function () {
+    snd("tap");
+    show("theory");
+    openTheory(Object.keys(TYPES)[0]);
+};
+$("thBack").onclick = function () {
+    snd("tap");
+    show("start");
+};
+$("muteBtn").onclick = function () {
+    muted = !muted;
+    store.set("story-mute", muted ? "1" : "0");
+    setMute();
+};
+addEventListener("keydown", function (e) {
+    if ($("qwrap").hidden)
+        return;
+    var n = +e.key;
+    if (n >= 1 && n <= 4) {
+        var b = $("qcard").querySelectorAll(".opt")[n - 1];
+        if (b && !b.disabled)
+            b.click();
+    }
+    else if (e.key === "Enter") {
+        var g = $("goOn");
+        if (g)
+            g.click();
+    }
+});
+show("start");
+W3.idle(true);
+</script>
+
+</body>
+</html>
